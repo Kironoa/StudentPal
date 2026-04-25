@@ -107,7 +107,7 @@ class AboutScreen extends StatelessWidget {
               children: [
                 _buildTechIcon(Icons.bolt, "Flutter"),
                 _buildTechIcon(Icons.storage, "Local Storage"),
-                _buildTechIcon(Icons.palette, "Simple UI"),
+                _buildTechIcon(Icons.palette, "Simple Design"),
               ],
             ),
             const SizedBox(height: 60),
