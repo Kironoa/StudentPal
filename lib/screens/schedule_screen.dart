@@ -3,11 +3,11 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/class_model.dart';
 import 'package:mobile_app/repositories/class_repository.dart';
-import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/providers/class_update_notifier.dart';
 import 'package:mobile_app/utils/schedule_utils.dart';
 import 'package:mobile_app/glass_modal.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
 class SchedulePage extends ConsumerStatefulWidget {
   final int userId;
@@ -24,10 +24,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   String selectedDayFilter = 'M';
   final List<String> weekDays = ['M', 'T', 'W', 'Th', 'F', 'S', 'Sun'];
 
-  double res(BuildContext context, double value) {
-    return value * ref.read(themeProvider).uiScale;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -35,7 +31,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   }
 
   void _refreshSchedules() async {
-    debugPrint('[SchedulePage] Refreshing schedules for userId=${widget.userId}');
+    debugPrint(
+        '[SchedulePage] Refreshing schedules for userId=${widget.userId}');
     final data = await _repository.getAllClasses(widget.userId);
     final conflictData = findConflicts(data);
     setState(() {
@@ -49,9 +46,11 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   void _applyFilter(String day) {
     setState(() {
       selectedDayFilter = day;
-      filteredSchedules = allSchedules.where((s) => _matchesDay(s.days, day)).toList();
+      filteredSchedules =
+          allSchedules.where((s) => _matchesDay(s.days, day)).toList();
       filteredSchedules.sort(
-        (a, b) => ClassModel.timeToMinutes(a.startTime).compareTo(ClassModel.timeToMinutes(b.startTime)),
+        (a, b) => ClassModel.timeToMinutes(a.startTime)
+            .compareTo(ClassModel.timeToMinutes(b.startTime)),
       );
     });
   }
@@ -59,10 +58,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   bool _matchesDay(String scheduleDays, String filterDay) {
     final sd = scheduleDays.toUpperCase();
     final fd = filterDay.toUpperCase();
-    if (fd == 'WED') return sd.contains('WED') || (sd.contains('W') && !sd.contains('TUE') && !sd.contains('FRI'));
+    if (fd == 'WED')
+      return sd.contains('WED') ||
+          (sd.contains('W') && !sd.contains('TUE') && !sd.contains('FRI'));
     if (fd == 'MON') return sd.contains('MON') || sd.contains('M');
     if (fd == 'TUE') return sd.contains('TUE') || sd.contains('T');
-    if (fd == 'THU') return sd.contains('THU') || (sd.contains('TH') && !sd.contains('MON'));
+    if (fd == 'THU')
+      return sd.contains('THU') || (sd.contains('TH') && !sd.contains('MON'));
     if (fd == 'FRI') return sd.contains('FRI');
     if (fd == 'SAT') return sd.contains('SAT') || sd.contains('S');
     if (fd == 'SUN') return sd.contains('SUN');
@@ -453,8 +455,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
               padding: EdgeInsets.all(res(context, 25)),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(res(context, 30))),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -470,12 +472,14 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                   SizedBox(height: res(context, 25)),
                   Text(item.subject,
                       style: TextStyle(
-                          fontSize: res(context, 22), fontWeight: FontWeight.bold)),
+                          fontSize: res(context, 22),
+                          fontWeight: FontWeight.bold)),
                   SizedBox(height: res(context, 20)),
                   _detailItem(Icons.access_time, "Time",
                       "${item.displayStartTime} - ${item.displayEndTime}"),
                   _detailItem(Icons.room_rounded, "Room", item.room),
-                  _detailItem(Icons.person_outline, "Professor", item.professor),
+                  _detailItem(
+                      Icons.person_outline, "Professor", item.professor),
                   _detailItem(Icons.calendar_today_outlined, "Days", item.days),
                   SizedBox(height: res(context, 30)),
                   Row(
@@ -483,8 +487,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            padding:
-                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            padding: EdgeInsets.symmetric(
+                                vertical: res(context, 15)),
                             side: const BorderSide(color: Colors.redAccent),
                             shape: RoundedRectangleBorder(
                                 borderRadius:
@@ -506,8 +510,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
-                            padding:
-                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            padding: EdgeInsets.symmetric(
+                                vertical: res(context, 15)),
                             shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.circular(res(context, 12))),
@@ -629,11 +633,12 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                       res(context, 25),
                       res(context, 25),
                       res(context, 25),
-                      MediaQuery.of(context).viewInsets.bottom + res(context, 25)),
+                      MediaQuery.of(context).viewInsets.bottom +
+                          res(context, 25)),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+                    borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(res(context, 30))),
                   ),
                   child: SingleChildScrollView(
                     child: Column(
@@ -690,8 +695,9 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                           : theme.colorScheme.onSurface,
                                       fontSize: res(context, 12))),
                               selectedColor: theme.colorScheme.primary,
-                              onSelected: (val) => setDialogState(() =>
-                                  val ? selectedDays.add(d) : selectedDays.remove(d)),
+                              onSelected: (val) => setDialogState(() => val
+                                  ? selectedDays.add(d)
+                                  : selectedDays.remove(d)),
                             );
                           }).toList(),
                         ),
@@ -701,11 +707,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                             Expanded(
                               child: _timeTile(
                                   "Starts",
-                                  startT != null 
+                                  startT != null
                                       ? _formatTimeOfDay(startT!)
-                                      : (existingSchedule?.displayStartTime ?? "Select"), () async {
+                                      : (existingSchedule?.displayStartTime ??
+                                          "Select"), () async {
                                 final t = await showTimePicker(
-                                    context: context, initialTime: TimeOfDay.now());
+                                    context: context,
+                                    initialTime: TimeOfDay.now());
                                 if (t != null) setDialogState(() => startT = t);
                               }),
                             ),
@@ -713,11 +721,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                             Expanded(
                               child: _timeTile(
                                   "Ends",
-                                  endT != null 
+                                  endT != null
                                       ? _formatTimeOfDay(endT!)
-                                      : (existingSchedule?.displayEndTime ?? "Select"), () async {
+                                      : (existingSchedule?.displayEndTime ??
+                                          "Select"), () async {
                                 final t = await showTimePicker(
-                                    context: context, initialTime: TimeOfDay.now());
+                                    context: context,
+                                    initialTime: TimeOfDay.now());
                                 if (t != null) setDialogState(() => endT = t);
                               }),
                             ),
@@ -727,17 +737,18 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
-                            minimumSize: Size(double.infinity, res(context, 50)),
+                            minimumSize:
+                                Size(double.infinity, res(context, 50)),
                             shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.circular(res(context, 15))),
                           ),
                           onPressed: () async {
                             if (subjectCtrl.text.isNotEmpty) {
-                              String startTimeStr = startT != null 
+                              String startTimeStr = startT != null
                                   ? _formatTimeOfDay(startT!)
                                   : (existingSchedule?.startTime ?? "9:00 AM");
-                              String endTimeStr = endT != null 
+                              String endTimeStr = endT != null
                                   ? _formatTimeOfDay(endT!)
                                   : (existingSchedule?.endTime ?? "10:00 AM");
                               final classModel = ClassModel(
@@ -746,18 +757,26 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                 days: selectedDays.join(", "),
                                 startTime: startTimeStr,
                                 endTime: endTimeStr,
-                                room: roomCtrl.text.isEmpty ? "TBA" : roomCtrl.text,
-                                professor:
-                                    profCtrl.text.isEmpty ? "TBA" : profCtrl.text,
+                                room: roomCtrl.text.isEmpty
+                                    ? "TBA"
+                                    : roomCtrl.text,
+                                professor: profCtrl.text.isEmpty
+                                    ? "TBA"
+                                    : profCtrl.text,
                               );
                               if (isEdit) {
                                 await _repository.updateClass(classModel);
-                                debugPrint('[SchedulePage] Class updated: ${classModel.subject}');
-                                ClassUpdateProvider.instance.notifyClassUpdate();
+                                debugPrint(
+                                    '[SchedulePage] Class updated: ${classModel.subject}');
+                                ClassUpdateProvider.instance
+                                    .notifyClassUpdate();
                               } else {
-                                await _repository.createClass(widget.userId, classModel);
-                                debugPrint('[SchedulePage] Class created: ${classModel.subject}');
-                                ClassUpdateProvider.instance.notifyClassUpdate();
+                                await _repository.createClass(
+                                    widget.userId, classModel);
+                                debugPrint(
+                                    '[SchedulePage] Class created: ${classModel.subject}');
+                                ClassUpdateProvider.instance
+                                    .notifyClassUpdate();
                               }
                               _refreshSchedules();
                               if (context.mounted) Navigator.pop(context);
@@ -869,13 +888,22 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
           color: Colors.transparent,
           child: Container(
             margin: EdgeInsets.symmetric(horizontal: 50 * scale),
-            padding: EdgeInsets.symmetric(vertical: 20 * scale, horizontal: 25 * scale),
+            padding: EdgeInsets.symmetric(
+                vertical: 20 * scale, horizontal: 25 * scale),
             decoration: BoxDecoration(
               color: widget.themeColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(20 * scale),
-              boxShadow: [BoxShadow(color: widget.themeColor.withValues(alpha: 0.4), blurRadius: 20)],
+              boxShadow: [
+                BoxShadow(
+                    color: widget.themeColor.withValues(alpha: 0.4),
+                    blurRadius: 20)
+              ],
             ),
-            child: Text(widget.message, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14 * scale)),
+            child: Text(widget.message,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14 * scale)),
           ),
         ),
       ),

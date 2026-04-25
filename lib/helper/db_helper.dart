@@ -33,13 +33,14 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 18,
+      version: 19,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             username TEXT, 
             password TEXT, 
+            passwordSalt TEXT,
             profilePath TEXT,
             secretQuestion TEXT,
             secretAnswerHash TEXT,
@@ -116,6 +117,9 @@ class DatabaseHelper {
           await db.execute('ALTER TABLE users ADD COLUMN secretQuestion TEXT');
           await db.execute('ALTER TABLE users ADD COLUMN secretAnswerHash TEXT');
           await db.execute('ALTER TABLE users ADD COLUMN recoveryToken TEXT');
+        }
+        if (oldVersion < 19) {
+          await db.execute('ALTER TABLE users ADD COLUMN passwordSalt TEXT');
         }
       },
     );
@@ -274,8 +278,13 @@ class DatabaseHelper {
 
   Future<int> registerUser(String username, String password) async {
     final db = await database;
-    return await db.insert('users',
-        {'username': username, 'password': CryptoUtils.hashPassword(password), 'profilePath': null});
+    final salt = CryptoUtils.generateSalt();
+    return await db.insert('users', {
+      'username': username,
+      'password': CryptoUtils.hashPassword(password, salt),
+      'passwordSalt': salt,
+      'profilePath': null
+    });
   }
 
   Future<Map<String, dynamic>> registerUserWithRecovery(
@@ -285,13 +294,15 @@ class DatabaseHelper {
     String secretAnswer,
   ) async {
     final db = await database;
-    final secretAnswerHash = CryptoUtils.hashPassword(secretAnswer);
+    final salt = CryptoUtils.generateSalt();
+    final secretAnswerHash = CryptoUtils.hashPassword(secretAnswer, salt);
     final token = '${username}_${DateTime.now().millisecondsSinceEpoch}';
-    final recoveryToken = CryptoUtils.hashPassword(token);
+    final recoveryToken = CryptoUtils.hashPassword(token, salt);
     
     final userId = await db.insert('users', {
       'username': username,
-      'password': CryptoUtils.hashPassword(password),
+      'password': CryptoUtils.hashPassword(password, salt),
+      'passwordSalt': salt,
       'profilePath': null,
       'secretQuestion': secretQuestion,
       'secretAnswerHash': secretAnswerHash,
@@ -304,19 +315,46 @@ class DatabaseHelper {
   Future<Map<String, dynamic>?> checkLogin(
       String username, String password) async {
     final db = await database;
-    List<Map<String, dynamic>> results = await db.query('users',
-        where: 'username = ? AND password = ?',
-        whereArgs: [username, CryptoUtils.hashPassword(password)]);
-    return results.isNotEmpty ? results.first : null;
+    final results = await db.query('users',
+        where: 'username = ?',
+        whereArgs: [username]);
+    if (results.isEmpty) return null;
+    
+    final user = results.first;
+    final storedHash = user['password'] as String?;
+    final storedSalt = user['passwordSalt'] as String?;
+    
+    String computedHash;
+    if (storedSalt == null || storedSalt.isEmpty) {
+      computedHash = CryptoUtils.hashLegacy(password);
+    } else {
+      computedHash = CryptoUtils.hashPassword(password, storedSalt);
+    }
+    
+    if (computedHash == storedHash) {
+      return user;
+    }
+    return null;
   }
 
   Future<bool> verifySecretAnswer(String username, String answer) async {
     final db = await database;
-    final answerHash = CryptoUtils.hashPassword(answer);
     final results = await db.query('users',
-        where: 'username = ? AND secretAnswerHash = ?',
-        whereArgs: [username, answerHash]);
-    return results.isNotEmpty;
+        where: 'username = ?',
+        whereArgs: [username]);
+    if (results.isEmpty) return false;
+    
+    final user = results.first;
+    final storedSalt = user['passwordSalt'] as String?;
+    
+    String computedHash;
+    if (storedSalt == null || storedSalt.isEmpty) {
+      computedHash = CryptoUtils.hashLegacy(answer);
+    } else {
+      computedHash = CryptoUtils.hashPassword(answer, storedSalt);
+    }
+    
+    return computedHash == user['secretAnswerHash'];
   }
 
   Future<Map<String, dynamic>?> verifyRecoveryToken(String token) async {
@@ -329,8 +367,17 @@ class DatabaseHelper {
 
   Future<void> updatePassword(int userId, String newPassword) async {
     final db = await database;
+    final existingUser = await db.query('users',
+        where: 'id = ?',
+        whereArgs: [userId]);
+    if (existingUser.isEmpty) return;
+    
+    final salt = CryptoUtils.generateSalt();
     await db.update('users',
-        {'password': CryptoUtils.hashPassword(newPassword)},
+        {
+          'password': CryptoUtils.hashPassword(newPassword, salt),
+          'passwordSalt': salt
+        },
         where: 'id = ?',
         whereArgs: [userId]);
   }

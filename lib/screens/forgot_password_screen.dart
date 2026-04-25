@@ -270,14 +270,26 @@ class _SecretQuestionScreenState extends ConsumerState<SecretQuestionScreen> {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Text("Answer Question", style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
-Container(
-                    padding: const EdgeInsets.all(15),
+                  Text(widget.question, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.primary, fontSize: 15, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 20),
+                  Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), offset: const Offset(2, 5), blurRadius: 10)],
                     ),
-                    child: Text(widget.question, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14)),
+                    child: TextField(
+                      controller: _answerController,
+                      obscureText: false,
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.question_answer, color: theme.colorScheme.onSurface, size: 18),
+                        hintText: 'Type your answer here',
+                        hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.24)),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(width: double.infinity, child: TextButton(onPressed: handleSubmit, child: const Text("SUBMIT"))),

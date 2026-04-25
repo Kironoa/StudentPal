@@ -121,7 +121,7 @@ class SettingsScreen extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const AboutScreen()),
+                            builder: (_) => const ProviderScope(child: AboutScreen())),
                       );
                     },
                     scale,

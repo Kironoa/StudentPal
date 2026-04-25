@@ -136,16 +136,17 @@ final themeProvider = NotifierProvider<ThemeProviderNotifier, ThemeState>(
 );
 
 class ThemeProviderNotifier extends Notifier<ThemeState> {
+  final _themeProvider = ThemeProvider();
+
   @override
   ThemeState build() {
     Future.microtask(() async {
-      final provider = ThemeProvider();
-      await provider.loadSettings();
+      await _themeProvider.loadSettings();
       state = ThemeState(
-        username: provider.username,
-        uiScale: provider.uiScale,
-        brightness: provider.brightness,
-        accentColor: provider.currentAccentColor,
+        username: _themeProvider.username,
+        uiScale: _themeProvider.uiScale,
+        brightness: _themeProvider.brightness,
+        accentColor: _themeProvider.currentAccentColor,
         isLoaded: true,
       );
     });
@@ -153,39 +154,34 @@ class ThemeProviderNotifier extends Notifier<ThemeState> {
   }
 
   Future<void> loadSettings() async {
-    final provider = ThemeProvider();
-    await provider.loadSettings();
+    await _themeProvider.loadSettings();
     state = ThemeState(
-      username: provider.username,
-      uiScale: provider.uiScale,
-      brightness: provider.brightness,
-      accentColor: provider.currentAccentColor,
+      username: _themeProvider.username,
+      uiScale: _themeProvider.uiScale,
+      brightness: _themeProvider.brightness,
+      accentColor: _themeProvider.currentAccentColor,
       isLoaded: true,
     );
   }
 
   Future<void> updateUsername(String name) async {
-    final provider = ThemeProvider();
-    await provider.updateUsername(name);
-    state = state.copyWith(username: name);
+    await _themeProvider.updateUsername(name);
+    state = state.copyWith(username: _themeProvider.username);
   }
 
   Future<void> setScale(double scale) async {
-    final provider = ThemeProvider();
-    await provider.setScale(scale);
-    state = state.copyWith(uiScale: scale);
+    await _themeProvider.setScale(scale);
+    state = state.copyWith(uiScale: _themeProvider.uiScale);
   }
 
   Future<void> setBrightness(Brightness b) async {
-    final provider = ThemeProvider();
-    await provider.setBrightness(b);
-    state = state.copyWith(brightness: b);
+    await _themeProvider.setBrightness(b);
+    state = state.copyWith(brightness: _themeProvider.brightness);
   }
 
   void setColor(Color c) {
-    final provider = ThemeProvider();
-    provider.setColor(c);
-    state = state.copyWith(accentColor: c);
+    _themeProvider.setColor(c);
+    state = state.copyWith(accentColor: _themeProvider.currentAccentColor);
   }
 
   ThemeData get currentTheme => state.currentTheme;

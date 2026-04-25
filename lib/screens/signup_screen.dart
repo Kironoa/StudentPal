@@ -311,96 +311,108 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget _buildStep2Card(ThemeData theme) {
     return Container(
       key: const ValueKey('step2'),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(res(context, 20)),
       ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: res(context, 25.0),
-          vertical: res(context, 30),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Security Question",
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: res(context, 22),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: res(context, 10)),
-            Text(
-              "Set a secret question for password recovery",
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontSize: res(context, 12),
-              ),
-            ),
-            SizedBox(height: res(context, 25)),
-            Container(
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(res(context, 25)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    offset: Offset(res(context, 2), res(context, 5)),
-                    blurRadius: res(context, 10),
-                  ),
-                ],
-              ),
-              child: DropdownButtonFormField<String>(
-                value: selectedQuestion,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.help_outline, color: theme.colorScheme.onSurface, size: 18),
-                  hintText: "Select a question",
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.24),
-                    fontSize: res(context, 14),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: res(context, 15)),
-                ),
-                items: secretQuestions.map((q) {
-                  return DropdownMenuItem(
-                    value: q,
-                    child: Text(
-                      q,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                        fontSize: res(context, 13),
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (v) => setState(() => selectedQuestion = v),
-              ),
-            ),
-            SizedBox(height: res(context, 10)),
-            _buildField(
-              context,
-              Icons.lock,
-              "Your Answer",
-              isPassword: true,
-              controller: _answerController,
-            ),
-            SizedBox(height: res(context, 30)),
-            _buildButton(context, "Confirm"),
-            SizedBox(height: res(context, 15)),
-            GestureDetector(
-              onTap: () => setState(() => isStep2 = false),
-              child: Text(
-                "Go Back",
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: res(context, 25.0),
+            vertical: res(context, 30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Security Question",
                 style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                  color: theme.colorScheme.onSurface,
+                  fontSize: res(context, 22),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: res(context, 10)),
+              Text(
+                "Set a secret question for password recovery",
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: res(context, 12),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: res(context, 25)),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(res(context, 25)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      offset: Offset(res(context, 2), res(context, 5)),
+                      blurRadius: res(context, 10),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: selectedQuestion,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.help_outline, color: theme.colorScheme.onSurface, size: 18),
+                    hintText: "Select a question",
+                    hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.24),
+                      fontSize: res(context, 14),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: res(context, 15)),
+                  ),
+                  items: secretQuestions.map((q) {
+                    return DropdownMenuItem(
+                      value: q,
+                      child: Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6),
+                        child: Text(
+                          q,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          softWrap: true,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            fontSize: res(context, 13),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setState(() => selectedQuestion = v),
+                ),
+              ),
+              SizedBox(height: res(context, 10)),
+              _buildField(
+                context,
+                Icons.lock,
+                "Your Answer",
+                isPassword: true,
+                controller: _answerController,
+              ),
+              SizedBox(height: res(context, 30)),
+              _buildButton(context, "Confirm"),
+              SizedBox(height: res(context, 15)),
+              GestureDetector(
+                onTap: () => setState(() => isStep2 = false),
+                child: Text(
+                  "Go Back",
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                    fontSize: res(context, 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

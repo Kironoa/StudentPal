@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
-// Shared UI helper for scaling
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
-  // STATIC PERSISTENCE: This list lives outside the Widget state
-  // so it doesn't clear when the modal closes.
   static final List<Map<String, String>> _persistentMessages = [
     {
       "role": "bot",
@@ -23,10 +16,10 @@ class ChatScreen extends StatefulWidget {
   ];
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final AIService _aiService = AIService();
@@ -35,7 +28,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Scroll to bottom when opening if there's existing history
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _scrollToBottom(instant: true));
   }
@@ -86,12 +78,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = Provider.of<ThemeProvider>(context).currentAccentColor;
+    final accentColor = ref.read(themeProvider).accentColor;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F), // Consistent dark background
+        color: const Color(0xFF0F0F0F),
         borderRadius:
             BorderRadius.vertical(top: Radius.circular(res(context, 30))),
         border:
@@ -99,7 +91,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Column(
         children: [
-          // 1. Drag Handle
           Container(
             margin: EdgeInsets.only(
                 top: res(context, 15), bottom: res(context, 10)),
@@ -110,8 +101,6 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-
-          // 2. Header
           Padding(
             padding: EdgeInsets.symmetric(
                 horizontal: res(context, 20), vertical: res(context, 10)),
@@ -152,8 +141,6 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           const Divider(color: Colors.white10, height: 1),
-
-          // 3. Chat Area
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -205,8 +192,6 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-
-          // 4. Input Area
           Padding(
             padding: EdgeInsets.only(
               bottom:

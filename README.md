@@ -44,6 +44,18 @@
     flutter run
     ```
 
+## ⚙️ Environment Setup
+
+Run the app with:
+```bash
+flutter run --dart-define=GEMINI_API_KEY=your_key_here
+```
+
+Build with:
+```bash
+flutter build apk --dart-define=GEMINI_API_KEY=your_key_here
+```
+
 ## 📂 Project Structure
 * `lib/screens/`: UI for Dashboard, AI Chat, and Resource Management.
 * `lib/services/`: Logic for Notifications, Supabase integration, and AI API calls.

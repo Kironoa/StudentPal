@@ -3,13 +3,9 @@ import 'package:mobile_app/models/study_resource_model.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/alert_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
-
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
+import 'package:mobile_app/utils/responsive.dart';
 
 class QuizQuestion {
   final String question;
@@ -23,15 +19,15 @@ class QuizQuestion {
   });
 }
 
-class QuizzesScreen extends StatefulWidget {
+class QuizzesScreen extends ConsumerStatefulWidget {
   final int userId;
   const QuizzesScreen({super.key, required this.userId});
 
   @override
-  State<QuizzesScreen> createState() => _QuizzesScreenState();
+  ConsumerState<QuizzesScreen> createState() => _QuizzesScreenState();
 }
 
-class _QuizzesScreenState extends State<QuizzesScreen> {
+class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
   final _resourceService = StudyResourceService();
   final AlertService _alertService = AlertService();
   List<StudyResource> _quizzes = [];
@@ -259,8 +255,8 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accentColor = themeProvider.currentAccentColor;
+    final themeState = ref.read(themeProvider);
+    final accentColor = themeState.accentColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -301,7 +297,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                           border: Border.all(
                               color: theme.dividerColor.withValues(alpha: 0.1)),
                           boxShadow: [
-                            if (!themeProvider.isDarkMode)
+                            if (themeState.brightness != Brightness.dark)
                               BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.03),
                                   blurRadius: 10,
@@ -344,15 +340,15 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
   }
 }
 
-class QuizPlayInternal extends StatefulWidget {
+class QuizPlayInternal extends ConsumerStatefulWidget {
   final StudyResource resource;
   const QuizPlayInternal({super.key, required this.resource});
 
   @override
-  State<QuizPlayInternal> createState() => _QuizPlayInternalState();
+  ConsumerState<QuizPlayInternal> createState() => _QuizPlayInternalState();
 }
 
-class _QuizPlayInternalState extends State<QuizPlayInternal> {
+class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
   List<QuizQuestion> _questions = [];
   int _currentIndex = 0;
   int _score = 0;
@@ -425,8 +421,8 @@ class _QuizPlayInternalState extends State<QuizPlayInternal> {
   }
 
   void _showFinishDialog() {
-    final theme = Provider.of<ThemeProvider>(context, listen: false);
-    final isDark = theme.isDarkMode;
+    final themeState = ref.read(themeProvider);
+    final isDark = themeState.brightness == Brightness.dark;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -447,7 +443,7 @@ class _QuizPlayInternalState extends State<QuizPlayInternal> {
             children: [
               Text("$_score / ${_questions.length}",
                   style: TextStyle(
-                      color: theme.currentAccentColor,
+                      color: themeState.accentColor,
                       fontSize: 40,
                       fontWeight: FontWeight.w900)),
               Text("Correct Answers",
@@ -483,9 +479,9 @@ class _QuizPlayInternalState extends State<QuizPlayInternal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accent = themeProvider.currentAccentColor;
-    final isDark = themeProvider.isDarkMode;
+    final themeState = ref.read(themeProvider);
+    final accent = themeState.accentColor;
+    final isDark = themeState.brightness == Brightness.dark;
 
     if (_questions.isEmpty) {
       return Scaffold(

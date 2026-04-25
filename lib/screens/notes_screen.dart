@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/models/study_note_model.dart';
 import 'package:mobile_app/models/study_resource_model.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/services/notes_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
@@ -12,21 +12,17 @@ import 'package:mobile_app/services/study_resource_service.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/screens/flashcards_screen.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class NotesScreen extends StatefulWidget {
+class NotesScreen extends ConsumerStatefulWidget {
   final int userId;
   const NotesScreen({super.key, required this.userId});
 
   @override
-  State<NotesScreen> createState() => _NotesScreenState();
+  ConsumerState<NotesScreen> createState() => _NotesScreenState();
 }
 
-class _NotesScreenState extends State<NotesScreen> {
+class _NotesScreenState extends ConsumerState<NotesScreen> {
   final NotesService _notesService = NotesService();
   final AIService _aiService = AIService();
   final StudyResourceService _resourceService = StudyResourceService();
@@ -224,8 +220,7 @@ Text: ${note.description ?? note.content ?? ''}
   void _showQuantityPicker(StudyNote note, String type) {
     int quantity = 5;
     final theme = Theme.of(context);
-    final accent =
-        Provider.of<ThemeProvider>(context, listen: false).currentAccentColor;
+    final accent = ref.read(themeProvider).accentColor;
 
     showModalBottomSheet(
       context: context,

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -9,22 +9,17 @@ import 'package:mobile_app/models/study_resource_model.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/alert_service.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
-// Use the same helper for consistency with NotesScreen
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class ResourcesScreen extends StatefulWidget {
+class ResourcesScreen extends ConsumerStatefulWidget {
   final int userId;
   const ResourcesScreen({super.key, required this.userId});
 
   @override
-  State<ResourcesScreen> createState() => _ResourcesScreenState();
+  ConsumerState<ResourcesScreen> createState() => _ResourcesScreenState();
 }
 
-class _ResourcesScreenState extends State<ResourcesScreen>
+class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _resourceService = StudyResourceService();
@@ -308,7 +303,7 @@ class _ResourcesScreenState extends State<ResourcesScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = Provider.of<ThemeProvider>(context).currentAccentColor;
+    final accentColor = ref.read(themeProvider).accentColor;
 
     return Stack(
       children: [

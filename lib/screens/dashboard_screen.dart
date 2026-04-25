@@ -7,96 +7,19 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/helper/db_helper.dart';
-import 'package:mobile_app/screens/resource_screen.dart' hide res;
-import 'package:mobile_app/screens/schedule_screen.dart' hide res;
+import 'package:mobile_app/screens/resource_screen.dart';
+import 'package:mobile_app/screens/schedule_screen.dart';
 import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/notification_service.dart';
-import 'package:mobile_app/screens/notes_screen.dart' hide res;
-import 'package:mobile_app/screens/assignments_screen.dart' hide res;
-import 'package:mobile_app/screens/chat_screen.dart' hide res;
-import 'package:mobile_app/screens/quizzes_screen.dart' hide res;
-import 'package:mobile_app/screens/flashcards_screen.dart' hide res;
-import 'package:mobile_app/screens/summaries_screen.dart' hide res;
+import 'package:mobile_app/screens/notes_screen.dart';
+import 'package:mobile_app/screens/assignments_screen.dart';
+import 'package:mobile_app/screens/chat_screen.dart';
+import 'package:mobile_app/screens/quizzes_screen.dart';
+import 'package:mobile_app/screens/flashcards_screen.dart';
+import 'package:mobile_app/screens/summaries_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
-
-class LiveClockWidget extends StatefulWidget {
-  final double Function(double) r;
-  final Color accent;
-
-  const LiveClockWidget({super.key, required this.r, required this.accent});
-
-  @override
-  State<LiveClockWidget> createState() => _LiveClockWidgetState();
-}
-
-class _LiveClockWidgetState extends State<LiveClockWidget> {
-  late Timer _clockTimer;
-  String _timeString = DateFormat('hh:mm:ss a').format(DateTime.now());
-  String _dateString = DateFormat('EEE, MMM dd, yyyy').format(DateTime.now());
-
-  @override
-  void initState() {
-    super.initState();
-    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _timeString = DateFormat('hh:mm:ss a').format(DateTime.now());
-          _dateString = DateFormat('EEE, MMM dd, yyyy').format(DateTime.now());
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _clockTimer.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: onSurface.withValues(alpha: 0.1)),
-      ),
-      padding:
-          EdgeInsets.symmetric(horizontal: widget.r(10), vertical: widget.r(6)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_timeString.split(' ')[0],
-                  style: TextStyle(
-                      color: onSurface,
-                      fontSize: widget.r(11),
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'monospace')),
-              SizedBox(width: widget.r(3)),
-              Text(_timeString.split(' ')[1],
-                  style: TextStyle(
-                      color: widget.accent,
-                      fontSize: widget.r(8),
-                      fontWeight: FontWeight.w900)),
-            ],
-          ),
-          Text(_dateString.toUpperCase(),
-              style: TextStyle(
-                  color: onSurface.withValues(alpha: 0.6),
-                  fontSize: widget.r(7),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5)),
-        ],
-      ),
-    );
-  }
-}
+import 'package:mobile_app/widgets/live_clock_widget.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
@@ -582,8 +505,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       onTrailingTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AssignmentsScreen(userId: widget.userId),
+                          builder: (context) => Builder(
+                            builder: (innerContext) =>
+                                AssignmentsScreen(userId: widget.userId),
+                          ),
                         ),
                       ).then((_) => _loadDashboardData()),
                     ),
@@ -1069,7 +994,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           subtitle: Text(
             "Due: ${formatDeadline(assignment['deadline'])}",
             style: TextStyle(
-                color: _getDeadlineColor(assignment['deadline'], theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                color: _getDeadlineColor(assignment['deadline'],
+                    theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 fontSize: r(12)),
           ),
           trailing: Icon(Icons.chevron_right, color: accent),

@@ -4,23 +4,18 @@ import 'package:mobile_app/models/study_resource_model.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/alert_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
-// Helper for UI scaling consistent with NotesScreen
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class SummariesScreen extends StatefulWidget {
+class SummariesScreen extends ConsumerStatefulWidget {
   final int userId;
   const SummariesScreen({super.key, required this.userId});
 
   @override
-  State<SummariesScreen> createState() => _SummariesScreenState();
+  ConsumerState<SummariesScreen> createState() => _SummariesScreenState();
 }
 
-class _SummariesScreenState extends State<SummariesScreen> {
+class _SummariesScreenState extends ConsumerState<SummariesScreen> {
   final _resourceService = StudyResourceService();
   final AlertService _alertService = AlertService();
   List<StudyResource> _summaries = [];
@@ -51,7 +46,7 @@ class _SummariesScreenState extends State<SummariesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = Provider.of<ThemeProvider>(context).currentAccentColor;
+    final accentColor = ref.read(themeProvider).accentColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -400,78 +395,6 @@ class _SummariesScreenState extends State<SummariesScreen> {
                         fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               )
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassAlertAnimated extends StatefulWidget {
-  final String message;
-  final Color themeColor;
-  final VoidCallback onDismiss;
-  const _GlassAlertAnimated(
-      {required this.message,
-      required this.themeColor,
-      required this.onDismiss});
-
-  @override
-  State<_GlassAlertAnimated> createState() => _GlassAlertAnimatedState();
-}
-
-class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _scaleAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2000), () async {
-      if (mounted) {
-        await _controller.reverse();
-        widget.onDismiss();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: res(context, 50)),
-            padding: EdgeInsets.symmetric(
-                vertical: res(context, 20), horizontal: res(context, 25)),
-            decoration: BoxDecoration(
-                color: widget.themeColor.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(res(context, 20)),
-                boxShadow: [
-                  BoxShadow(
-                      color: widget.themeColor.withValues(alpha: 0.4),
-                      blurRadius: 20)
-                ]),
-            child: Text(widget.message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14)),
           ),
         ),
       ),

@@ -4,14 +4,9 @@ import 'package:mobile_app/models/study_resource_model.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/alert_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
-
-// Shared UI helper
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
+import 'package:mobile_app/utils/responsive.dart';
 
 class Flashcard {
   final String question;
@@ -19,15 +14,15 @@ class Flashcard {
   Flashcard({required this.question, required this.answer});
 }
 
-class FlashcardsScreen extends StatefulWidget {
+class FlashcardsScreen extends ConsumerStatefulWidget {
   final int userId;
   const FlashcardsScreen({super.key, required this.userId});
 
   @override
-  State<FlashcardsScreen> createState() => _FlashcardsScreenState();
+  ConsumerState<FlashcardsScreen> createState() => _FlashcardsScreenState();
 }
 
-class _FlashcardsScreenState extends State<FlashcardsScreen> {
+class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   final _resourceService = StudyResourceService();
   final AlertService _alertService = AlertService();
   List<StudyResource> _groups = [];
@@ -244,9 +239,9 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final accentColor = themeProvider.currentAccentColor;
-    final isDark = themeProvider.isDarkMode;
+    final themeState = ref.read(themeProvider);
+    final accentColor = themeState.accentColor;
+    final isDark = themeState.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -332,15 +327,15 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
   }
 }
 
-class FlashcardPlayScreen extends StatefulWidget {
+class FlashcardPlayScreen extends ConsumerStatefulWidget {
   final StudyResource resource;
   const FlashcardPlayScreen({super.key, required this.resource});
 
   @override
-  State<FlashcardPlayScreen> createState() => _FlashcardPlayScreenState();
+  ConsumerState<FlashcardPlayScreen> createState() => _FlashcardPlayScreenState();
 }
 
-class _FlashcardPlayScreenState extends State<FlashcardPlayScreen> {
+class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
   List<Flashcard> _cards = [];
   int _currentIndex = 0;
 
@@ -372,10 +367,10 @@ class _FlashcardPlayScreenState extends State<FlashcardPlayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeState = ref.read(themeProvider);
     final theme = Theme.of(context);
-    final accentColor = themeProvider.currentAccentColor;
-    final isDark = themeProvider.isDarkMode;
+    final accentColor = themeState.accentColor;
+    final isDark = themeState.brightness == Brightness.dark;
 
     if (_cards.isEmpty) {
       return Scaffold(

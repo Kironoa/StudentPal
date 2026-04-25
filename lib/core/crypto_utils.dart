@@ -1,8 +1,20 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 class CryptoUtils {
-  static String hashPassword(String password) {
+  static String generateSalt() {
+    final random = Random.secure();
+    final saltBytes = List<int>.generate(32, (_) => random.nextInt(256));
+    return base64Url.encode(saltBytes);
+  }
+
+  static String hashPassword(String password, String salt) {
+    final bytes = utf8.encode(password + salt);
+    return sha256.convert(bytes).toString();
+  }
+
+  static String hashLegacy(String password) {
     final bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
   }

@@ -2,25 +2,20 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/models/assignment_model.dart';
-import 'package:provider/provider.dart';
-import 'package:mobile_app/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/widgets/text_field.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class AssignmentsScreen extends StatefulWidget {
+class AssignmentsScreen extends ConsumerStatefulWidget {
   final int userId;
   const AssignmentsScreen({super.key, required this.userId});
 
   @override
-  State<AssignmentsScreen> createState() => _AssignmentsScreenState();
+  ConsumerState<AssignmentsScreen> createState() => _AssignmentsScreenState();
 }
 
-class _AssignmentsScreenState extends State<AssignmentsScreen> {
+class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
   final AssignmentService _assignmentService = AssignmentService();
   late Future<List<Assignment>> _assignmentsFuture;
 
