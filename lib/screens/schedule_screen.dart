@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/class_model.dart';
 import 'package:mobile_app/repositories/class_repository.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/providers/class_update_notifier.dart';
+import 'package:mobile_app/utils/schedule_utils.dart';
+import 'package:mobile_app/glass_modal.dart';
 
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class SchedulePage extends StatefulWidget {
+class SchedulePage extends ConsumerStatefulWidget {
   final int userId;
   const SchedulePage({super.key, required this.userId});
 
   @override
-  State<SchedulePage> createState() => _SchedulePageState();
+  ConsumerState<SchedulePage> createState() => _SchedulePageState();
 }
 
-class _SchedulePageState extends State<SchedulePage> {
+class _SchedulePageState extends ConsumerState<SchedulePage> {
   final ClassRepository _repository = ClassRepository();
   List<ClassModel> allSchedules = [], filteredSchedules = [];
+  List<List<ClassModel>> conflicts = [];
   String selectedDayFilter = 'M';
   final List<String> weekDays = ['M', 'T', 'W', 'Th', 'F', 'S', 'Sun'];
+
+  double res(BuildContext context, double value) {
+    return value * ref.read(themeProvider).uiScale;
+  }
 
   @override
   void initState() {
@@ -35,8 +37,10 @@ class _SchedulePageState extends State<SchedulePage> {
   void _refreshSchedules() async {
     debugPrint('[SchedulePage] Refreshing schedules for userId=${widget.userId}');
     final data = await _repository.getAllClasses(widget.userId);
+    final conflictData = findConflicts(data);
     setState(() {
       allSchedules = data;
+      conflicts = conflictData;
       _applyFilter(selectedDayFilter);
     });
     debugPrint('[SchedulePage] Refreshed ${data.length} schedules');
@@ -109,6 +113,7 @@ class _SchedulePageState extends State<SchedulePage> {
       ),
       body: Column(
         children: [
+          if (conflicts.isNotEmpty) _buildConflictBanner(theme),
           _buildDayPicker(),
           Expanded(
             child: filteredSchedules.isEmpty
@@ -137,6 +142,61 @@ class _SchedulePageState extends State<SchedulePage> {
               color: Colors.white,
               fontSize: res(context, 14)),
         ),
+      ),
+    );
+  }
+
+  Widget _buildConflictBanner(ThemeData theme) {
+    return MaterialBanner(
+      backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
+      content: Text(
+        "${conflicts.length} schedule conflict(s) detected",
+        style: TextStyle(
+          color: theme.colorScheme.error,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      leading: Icon(Icons.warning_rounded, color: theme.colorScheme.error),
+      actions: [
+        TextButton(
+          onPressed: () => _showConflictModal(),
+          child: Text(
+            "REVIEW",
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showConflictModal() {
+    final theme = Theme.of(context);
+    GlassModal.show(
+      context,
+      title: "Schedule Conflicts",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: conflicts.map((pair) {
+          final a = pair[0];
+          final b = pair[1];
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: res(context, 8)),
+            child: Container(
+              padding: EdgeInsets.all(res(context, 10)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(res(context, 8)),
+              ),
+              child: Text(
+                "${a.subject} ↔ ${b.subject} (${a.days}, ${a.displayStartTime}-${a.displayEndTime})",
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: res(context, 12),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -775,6 +835,8 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
+  double res(double value) => value * 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -799,29 +861,21 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
 
   @override
   Widget build(BuildContext context) {
+    final scale = 1.0;
     return Center(
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: res(context, 50)),
-            padding: EdgeInsets.symmetric(
-                vertical: res(context, 20), horizontal: res(context, 25)),
+            margin: EdgeInsets.symmetric(horizontal: 50 * scale),
+            padding: EdgeInsets.symmetric(vertical: 20 * scale, horizontal: 25 * scale),
             decoration: BoxDecoration(
               color: widget.themeColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(res(context, 20)),
-              boxShadow: [
-                BoxShadow(
-                    color: widget.themeColor.withValues(alpha: 0.4),
-                    blurRadius: 20)
-              ],
+              borderRadius: BorderRadius.circular(20 * scale),
+              boxShadow: [BoxShadow(color: widget.themeColor.withValues(alpha: 0.4), blurRadius: 20)],
             ),
-            child: Text(widget.message,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: res(context, 14))),
+            child: Text(widget.message, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14 * scale)),
           ),
         ),
       ),

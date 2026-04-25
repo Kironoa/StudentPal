@@ -143,7 +143,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       }
       final username = user['username'] as String?;
       if (username != null && username.isNotEmpty) {
-        ref.read(themeProviderProvider).updateUsername(username);
+        await DatabaseHelper().saveSettings(name: username);
+        ref.read(themeProvider.notifier).loadSettings();
       }
     }
   }
@@ -483,8 +484,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final Color dynamicAccent = theme.colorScheme.primary;
-    final themeProvider = ref.watch(themeProviderProvider);
-    final double scale = themeProvider.uiScale;
+    final themeState = ref.watch(themeProvider);
+    final double scale = themeState.uiScale;
     double r(double v) => v * scale;
 
     return Scaffold(
@@ -746,7 +747,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Widget _buildFloatingHeader(Color accent, double Function(double) r) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    final themeProvider = ref.watch(themeProviderProvider);
+    final themeState = ref.watch(themeProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -761,7 +762,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       fontSize: r(9),
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5)),
-              Text(_capitalize(themeProvider.username),
+              Text(_capitalize(themeState.username),
                   style: TextStyle(
                       color: onSurface,
                       fontSize: r(15),

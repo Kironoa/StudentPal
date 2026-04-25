@@ -33,14 +33,17 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 17,
+      version: 18,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             username TEXT, 
             password TEXT, 
-            profilePath TEXT
+            profilePath TEXT,
+            secretQuestion TEXT,
+            secretAnswerHash TEXT,
+            recoveryToken TEXT
           )
         ''');
 
@@ -108,6 +111,11 @@ class DatabaseHelper {
           if (!colNames.contains('uiScale')) {
             await db.execute('ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
           }
+        }
+        if (oldVersion < 18) {
+          await db.execute('ALTER TABLE users ADD COLUMN secretQuestion TEXT');
+          await db.execute('ALTER TABLE users ADD COLUMN secretAnswerHash TEXT');
+          await db.execute('ALTER TABLE users ADD COLUMN recoveryToken TEXT');
         }
       },
     );
@@ -270,12 +278,78 @@ class DatabaseHelper {
         {'username': username, 'password': CryptoUtils.hashPassword(password), 'profilePath': null});
   }
 
+  Future<Map<String, dynamic>> registerUserWithRecovery(
+    String username,
+    String password,
+    String secretQuestion,
+    String secretAnswer,
+  ) async {
+    final db = await database;
+    final secretAnswerHash = CryptoUtils.hashPassword(secretAnswer);
+    final token = '${username}_${DateTime.now().millisecondsSinceEpoch}';
+    final recoveryToken = CryptoUtils.hashPassword(token);
+    
+    final userId = await db.insert('users', {
+      'username': username,
+      'password': CryptoUtils.hashPassword(password),
+      'profilePath': null,
+      'secretQuestion': secretQuestion,
+      'secretAnswerHash': secretAnswerHash,
+      'recoveryToken': recoveryToken,
+    });
+    
+    return {'id': userId, 'token': recoveryToken};
+  }
+
   Future<Map<String, dynamic>?> checkLogin(
       String username, String password) async {
     final db = await database;
     List<Map<String, dynamic>> results = await db.query('users',
         where: 'username = ? AND password = ?',
         whereArgs: [username, CryptoUtils.hashPassword(password)]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<bool> verifySecretAnswer(String username, String answer) async {
+    final db = await database;
+    final answerHash = CryptoUtils.hashPassword(answer);
+    final results = await db.query('users',
+        where: 'username = ? AND secretAnswerHash = ?',
+        whereArgs: [username, answerHash]);
+    return results.isNotEmpty;
+  }
+
+  Future<Map<String, dynamic>?> verifyRecoveryToken(String token) async {
+    final db = await database;
+    final results = await db.query('users',
+        where: 'recoveryToken = ?',
+        whereArgs: [token]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<void> updatePassword(int userId, String newPassword) async {
+    final db = await database;
+    await db.update('users',
+        {'password': CryptoUtils.hashPassword(newPassword)},
+        where: 'id = ?',
+        whereArgs: [userId]);
+  }
+
+  Future<String?> getSecretQuestion(String username) async {
+    final db = await database;
+    final results = await db.query('users',
+        columns: ['secretQuestion'],
+        where: 'username = ?',
+        whereArgs: [username]);
+    if (results.isEmpty) return null;
+    return results.first['secretQuestion'] as String?;
+  }
+
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    final db = await database;
+    final results = await db.query('users',
+        where: 'username = ?',
+        whereArgs: [username]);
     return results.isNotEmpty ? results.first : null;
   }
 

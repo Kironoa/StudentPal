@@ -1,3 +1,5 @@
+import 'package:mobile_app/models/class_model.dart';
+
 String dayToAbbrev(String day) {
   final map = {
     'MONDAY': 'MON',
@@ -36,4 +38,42 @@ int timeTo24Hour(String timeStr) {
   } catch (e) {
     return 0;
   }
+}
+
+List<List<ClassModel>> findConflicts(List<ClassModel> classes) {
+  final conflicts = <List<ClassModel>>[];
+  final processedPairs = <String>{};
+
+  for (int i = 0; i < classes.length; i++) {
+    for (int j = i + 1; j < classes.length; j++) {
+      final a = classes[i];
+      final b = classes[j];
+
+      final aDays = a.days.toUpperCase().replaceAll(' ', '');
+      final bDays = b.days.toUpperCase().replaceAll(' ', '');
+      
+      final aDayParts = aDays.split(',');
+      final bDayParts = bDays.split(',');
+      
+      final sharedDays = aDayParts.where((d) => bDayParts.contains(d)).toList();
+      if (sharedDays.isEmpty) continue;
+
+      final aStart = ClassModel.timeToMinutes(a.startTime);
+      final aEnd = ClassModel.timeToMinutes(a.endTime);
+      final bStart = ClassModel.timeToMinutes(b.startTime);
+      final bEnd = ClassModel.timeToMinutes(b.endTime);
+
+      if (aStart < bEnd && bStart < aEnd) {
+        final pairKey = '${a.id}-${b.id}';
+        final reverseKey = '${b.id}-${a.id}';
+        
+        if (!processedPairs.contains(pairKey) && !processedPairs.contains(reverseKey)) {
+          processedPairs.add(pairKey);
+          conflicts.add([a, b]);
+        }
+      }
+    }
+  }
+
+  return conflicts;
 }

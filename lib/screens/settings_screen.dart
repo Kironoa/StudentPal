@@ -1,27 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:mobile_app/themes/app_themes.dart';
 import 'package:mobile_app/widgets/about.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  double res(BuildContext context, double value) {
-    final provider = Provider.of<ThemeProvider>(context, listen: false);
-    return value * provider.uiScale;
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeProvider);
     final theme = Theme.of(context);
 
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    final primaryColor = themeProvider.currentAccentColor;
-
-    final double scale = themeProvider.uiScale;
-
+    final primaryColor = themeState.accentColor;
+    final double scale = themeState.uiScale;
     final bool isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
@@ -34,7 +26,7 @@ class SettingsScreen extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w900,
-            fontSize: res(context, 12),
+            fontSize: scale * 12,
             letterSpacing: 1.5,
           ),
         ),
@@ -52,18 +44,16 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader("Appearance", primaryColor, context),
+                  _buildSectionHeader("Appearance", primaryColor, context, scale),
                   ListTile(
-                    leading:
-                        Icon(isDark ? Icons.dark_mode : Icons.light_mode),
+                    leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
                     title: const Text("Brightness Mode"),
-                    subtitle: Text(
-                        isDark ? "Dark Mode Active" : "Light Mode Active"),
+                    subtitle: Text(isDark ? "Dark Mode Active" : "Light Mode Active"),
                     trailing: Switch(
                       value: isDark,
                       activeThumbColor: primaryColor,
                       onChanged: (value) {
-                        themeProvider.setBrightness(
+                        ref.read(themeProvider.notifier).setBrightness(
                             value ? Brightness.dark : Brightness.light);
                       },
                     ),
@@ -80,12 +70,12 @@ class SettingsScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    onTap: () => _showThemeDialog(context),
+                    onTap: () => _showThemeDialog(context, ref),
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: res(context, 16.0),
-                      vertical: res(context, 8.0),
+                      horizontal: scale * 16.0,
+                      vertical: scale * 8.0,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
                           children: [
                             Text(
                               "Interface Scale",
-                              style: TextStyle(fontSize: res(context, 16)),
+                              style: TextStyle(fontSize: scale * 16),
                             ),
                             Text(
                               "${(scale * 100).round()}%",
@@ -114,18 +104,16 @@ class SettingsScreen extends StatelessWidget {
                           label: "${(scale * 100).round()}%",
                           activeColor: primaryColor,
                           onChanged: (double value) {
-                            themeProvider.setScale(value);
+                            ref.read(themeProvider.notifier).setScale(value);
                           },
                         ),
                       ],
                     ),
                   ),
-                  Divider(indent: res(context, 16), endIndent: res(context, 16)),
-                  _buildSectionHeader("General", primaryColor, context),
-                  _buildListTile(
-                      Icons.notifications_none, "Notifications", () {}),
-                  _buildListTile(
-                      Icons.lock_outline, "Privacy & Security", () {}),
+                  Divider(indent: scale * 16, endIndent: scale * 16),
+                  _buildSectionHeader("General", primaryColor, context, scale),
+                  _buildListTile(Icons.notifications_none, "Notifications", () {}, scale),
+                  _buildListTile(Icons.lock_outline, "Privacy & Security", () {}, scale),
                   _buildListTile(
                     Icons.info_outline,
                     "About",
@@ -136,8 +124,9 @@ class SettingsScreen extends StatelessWidget {
                             builder: (context) => const AboutScreen()),
                       );
                     },
+                    scale,
                   ),
-                  SizedBox(height: res(context, 40)),
+                  SizedBox(height: scale * 40),
                 ],
               ),
             );
@@ -147,9 +136,9 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, Color color, BuildContext context) {
+  Widget _buildSectionHeader(String title, Color color, BuildContext context, double scale) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(res(context, 16.0), res(context, 16.0), res(context, 16.0), res(context, 8.0)),
+      padding: EdgeInsets.fromLTRB(scale * 16.0, scale * 16.0, scale * 16.0, scale * 8.0),
       child: Text(
         title,
         style: TextStyle(
@@ -161,7 +150,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildListTile(IconData icon, String title, VoidCallback onTap, double scale) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
@@ -170,14 +159,12 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showThemeDialog(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-
+  void _showThemeDialog(BuildContext context, WidgetRef ref) {
     final themeEntries = AppThemes.colors.entries.toList();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Select Accent Color"),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SizedBox(
@@ -195,15 +182,12 @@ class SettingsScreen extends StatelessWidget {
             itemCount: themeEntries.length,
             itemBuilder: (context, index) {
               final entry = themeEntries[index];
-
-              final isSelected =
-                  themeProvider.currentAccentColor == entry.value;
+              final selected = ref.read(themeProvider).accentColor == entry.value;
 
               return GestureDetector(
                 onTap: () {
-                  themeProvider.setColor(entry.value);
-
-                  Navigator.pop(context);
+                  ref.read(themeProvider.notifier).setColor(entry.value);
+                  Navigator.pop(dialogContext);
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -211,11 +195,11 @@ class SettingsScreen extends StatelessWidget {
                     CircleAvatar(
                       backgroundColor: entry.value,
                       radius: 25,
-                      child: isSelected
+                      child: selected
                           ? const Icon(Icons.check, color: Colors.white)
                           : null,
                     ),
-                    SizedBox(height: res(context, 4)),
+                    SizedBox(height: 4),
                     Text(
                       entry.key,
                       style: const TextStyle(fontSize: 12),
@@ -230,7 +214,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text("CLOSE"),
           ),
         ],

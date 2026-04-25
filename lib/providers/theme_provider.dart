@@ -3,6 +3,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/themes/app_themes.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 
+class ThemeState {
+  final String username;
+  final double uiScale;
+  final Brightness brightness;
+  final Color accentColor;
+  final bool isLoaded;
+
+  const ThemeState({
+    this.username = "Student",
+    this.uiScale = 1.0,
+    this.brightness = Brightness.dark,
+    this.accentColor = const Color(0xFF009688),
+    this.isLoaded = false,
+  });
+
+  ThemeState copyWith({
+    String? username,
+    double? uiScale,
+    Brightness? brightness,
+    Color? accentColor,
+    bool? isLoaded,
+  }) {
+    return ThemeState(
+      username: username ?? this.username,
+      uiScale: uiScale ?? this.uiScale,
+      brightness: brightness ?? this.brightness,
+      accentColor: accentColor ?? this.accentColor,
+      isLoaded: isLoaded ?? this.isLoaded,
+    );
+  }
+
+  ThemeData get currentTheme => AppThemes.createTheme(brightness, accentColor);
+}
+
 class ThemeProvider extends ChangeNotifier {
   String _username = "Student";
   double _uiScale = 1.0;
@@ -39,7 +73,6 @@ class ThemeProvider extends ChangeNotifier {
         }
 
         if (_uiScale >= 0.8 && _uiScale <= 1.2) {
-          // valid range
         } else {
           _uiScale = 1.0;
         }
@@ -98,19 +131,62 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
-final themeProviderProvider = NotifierProvider<ThemeProviderNotifier, ThemeProvider>(() {
-  return ThemeProviderNotifier();
-});
+final themeProvider = NotifierProvider<ThemeProviderNotifier, ThemeState>(
+  ThemeProviderNotifier.new,
+);
 
-class ThemeProviderNotifier extends Notifier<ThemeProvider> {
+class ThemeProviderNotifier extends Notifier<ThemeState> {
   @override
-  ThemeProvider build() {
+  ThemeState build() {
+    Future.microtask(() async {
+      final provider = ThemeProvider();
+      await provider.loadSettings();
+      state = ThemeState(
+        username: provider.username,
+        uiScale: provider.uiScale,
+        brightness: provider.brightness,
+        accentColor: provider.currentAccentColor,
+        isLoaded: true,
+      );
+    });
+    return const ThemeState();
+  }
+
+  Future<void> loadSettings() async {
     final provider = ThemeProvider();
-    Future.microtask(() => provider.loadSettings());
-    return provider;
+    await provider.loadSettings();
+    state = ThemeState(
+      username: provider.username,
+      uiScale: provider.uiScale,
+      brightness: provider.brightness,
+      accentColor: provider.currentAccentColor,
+      isLoaded: true,
+    );
   }
 
   Future<void> updateUsername(String name) async {
-    await state.updateUsername(name);
+    final provider = ThemeProvider();
+    await provider.updateUsername(name);
+    state = state.copyWith(username: name);
   }
+
+  Future<void> setScale(double scale) async {
+    final provider = ThemeProvider();
+    await provider.setScale(scale);
+    state = state.copyWith(uiScale: scale);
+  }
+
+  Future<void> setBrightness(Brightness b) async {
+    final provider = ThemeProvider();
+    await provider.setBrightness(b);
+    state = state.copyWith(brightness: b);
+  }
+
+  void setColor(Color c) {
+    final provider = ThemeProvider();
+    provider.setColor(c);
+    state = state.copyWith(accentColor: c);
+  }
+
+  ThemeData get currentTheme => state.currentTheme;
 }

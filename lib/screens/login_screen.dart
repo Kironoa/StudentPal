@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/app_user.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
 import 'package:mobile_app/screens/signup_screen.dart';
+import 'package:mobile_app/screens/forgot_password_screen.dart';
 import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
 
-double res(BuildContext context, double value) {
-  final provider = Provider.of<ThemeProvider>(context, listen: false);
-  return value * provider.uiScale;
-}
-
-class StudentPalLogin extends StatefulWidget {
+class StudentPalLogin extends ConsumerStatefulWidget {
   const StudentPalLogin({super.key});
 
   @override
-  State<StudentPalLogin> createState() => _StudentPalLoginState();
+  ConsumerState<StudentPalLogin> createState() => _StudentPalLoginState();
 }
 
-class _StudentPalLoginState extends State<StudentPalLogin> {
+class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
   bool isPressed = false;
   final AuthService _authService = AuthService();
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+
+  double res(BuildContext context, double value) {
+    return value * ref.read(themeProvider).uiScale;
+  }
 
   Widget buildGlassIcon(IconData icon, Color color) {
     return Container(
@@ -310,6 +310,13 @@ class _StudentPalLoginState extends State<StudentPalLogin> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const SignUpScreen()),
+            );
+          } else if (text == "Forgot Password") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ForgotPasswordScreen(),
+              ),
             );
           }
         },

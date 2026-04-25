@@ -7,16 +7,17 @@ class GlassModal {
     required String title,
     required Widget content,
     VoidCallback? onNavigate,
-    bool barrierDismissible = false, // Added flexibility
+    VoidCallback? onConfirm,
+    String? confirmText,
+    bool showConfirm = false,
+    bool barrierDismissible = false,
   }) {
     showGeneralDialog(
       context: context,
       barrierDismissible: barrierDismissible,
       barrierLabel: 'GlassModal',
-      barrierColor: Colors.black.withValues(alpha: 0.5), // Subtle dimming
-      transitionDuration: const Duration(
-        milliseconds: 400,
-      ), // Slightly smoother
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
       transitionBuilder: (context, anim1, anim2, child) {
         return FadeTransition(
@@ -37,9 +38,7 @@ class GlassModal {
                       child: Container(
                         padding: const EdgeInsets.all(25),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(
-                            alpha: 0.08,
-                          ), // Refined opacity
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.15),
@@ -49,7 +48,6 @@ class GlassModal {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Modal Title
                             Text(
                               title,
                               textAlign: TextAlign.center,
@@ -61,21 +59,42 @@ class GlassModal {
                               ),
                             ),
                             const SizedBox(height: 20),
-
                             content,
-
                             const SizedBox(height: 10),
-
-                            // Close Button
+                            if (showConfirm && confirmText != null) ...[
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF00FF75),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  if (onConfirm != null) {
+                                    Future.delayed(
+                                      const Duration(milliseconds: 100),
+                                      () {
+                                        onConfirm();
+                                      },
+                                    );
+                                  }
+                                },
+                                child: Text(
+                                  confirmText.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                            ],
                             TextButton(
                               style: TextButton.styleFrom(
                                 foregroundColor: const Color(0xFF00FF75),
                               ),
                               onPressed: () {
                                 Navigator.of(context).pop();
-
                                 if (onNavigate != null) {
-                                  // Ensures navigation happens after the modal is gone
                                   Future.delayed(
                                     const Duration(milliseconds: 100),
                                     () {
@@ -84,9 +103,9 @@ class GlassModal {
                                   );
                                 }
                               },
-                              child: const Text(
-                                "CLOSE",
-                                style: TextStyle(
+                              child: Text(
+                                showConfirm ? "CLOSE" : "CLOSE",
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.2,

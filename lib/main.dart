@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart' as pm;
 import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
@@ -44,26 +43,21 @@ void main() async {
     await notificationService.requestPermissions();
   }
 
-  final themeProvider = ThemeProvider();
-
   runApp(
-    ProviderScope(
-      child: pm.ChangeNotifierProvider<ThemeProvider>.value(
-        value: themeProvider,
-        child: const StudentPalApp(),
-      ),
+    const ProviderScope(
+      child: StudentPalApp(),
     ),
   );
 }
 
-class StudentPalApp extends StatefulWidget {
+class StudentPalApp extends ConsumerStatefulWidget {
   const StudentPalApp({super.key});
 
   @override
-  State<StudentPalApp> createState() => _StudentPalAppState();
+  ConsumerState<StudentPalApp> createState() => _StudentPalAppState();
 }
 
-class _StudentPalAppState extends State<StudentPalApp> {
+class _StudentPalAppState extends ConsumerState<StudentPalApp> {
   late Future<UserSession> _sessionFuture;
 
   @override
@@ -75,8 +69,8 @@ class _StudentPalAppState extends State<StudentPalApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = pm.Provider.of<ThemeProvider>(context);
-    final baseTheme = themeProvider.currentTheme;
+    final themeState = ref.watch(themeProvider);
+    final baseTheme = themeState.currentTheme;
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -87,7 +81,7 @@ class _StudentPalAppState extends State<StudentPalApp> {
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(themeProvider.uiScale),
+            textScaler: TextScaler.linear(themeState.uiScale),
           ),
           child: child!,
         );

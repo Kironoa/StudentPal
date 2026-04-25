@@ -40,8 +40,9 @@ class AuthService {
     return existingUsers.isNotEmpty;
   }
 
-  Future<AppUser?> register(String username, String password) async {
-    final userId = await _dbHelper.registerUser(username, password);
+  Future<AppUser?> register(String username, String password, String secretQuestion, String secretAnswer) async {
+    final result = await _dbHelper.registerUserWithRecovery(username, password, secretQuestion, secretAnswer);
+    final userId = result['id'] as int;
     final userMap = await _dbHelper.getUser(userId);
     if (userMap == null) {
       return AppUser(id: userId, username: username);
@@ -49,7 +50,43 @@ class AuthService {
     return AppUser.fromMap(userMap);
   }
 
+  Future<Map<String, dynamic>> registerWithRecoveryToken(
+    String username,
+    String password,
+    String secretQuestion,
+    String secretAnswer,
+  ) async {
+    final result = await _dbHelper.registerUserWithRecovery(username, password, secretQuestion, secretAnswer);
+    final userId = result['id'] as int;
+    final recoveryToken = result['token'] as String;
+    final userMap = await _dbHelper.getUser(userId);
+    final user = userMap != null ? AppUser.fromMap(userMap) : AppUser(id: userId, username: username);
+    return {'user': user, 'recoveryToken': recoveryToken};
+  }
+
   Future<void> logout() {
     return _sessionService.clearSession();
+  }
+
+  Future<String?> getSecretQuestion(String username) {
+    return _dbHelper.getSecretQuestion(username);
+  }
+
+  Future<bool> verifySecretAnswer(String username, String answer) {
+    return _dbHelper.verifySecretAnswer(username, answer);
+  }
+
+  Future<Map<String, dynamic>?> verifyRecoveryToken(String token) {
+    return _dbHelper.verifyRecoveryToken(token);
+  }
+
+  Future<void> updatePassword(int userId, String newPassword) {
+    return _dbHelper.updatePassword(userId, newPassword);
+  }
+
+  Future<AppUser?> getUserByUsername(String username) async {
+    final userMap = await _dbHelper.getUserByUsername(username);
+    if (userMap == null) return null;
+    return AppUser.fromMap(userMap);
   }
 }
