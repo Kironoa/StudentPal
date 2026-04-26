@@ -1,6 +1,7 @@
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/study_note_model.dart';
 
+/// Manages study notes CRUD operations.
 class NotesService {
   final DatabaseHelper _dbHelper;
 

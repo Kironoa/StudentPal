@@ -24,7 +24,6 @@ class FlashcardsScreen extends ConsumerStatefulWidget {
 
 class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   final _resourceService = StudyResourceService();
-  final AlertService _alertService = AlertService();
   List<StudyResource> _groups = [];
   bool _isLoading = true;
 
@@ -48,53 +47,20 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   }
 
   void _showGlassAlert(String message, {Color? color}) {
-    _alertService.showGlassAlert(context, message, color: color);
+    AlertService().showGlassAlert(context, message, color: color);
   }
 
   void _confirmDelete(StudyResource group) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(res(context, 20))),
-          title: Text("Delete Note?",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                  fontSize: res(context, 18))),
-          content: Text("This action cannot be undone.",
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontSize: res(context, 14))),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text("CANCEL",
-                    style: TextStyle(
-                        color: theme.hintColor, fontWeight: FontWeight.bold))),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(res(context, 10)))),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await _resourceService.deleteResource(group.id!);
-                _loadGroups();
-                _showGlassAlert("Set Deleted", color: Colors.redAccent);
-              },
-              child: const Text("DELETE",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+    AlertService().showConfirmDialog(
+      context,
+      title: 'Delete Set?',
+      body: 'This action cannot be undone.',
+      confirmLabel: 'DELETE',
+      onConfirm: () async {
+        await _resourceService.deleteResource(group.id!);
+        _loadGroups();
+        _showGlassAlert("Set Deleted", color: Colors.redAccent);
+      },
     );
   }
 

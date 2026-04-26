@@ -1,8 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
 
+/// Displays animated glass overlay alerts and delete confirmation dialogs.
 class AlertService {
   static final AlertService _instance = AlertService._internal();
   factory AlertService() => _instance;
@@ -25,13 +24,13 @@ class AlertService {
 
   void showInfo(BuildContext context, String message) {
     if (!context.mounted) return;
-    final accent = Provider.of<ThemeProvider>(context, listen: false).currentAccentColor;
+    final accent = Theme.of(context).colorScheme.primary;
     _showGlassAlert(context, message, accent);
   }
 
   void showGlassAlert(BuildContext context, String message, {Color? color}) {
     if (!context.mounted) return;
-    final accent = Provider.of<ThemeProvider>(context, listen: false).currentAccentColor;
+    final accent = Theme.of(context).colorScheme.primary;
     _showGlassAlert(context, message, color ?? accent);
   }
 
@@ -51,6 +50,60 @@ class AlertService {
     overlay.insert(entry);
   }
 
+  void showConfirmDialog(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required String confirmLabel,
+    required VoidCallback onConfirm,
+    Color confirmColor = Colors.redAccent,
+    String cancelLabel = 'CANCEL',
+  }) {
+    if (!context.mounted) return;
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        content: Text(
+          body,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              cancelLabel,
+              style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              onConfirm();
+            },
+            child: Text(
+              confirmLabel,
+              style: TextStyle(
+                color: confirmColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool> confirmDelete(BuildContext context, String itemName) async {
     final result = await showDialog<bool>(
       context: context,
@@ -60,54 +113,12 @@ class AlertService {
   }
 
   Future<void> showDeleteDialog(BuildContext context, String itemName, VoidCallback onConfirm) async {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            "Delete $itemName?",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          content: Text(
-            "This action cannot be undone.",
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                "CANCEL",
-                style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pop(context, true);
-                onConfirm();
-              },
-              child: const Text(
-                "DELETE",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
+    showConfirmDialog(
+      context,
+      title: 'Delete $itemName?',
+      body: 'This action cannot be undone.',
+      confirmLabel: 'DELETE',
+      onConfirm: onConfirm,
     );
   }
 }
@@ -135,9 +146,12 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _scaleAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
     _controller.forward();
+
     Future.delayed(const Duration(milliseconds: 2000), () async {
       if (mounted) {
         await _controller.reverse();
@@ -161,21 +175,49 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
           color: Colors.transparent,
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 50),
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
             decoration: BoxDecoration(
-              color: widget.themeColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(25),
               boxShadow: [
-                BoxShadow(color: widget.themeColor.withValues(alpha: 0.4), blurRadius: 20)
+                BoxShadow(
+                  color: widget.themeColor.withValues(alpha: 0.3),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                )
               ],
             ),
-            child: Text(
-              widget.message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(25),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 18, horizontal: 35),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        widget.themeColor.withValues(alpha: 0.7),
+                        widget.themeColor.withValues(alpha: 0.9),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Text(
+                    widget.message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -195,7 +237,7 @@ class _DeleteConfirmDialog extends StatelessWidget {
     final theme = Theme.of(context);
     return AlertDialog(
       backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       title: Text(
         "Delete $itemName?",
         style: TextStyle(

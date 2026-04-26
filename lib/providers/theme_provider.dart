@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/themes/app_themes.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 
+/// Riverpod state management for app theme, brightness, and UI scale.
 class ThemeState {
   final String username;
   final double uiScale;

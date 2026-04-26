@@ -117,7 +117,8 @@ $currentContent
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => FlashcardsScreen(userId: widget.userId)));
+                  builder: (context) =>
+                      FlashcardsScreen(userId: widget.userId)));
         }
       }
     } catch (e) {
@@ -362,35 +363,36 @@ Text: ${note.description ?? note.content ?? ''}
               visualDensity: VisualDensity.compact,
               icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
               onPressed: () => Navigator.pop(context),
-),
             ),
-            body: SafeArea(
-              child: _notesFuture == null
-                  ? Center(child: CircularProgressIndicator(color: accentColor))
-                  : FutureBuilder<List<StudyNote>>(
-                      future: _notesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(
-                              child: CircularProgressIndicator(color: accentColor));
-                        }
-                        final data = snapshot.data ?? [];
-                        if (data.isEmpty) return _buildEmptyState(theme);
+          ),
+          body: SafeArea(
+            child: _notesFuture == null
+                ? Center(child: CircularProgressIndicator(color: accentColor))
+                : FutureBuilder<List<StudyNote>>(
+                    future: _notesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                            child:
+                                CircularProgressIndicator(color: accentColor));
+                      }
+                      final data = snapshot.data ?? [];
+                      if (data.isEmpty) return _buildEmptyState(theme);
 
-                        return ListView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            res(context, 20),
-                            res(context, 10),
-                            res(context, 20),
-                            res(context, 100),
-                          ),
-                          itemCount: data.length,
-                          itemBuilder: (context, index) =>
-                              _buildNoteTile(data[index], index, data.length),
-                        );
-                      },
-                    ),
-            ),
+                      return ListView.builder(
+                        padding: EdgeInsets.fromLTRB(
+                          res(context, 20),
+                          res(context, 10),
+                          res(context, 20),
+                          res(context, 100),
+                        ),
+                        itemCount: data.length,
+                        itemBuilder: (context, index) =>
+                            _buildNoteTile(data[index], index, data.length),
+                      );
+                    },
+                  ),
+          ),
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: FloatingActionButton.extended(
@@ -579,8 +581,8 @@ Text: ${note.description ?? note.content ?? ''}
                         Navigator.pop(context);
                         _showReminderPicker(item);
                       },
-                      icon: Icon(Icons.alarm,
-                          color: theme.colorScheme.secondary),
+                      icon:
+                          Icon(Icons.alarm, color: theme.colorScheme.secondary),
                       tooltip: "Set Reminder"),
                   SizedBox(width: res(context, 10)),
                   Expanded(
@@ -635,48 +637,16 @@ Text: ${note.description ?? note.content ?? ''}
   }
 
   void _confirmDelete(int noteId) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(res(context, 20))),
-          title: Text("Delete Note?",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                  fontSize: res(context, 18))),
-          content: Text("This action cannot be undone.",
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontSize: res(context, 14))),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("CANCEL",
-                    style: TextStyle(
-                        color: theme.hintColor, fontWeight: FontWeight.bold))),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(res(context, 10)))),
-              onPressed: () async {
-                await _notesService.deleteNote(noteId);
-                if (context.mounted) Navigator.pop(context);
-                _refreshNotes();
-                _showGlassAlert("Note Deleted", color: Colors.redAccent);
-              },
-              child: const Text("DELETE",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+    AlertService().showConfirmDialog(
+      context,
+      title: 'Delete Note?',
+      body: 'This action cannot be undone.',
+      confirmLabel: 'DELETE',
+      onConfirm: () async {
+        await _notesService.deleteNote(noteId);
+        _refreshNotes();
+        _showGlassAlert("Note Deleted", color: Colors.redAccent);
+      },
     );
   }
 
@@ -848,7 +818,8 @@ Text: ${note.description ?? note.content ?? ''}
             padding: EdgeInsets.all(res(context, 25)),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+              borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(res(context, 30))),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -860,9 +831,17 @@ Text: ${note.description ?? note.content ?? ''}
                         letterSpacing: 1.2)),
                 SizedBox(height: res(context, 20)),
                 ListTile(
-                  leading: Icon(Icons.wb_sunny, color: selectedOption == 0 ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Tomorrow", style: TextStyle(color: selectedOption == 0 ? theme.colorScheme.primary : null)),
-                  subtitle: Text(DateFormat('MMM dd, h:mm a').format(now.add(const Duration(days: 1)))),
+                  leading: Icon(Icons.wb_sunny,
+                      color: selectedOption == 0
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  title: Text("Tomorrow",
+                      style: TextStyle(
+                          color: selectedOption == 0
+                              ? theme.colorScheme.primary
+                              : null)),
+                  subtitle: Text(DateFormat('MMM dd, h:mm a')
+                      .format(now.add(const Duration(days: 1)))),
                   selected: selectedOption == 0,
                   onTap: () {
                     setModalState(() {
@@ -872,9 +851,17 @@ Text: ${note.description ?? note.content ?? ''}
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.calendar_today, color: selectedOption == 1 ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Next Week", style: TextStyle(color: selectedOption == 1 ? theme.colorScheme.primary : null)),
-                  subtitle: Text(DateFormat('MMM dd, h:mm a').format(now.add(const Duration(days: 7)))),
+                  leading: Icon(Icons.calendar_today,
+                      color: selectedOption == 1
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  title: Text("Next Week",
+                      style: TextStyle(
+                          color: selectedOption == 1
+                              ? theme.colorScheme.primary
+                              : null)),
+                  subtitle: Text(DateFormat('MMM dd, h:mm a')
+                      .format(now.add(const Duration(days: 7)))),
                   selected: selectedOption == 1,
                   onTap: () {
                     setModalState(() {
@@ -884,41 +871,51 @@ Text: ${note.description ?? note.content ?? ''}
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.event, color: selectedOption == 2 ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Pick Date", style: TextStyle(color: selectedOption == 2 ? theme.colorScheme.primary : null)),
+                  leading: Icon(Icons.event,
+                      color: selectedOption == 2
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  title: Text("Pick Date",
+                      style: TextStyle(
+                          color: selectedOption == 2
+                              ? theme.colorScheme.primary
+                              : null)),
                   subtitle: const Text("Choose a custom date"),
                   selected: selectedOption == 2,
                   onTap: () async {
-                      if (!mounted) return;
-                      Navigator.pop(context);
-                      final date = await showDatePicker(
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: now,
+                      lastDate: now.add(const Duration(days: 365)),
+                    );
+                    if (date != null) {
+                      final time = await showTimePicker(
                         context: context,
-                        initialDate: selectedDate,
-                        firstDate: now,
-                        lastDate: now.add(const Duration(days: 365)),
+                        initialTime: TimeOfDay.fromDateTime(selectedDate),
                       );
-                      if (date != null) {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.fromDateTime(selectedDate),
+                      if (time != null) {
+                        selectedDate = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
                         );
-                        if (time != null) {
-                          selectedDate = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        }
                       }
-                      if (note.id != null && selectedDate.isAfter(now)) {
-                        await _notificationService.scheduleNoteReminders(
+                    }
+                    if (note.id != null && selectedDate.isAfter(now)) {
+                      await _notificationService.scheduleNoteReminders(
                         noteId: note.id!,
-                        noteTitle: note.title.isNotEmpty ? note.title : 'Untitled Note',
+                        noteTitle: note.title.isNotEmpty
+                            ? note.title
+                            : 'Untitled Note',
                         reminderTime: selectedDate,
                       );
-                      _showGlassAlert("Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      _showGlassAlert(
+                          "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
                     }
                   },
                 ),
@@ -928,7 +925,8 @@ Text: ${note.description ?? note.content ?? ''}
                     onPressed: () async {
                       await _notificationService.cancelNoteReminder(note.id!);
                       if (context.mounted) Navigator.pop(context);
-                      _showGlassAlert("Reminder cancelled", color: Colors.orange);
+                      _showGlassAlert("Reminder cancelled",
+                          color: Colors.orange);
                     },
                     child: const Text("CANCEL REMINDER"),
                   ),
@@ -944,10 +942,13 @@ Text: ${note.description ?? note.content ?? ''}
                     if (note.id != null) {
                       await _notificationService.scheduleNoteReminders(
                         noteId: note.id!,
-                        noteTitle: note.title.isNotEmpty ? note.title : 'Untitled Note',
+                        noteTitle: note.title.isNotEmpty
+                            ? note.title
+                            : 'Untitled Note',
                         reminderTime: selectedDate,
                       );
-                      _showGlassAlert("Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      _showGlassAlert(
+                          "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
                     }
                   },
                   child: const Text("SET REMINDER"),

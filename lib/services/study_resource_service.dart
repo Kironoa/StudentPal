@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/study_resource_model.dart';
 
+/// Manages CRUD operations for study resources (quizzes, flashcards, summaries).
 class StudyResourceService {
   final DatabaseHelper _dbHelper;
 
@@ -15,7 +16,6 @@ class StudyResourceService {
 
   Future<void> addResource(int userId, StudyResource resource) async {
     try {
-      debugPrint("Service: Attempting to save ${resource.category}...");
       await _dbHelper.insertResource(
         userId,
         resource.fileName,
@@ -23,7 +23,6 @@ class StudyResourceService {
         resource.category,
         content: resource.content ?? '',
       );
-      debugPrint("Service: Save to SQLite Successful!");
     } catch (e) {
       debugPrint("Service Error: Save failed! Error: $e");
     }

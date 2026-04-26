@@ -2,6 +2,7 @@ import 'package:mobile_app/models/app_user.dart';
 import 'package:mobile_app/models/user_session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Manages user session persistence via SharedPreferences.
 class UserSessionService {
   Future<UserSession> loadSession() async {
     final preferences = await SharedPreferences.getInstance();

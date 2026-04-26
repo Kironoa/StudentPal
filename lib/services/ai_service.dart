@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mobile_app/config/env.dart';
 
+/// Singleton wrapper for the Gemini AI chat session.
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
@@ -11,12 +13,22 @@ class AIService {
   AIService._internal();
 
   static Future<void> initialize() async {
-    _instance._model = GenerativeModel(
-      model: 'gemini-2.5-flash-lite',
-      apiKey: Env.geminiApiKey,
-    );
-    _instance._chatSession = _instance._model.startChat();
+    try {
+      _instance._model = GenerativeModel(
+        model: 'gemini-2.5-flash-lite',
+        apiKey: Env.geminiApiKey,
+      );
+      _instance._chatSession = _instance._model.startChat();
+    } catch (e) {
+      debugPrint('AIService init failed: $e');
+    }
   }
+
+  void resetSession() {
+    _chatSession = _model.startChat();
+  }
+
+  bool get isReady => _chatSession != null;
 
   Future<String> sendMessage(String message) async {
     try {

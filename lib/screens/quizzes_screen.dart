@@ -29,7 +29,6 @@ class QuizzesScreen extends ConsumerStatefulWidget {
 
 class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
   final _resourceService = StudyResourceService();
-  final AlertService _alertService = AlertService();
   List<StudyResource> _quizzes = [];
   bool _isLoading = true;
 
@@ -52,58 +51,25 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
-      if (mounted) _alertService.showError(context, "Error loading quizzes");
+      if (mounted) AlertService().showError(context, "Error loading quizzes");
     }
   }
 
   void _showGlassAlert(String message, {Color? color}) {
-    _alertService.showGlassAlert(context, message, color: color);
+    AlertService().showGlassAlert(context, message, color: color);
   }
 
   void _confirmDelete(StudyResource quiz) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(res(context, 20))),
-          title: Text("Delete Note?",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                  fontSize: res(context, 18))),
-          content: Text("This action cannot be undone.",
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontSize: res(context, 14))),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text("CANCEL",
-                    style: TextStyle(
-                        color: theme.hintColor, fontWeight: FontWeight.bold))),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(res(context, 10)))),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await _resourceService.deleteResource(quiz.id!);
-                _loadQuizzes();
-                _showGlassAlert("Quiz Deleted", color: Colors.redAccent);
-              },
-              child: const Text("DELETE",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+    AlertService().showConfirmDialog(
+      context,
+      title: 'Delete Quiz?',
+      body: 'This action cannot be undone.',
+      confirmLabel: 'DELETE',
+      onConfirm: () async {
+        await _resourceService.deleteResource(quiz.id!);
+        _loadQuizzes();
+        _showGlassAlert("Quiz Deleted", color: Colors.redAccent);
+      },
     );
   }
 
@@ -582,87 +548,8 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
         ),
       ),
     );
-  }
 }
 
-class _GlassAlertAnimated extends StatefulWidget {
-  final String message;
-  final Color themeColor;
-  final VoidCallback onDismiss;
-  const _GlassAlertAnimated(
-      {required this.message,
-      required this.themeColor,
-      required this.onDismiss});
-
-  @override
-  State<_GlassAlertAnimated> createState() => _GlassAlertAnimatedState();
 }
 
-class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _scaleAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2000), () async {
-      if (mounted) {
-        await _controller.reverse();
-        widget.onDismiss();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Material(
-          color: Colors.transparent,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(res(context, 25)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: res(context, 40)),
-                padding: EdgeInsets.symmetric(
-                    vertical: res(context, 18), horizontal: res(context, 35)),
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        widget.themeColor.withValues(alpha: 0.8),
-                        widget.themeColor.withValues(alpha: 0.95),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(res(context, 25)),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.2))),
-                child: Text(widget.message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16)),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// End of file

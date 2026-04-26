@@ -5,6 +5,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Schedules and cancels local push notifications for class reminders.
 const String noteChannelId = 'student_pal_note_reminders';
 const String noteChannelName = 'Study Note Reminders';
 

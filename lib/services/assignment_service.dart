@@ -1,6 +1,7 @@
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/assignment_model.dart';
 
+/// Manages assignment CRUD operations and retrieval.
 class AssignmentService {
   final DatabaseHelper _dbHelper;
 

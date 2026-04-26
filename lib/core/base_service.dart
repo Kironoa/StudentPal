@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+/// Abstract base service with ChangeNotifier for reactive state.
 abstract class BaseService<T> extends ChangeNotifier {
   List<T> _items = [];
   bool _isLoading = false;

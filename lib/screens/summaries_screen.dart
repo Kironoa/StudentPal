@@ -17,7 +17,6 @@ class SummariesScreen extends ConsumerStatefulWidget {
 
 class _SummariesScreenState extends ConsumerState<SummariesScreen> {
   final _resourceService = StudyResourceService();
-  final AlertService _alertService = AlertService();
   List<StudyResource> _summaries = [];
   bool _isLoading = true;
 
@@ -40,7 +39,7 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
   }
 
   void _showGlassAlert(String message, {Color? color}) {
-    _alertService.showGlassAlert(context, message, color: color);
+    AlertService().showGlassAlert(context, message, color: color);
   }
 
   @override

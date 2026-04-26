@@ -9,6 +9,7 @@ import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/core/crypto_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
+/// SQLite database singleton — manages all table creation, migrations, and queries.
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;

@@ -1,3 +1,4 @@
+/// Abstract base class for all model entities.
 abstract class BaseModel<T> {
   final int? id;
 

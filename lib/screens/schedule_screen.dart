@@ -8,6 +8,7 @@ import 'package:mobile_app/providers/class_update_notifier.dart';
 import 'package:mobile_app/utils/schedule_utils.dart';
 import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/utils/responsive.dart';
+import 'package:mobile_app/services/alert_service.dart';
 
 class SchedulePage extends ConsumerStatefulWidget {
   final int userId;
@@ -31,8 +32,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   }
 
   void _refreshSchedules() async {
-    debugPrint(
-        '[SchedulePage] Refreshing schedules for userId=${widget.userId}');
     final data = await _repository.getAllClasses(widget.userId);
     final conflictData = findConflicts(data);
     setState(() {
@@ -40,7 +39,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
       conflicts = conflictData;
       _applyFilter(selectedDayFilter);
     });
-    debugPrint('[SchedulePage] Refreshed ${data.length} schedules');
   }
 
   void _applyFilter(String day) {
@@ -72,17 +70,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   }
 
   void _showGlassAlert(String msg, Color themeColor) {
-    late OverlayEntry overlayEntry;
-    overlayEntry = OverlayEntry(
-      builder: (context) => _GlassAlertAnimated(
-        message: msg,
-        themeColor: themeColor,
-        onDismiss: () {
-          if (overlayEntry.mounted) overlayEntry.remove();
-        },
-      ),
-    );
-    Overlay.of(context).insert(overlayEntry);
+    AlertService().showGlassAlert(context, msg, color: themeColor);
   }
 
   @override
@@ -565,43 +553,17 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   }
 
   void _confirmDelete(int id) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return RepaintBoundary(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(res(context, 20))),
-              title: Text("Remove Class?",
-                  style: TextStyle(fontSize: res(context, 18))),
-              content: Text(
-                  "This will permanently remove this subject from your schedule.",
-                  style: TextStyle(fontSize: res(context, 14))),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text("CANCEL",
-                        style: TextStyle(fontSize: res(context, 14)))),
-                TextButton(
-                  onPressed: () async {
-                    await _repository.deleteClass(id);
-                    debugPrint('[SchedulePage] Class deleted: id=$id');
-                    ClassUpdateProvider.instance.notifyClassUpdate();
-                    _refreshSchedules();
-                    if (context.mounted) Navigator.pop(context);
-                    _showGlassAlert("Class removed", Colors.redAccent);
-                  },
-                  child: Text("DELETE",
-                      style: TextStyle(
-                          color: Colors.redAccent, fontSize: res(context, 14))),
-                ),
-              ],
-            ),
-          ),
-        );
+    AlertService().showConfirmDialog(
+      context,
+      title: 'Remove Class?',
+      body: 'This will permanently remove this subject from your schedule.',
+      confirmLabel: 'DELETE',
+      onConfirm: () async {
+        await _repository.deleteClass(id);
+        ClassUpdateProvider.instance.notifyClassUpdate();
+        _refreshSchedules();
+        if (context.mounted) Navigator.pop(context);
+        _showGlassAlert("Class removed", Colors.redAccent);
       },
     );
   }
@@ -766,15 +728,11 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                               );
                               if (isEdit) {
                                 await _repository.updateClass(classModel);
-                                debugPrint(
-                                    '[SchedulePage] Class updated: ${classModel.subject}');
                                 ClassUpdateProvider.instance
                                     .notifyClassUpdate();
                               } else {
                                 await _repository.createClass(
                                     widget.userId, classModel);
-                                debugPrint(
-                                    '[SchedulePage] Class created: ${classModel.subject}');
                                 ClassUpdateProvider.instance
                                     .notifyClassUpdate();
                               }
@@ -830,81 +788,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                 style: TextStyle(
                     fontWeight: FontWeight.bold, fontSize: res(context, 14))),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassAlertAnimated extends StatefulWidget {
-  final String message;
-  final Color themeColor;
-  final VoidCallback onDismiss;
-  const _GlassAlertAnimated(
-      {required this.message,
-      required this.themeColor,
-      required this.onDismiss});
-
-  @override
-  State<_GlassAlertAnimated> createState() => _GlassAlertAnimatedState();
-}
-
-class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  double res(double value) => value * 1.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _scaleAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2000), () async {
-      if (mounted) {
-        await _controller.reverse();
-        widget.onDismiss();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = 1.0;
-    return Center(
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 50 * scale),
-            padding: EdgeInsets.symmetric(
-                vertical: 20 * scale, horizontal: 25 * scale),
-            decoration: BoxDecoration(
-              color: widget.themeColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(20 * scale),
-              boxShadow: [
-                BoxShadow(
-                    color: widget.themeColor.withValues(alpha: 0.4),
-                    blurRadius: 20)
-              ],
-            ),
-            child: Text(widget.message,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14 * scale)),
-          ),
         ),
       ),
     );

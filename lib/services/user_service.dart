@@ -1,6 +1,7 @@
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/app_user.dart';
 
+/// Handles user profile data retrieval and update.
 class UserService {
   final DatabaseHelper _dbHelper;
 

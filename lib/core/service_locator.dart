@@ -2,8 +2,8 @@ import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/repositories/notes_repository.dart';
 import 'package:mobile_app/repositories/assignment_repository.dart';
 import 'package:mobile_app/repositories/schedule_repository.dart';
-import 'package:mobile_app/services/notes_service_base.dart';
 
+/// Simple service registry for dependency injection without a framework.
 class ServiceLocator {
   static final ServiceLocator _instance = ServiceLocator._internal();
   factory ServiceLocator() => _instance;
@@ -49,7 +49,6 @@ class ServiceLocator {
     register<NotesRepository>(NotesRepository());
     register<AssignmentRepository>(AssignmentRepository());
     register<ScheduleRepository>(ScheduleRepository());
-    register<NotesServiceBase>(NotesServiceBase());
   }
 }
 

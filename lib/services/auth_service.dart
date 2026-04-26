@@ -3,6 +3,7 @@ import 'package:mobile_app/models/app_user.dart';
 import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/services/user_session_service.dart';
 
+/// Handles user login, registration, and password recovery.
 class AuthService {
   final DatabaseHelper _dbHelper;
   final UserSessionService _sessionService;

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+/// ChangeNotifier for class list update notifications.
 class ClassUpdateNotifier extends ChangeNotifier {
   bool _shouldRefresh = false;
   int _updateCount = 0;
@@ -10,7 +11,6 @@ class ClassUpdateNotifier extends ChangeNotifier {
   void triggerUpdate() {
     _shouldRefresh = true;
     _updateCount++;
-    debugPrint('[ClassUpdateNotifier] Update triggered. Count: $_updateCount');
     notifyListeners();
     Future.delayed(const Duration(milliseconds: 100), () {
       _shouldRefresh = false;

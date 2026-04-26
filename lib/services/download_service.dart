@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+/// Handles model file downloads from remote URLs.
 class ModelDownloader {
   final Dio _dio = Dio();
 

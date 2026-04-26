@@ -4,6 +4,7 @@ import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:mobile_app/services/alert_service.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -326,7 +327,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       final userMap = await _authService.verifyRecoveryToken(rawValue);
       if (userMap == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid or unrecognised QR code.")));
+        AlertService().showError(context, "Invalid or unrecognised QR code.");
         setState(() => hasScanned = false);
         return;
       }
@@ -336,7 +337,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
     } catch (e) {
       debugPrint("Error: $e");
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error scanning QR code.")));
+      AlertService().showError(context, "Error scanning QR code.");
       setState(() => hasScanned = false);
     }
   }

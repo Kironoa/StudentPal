@@ -112,7 +112,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       return;
     }
     final now = DateTime.now();
-    debugPrint("Current time: $now");
     Schedule? foundCurrent;
     Schedule? foundNext;
     Duration minNextGap = const Duration(days: 1);
@@ -120,16 +119,12 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     for (var schedule in _todaySchedules) {
       final start = _parseTime(schedule.startTime);
       final end = _parseTime(schedule.endTime);
-      debugPrint("Schedule ${schedule.subject}: start=$start, end=$end");
       if (now.isAfter(start) && now.isBefore(end)) {
-        debugPrint("  -> Matched as current");
         foundCurrent = schedule;
       }
       if (start.isAfter(now)) {
         final gap = start.difference(now);
-        debugPrint("  -> Gap: $gap");
         if (gap < minNextGap) {
-          debugPrint("  -> New next (gap: $gap)");
           minNextGap = gap;
           foundNext = schedule;
         }

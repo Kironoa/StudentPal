@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/utils/responsive.dart';
+import 'package:mobile_app/services/alert_service.dart';
 
 class AssignmentsScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -57,17 +58,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
   }
 
   void _showGlassAlert(String msg, Color themeColor) {
-    late OverlayEntry overlayEntry;
-    overlayEntry = OverlayEntry(
-      builder: (context) => _GlassAlertAnimated(
-        message: msg,
-        themeColor: themeColor,
-        onDismiss: () {
-          if (overlayEntry.mounted) overlayEntry.remove();
-        },
-      ),
-    );
-    Overlay.of(context).insert(overlayEntry);
+    AlertService().showGlassAlert(context, msg, color: themeColor);
   }
 
   @override
@@ -540,30 +531,17 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
   }
 
   void _confirmDelete(int id) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Text("Delete Task?",
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Text("This action cannot be undone."),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("BACK")),
-          TextButton(
-              onPressed: () async {
-                await _assignmentService.deleteAssignment(id);
-                _refreshAssignments();
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                _showGlassAlert("Task removed", Colors.redAccent);
-              },
-              child: const Text("DELETE",
-                  style: TextStyle(
-                      color: Colors.redAccent, fontWeight: FontWeight.bold))),
-        ],
-      ),
+    AlertService().showConfirmDialog(
+      context,
+      title: 'Delete Task?',
+      body: 'This action cannot be undone.',
+      confirmLabel: 'DELETE',
+      onConfirm: () async {
+        await _assignmentService.deleteAssignment(id);
+        _refreshAssignments();
+        if (!context.mounted) return;
+        _showGlassAlert('Task removed', Colors.redAccent);
+      },
     );
   }
 
@@ -580,110 +558,4 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
           ],
         ),
       );
-}
-
-class _GlassAlertAnimated extends StatefulWidget {
-  final String message;
-  final Color themeColor;
-  final VoidCallback onDismiss;
-
-  const _GlassAlertAnimated({
-    required this.message,
-    required this.themeColor,
-    required this.onDismiss,
-  });
-
-  @override
-  State<_GlassAlertAnimated> createState() => _GlassAlertAnimatedState();
-}
-
-class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _scaleAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    _controller.forward();
-
-    Future.delayed(const Duration(milliseconds: 2000), () async {
-      if (mounted) {
-        await _controller.reverse();
-        widget.onDismiss();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  double res(BuildContext context, double value) => value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: res(context, 50)),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(res(context, 25)),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.themeColor.withValues(alpha: 0.3),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                )
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(res(context, 25)),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      vertical: res(context, 18), horizontal: res(context, 35)),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        widget.themeColor.withValues(alpha: 0.7),
-                        widget.themeColor.withValues(alpha: 0.9),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(res(context, 25)),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    widget.message,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: res(context, 16),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

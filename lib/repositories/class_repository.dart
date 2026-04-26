@@ -4,6 +4,7 @@ import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
 
+/// Data access layer for class scheduling — wraps DatabaseHelper queries.
 class ClassRepository {
   final DatabaseHelper _dbHelper;
 

@@ -3,6 +3,7 @@ import 'package:mobile_app/models/assignment_model.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/models/study_resource_model.dart';
 
+/// Factory implementations for model serialization.
 abstract class ModelFactory<T> {
   T fromMap(Map<String, dynamic> map);
   Map<String, dynamic> toMap(T model);
