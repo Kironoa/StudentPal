@@ -918,6 +918,7 @@ Text: ${note.description ?? note.content ?? ''}
   }
 
   void _showReminderPicker(StudyNote note) async {
+    final outerContext = context;
     final theme = Theme.of(context);
     final now = DateTime.now();
     DateTime selectedDate = now.add(const Duration(days: 1));
@@ -998,17 +999,18 @@ Text: ${note.description ?? note.content ?? ''}
                   subtitle: const Text("Choose a custom date"),
                   selected: selectedOption == 2,
                   onTap: () async {
-                    if (!mounted) return;
+                    if (!outerContext.mounted) return;
                     Navigator.pop(context);
                     final date = await showDatePicker(
-                      context: context,
+                      context: outerContext,
                       initialDate: selectedDate,
                       firstDate: now,
                       lastDate: now.add(const Duration(days: 365)),
                     );
                     if (date != null) {
+                      if (!outerContext.mounted) return;
                       final time = await showTimePicker(
-                        context: context,
+                        context: outerContext,
                         initialTime: TimeOfDay.fromDateTime(selectedDate),
                       );
                       if (time != null) {
@@ -1029,8 +1031,10 @@ Text: ${note.description ?? note.content ?? ''}
                             : 'Untitled Note',
                         reminderTime: selectedDate,
                       );
-                      _showGlassAlert(
-                          "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      if (outerContext.mounted) {
+                        _showGlassAlert(
+                            "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      }
                     }
                   },
                 ),
@@ -1039,8 +1043,8 @@ Text: ${note.description ?? note.content ?? ''}
                   OutlinedButton(
                     onPressed: () async {
                       await _notificationService.cancelNoteReminder(note.id!);
-                      if (context.mounted) Navigator.pop(context);
-                      _showGlassAlert("Reminder cancelled",
+                      if (outerContext.mounted) Navigator.pop(outerContext);
+                      if (outerContext.mounted) _showGlassAlert("Reminder cancelled",
                           color: Colors.orange);
                     },
                     child: const Text("CANCEL REMINDER"),
@@ -1062,8 +1066,10 @@ Text: ${note.description ?? note.content ?? ''}
                             : 'Untitled Note',
                         reminderTime: selectedDate,
                       );
-                      _showGlassAlert(
-                          "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      if (outerContext.mounted) {
+                        _showGlassAlert(
+                            "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
+                      }
                     }
                   },
                   child: const Text("SET REMINDER"),
