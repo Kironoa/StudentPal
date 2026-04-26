@@ -545,17 +545,43 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment_turned_in_outlined,
-                size: 80, color: theme.hintColor.withValues(alpha: 0.2)),
-            const SizedBox(height: 15),
-            Text("No pending assignments!",
-                style: TextStyle(
-                    color: theme.hintColor, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      );
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(res(context, 20)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.assignment_outlined,
+              size: res(context, 60),
+              color: theme.hintColor.withValues(alpha: 0.2),
+            ),
+          ),
+          SizedBox(height: res(context, 16)),
+          Text(
+            "No pending assignments",
+            style: TextStyle(
+              color: theme.hintColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              fontSize: res(context, 14),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Tap + to add a task",
+            style: TextStyle(
+              color: theme.hintColor.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

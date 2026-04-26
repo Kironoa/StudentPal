@@ -37,10 +37,14 @@ void main() async {
       systemNavigationBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
+  }
 
-    final notificationService = NotificationService();
+  final notificationService = NotificationService();
+  try {
     await notificationService.init();
     await notificationService.requestPermissions();
+  } catch (e) {
+    debugPrint('NotificationService init skipped: $e');
   }
 
   runApp(

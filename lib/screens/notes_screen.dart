@@ -30,9 +30,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   final AlertService _alertService = AlertService();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   Future<List<StudyNote>>? _notesFuture;
   bool _isLoading = false;
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -44,6 +47,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -364,34 +368,119 @@ Text: ${note.description ?? note.content ?? ''}
               icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _isSearching ? Icons.close : Icons.search_rounded,
+                  color: accentColor,
+                  size: 22,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    }
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           body: SafeArea(
-            child: _notesFuture == null
-                ? Center(child: CircularProgressIndicator(color: accentColor))
-                : FutureBuilder<List<StudyNote>>(
-                    future: _notesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                            child:
-                                CircularProgressIndicator(color: accentColor));
-                      }
-                      final data = snapshot.data ?? [];
-                      if (data.isEmpty) return _buildEmptyState(theme);
-
-                      return ListView.builder(
-                        padding: EdgeInsets.fromLTRB(
-                          res(context, 20),
-                          res(context, 10),
-                          res(context, 20),
-                          res(context, 100),
+            child: Column(
+              children: [
+                if (_isSearching)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      res(context, 16), res(context, 8),
+                      res(context, 16), 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(res(context, 12)),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.4)),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        style: TextStyle(
+                          fontSize: res(context, 14),
+                          color: theme.colorScheme.onSurface),
+                        decoration: InputDecoration(
+                          hintText: 'Search notes...',
+                          hintStyle: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: res(context, 13)),
+                          prefixIcon: Icon(Icons.search_rounded,
+                            color: accentColor, size: 20),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: res(context, 12)),
                         ),
-                        itemCount: data.length,
-                        itemBuilder: (context, index) =>
-                            _buildNoteTile(data[index], index, data.length),
-                      );
-                    },
+                        onChanged: (v) => setState(
+                          () => _searchQuery = v.toLowerCase()),
+                      ),
+                    ),
                   ),
+                Expanded(
+                  child: _notesFuture == null
+                      ? Center(child: CircularProgressIndicator(color: accentColor))
+                      : FutureBuilder<List<StudyNote>>(
+                          future: _notesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return Center(
+                                  child:
+                                      CircularProgressIndicator(color: accentColor));
+                            }
+                            final allNotes = snapshot.data ?? [];
+                            final data = _searchQuery.isEmpty
+                              ? allNotes
+                              : allNotes.where((n) =>
+                                  n.title.toLowerCase().contains(_searchQuery) ||
+                                  (n.description ?? '').toLowerCase().contains(_searchQuery) ||
+                                  (n.content ?? '').toLowerCase().contains(_searchQuery)
+                                ).toList();
+
+                            if (data.isEmpty && _searchQuery.isNotEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.search_off_rounded,
+                                      size: res(context, 50),
+                                      color: theme.hintColor.withValues(alpha: 0.2)),
+                                    SizedBox(height: res(context, 12)),
+                                    Text('No notes match "$_searchQuery"',
+                                      style: TextStyle(
+                                        color: theme.hintColor,
+                                        fontSize: res(context, 13))),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (data.isEmpty) return _buildEmptyState(theme);
+
+                            return ListView.builder(
+                              padding: EdgeInsets.fromLTRB(
+                                res(context, 20),
+                                res(context, 10),
+                                res(context, 20),
+                                res(context, 100),
+                              ),
+                              itemCount: data.length,
+                              itemBuilder: (context, index) =>
+                                  _buildNoteTile(data[index], index, data.length),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
@@ -683,19 +772,45 @@ Text: ${note.description ?? note.content ?? ''}
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notes_rounded,
-                size: res(context, 80),
-                color: theme.hintColor.withValues(alpha: 0.2)),
-            Text("Your notebook is empty",
-                style: TextStyle(
-                    color: theme.hintColor, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      );
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(res(context, 20)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.note_outlined,
+              size: res(context, 60),
+              color: theme.hintColor.withValues(alpha: 0.2),
+            ),
+          ),
+          SizedBox(height: res(context, 16)),
+          Text(
+            "No notes yet",
+            style: TextStyle(
+              color: theme.hintColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              fontSize: res(context, 14),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Tap + to create your first note",
+            style: TextStyle(
+              color: theme.hintColor.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showNoteForm({StudyNote? note}) {
     final theme = Theme.of(context);

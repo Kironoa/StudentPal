@@ -95,7 +95,9 @@ class ClassRepository {
   Future<void> deleteClass(int id) async {
     debugPrint('[ClassRepository] deleteClass: Deleting class id=$id');
     try {
-      await NotificationService().cancelNotification(id);
+      try {
+        await NotificationService().cancelNotification(id);
+      } catch (_) {}
       final db = await _dbHelper.database;
       await db.delete('schedules', where: 'id = ?', whereArgs: [id]);
       debugPrint('[ClassRepository] deleteClass: SUCCESS');

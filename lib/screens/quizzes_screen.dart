@@ -59,6 +59,46 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
     AlertService().showGlassAlert(context, message, color: color);
   }
 
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(res(context, 20)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.quiz_outlined,
+              size: res(context, 60),
+              color: theme.hintColor.withValues(alpha: 0.2),
+            ),
+          ),
+          SizedBox(height: res(context, 16)),
+          Text(
+            "No quizzes found",
+            style: TextStyle(
+              color: theme.hintColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              fontSize: res(context, 14),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Generate one using your notes",
+            style: TextStyle(
+              color: theme.hintColor.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDelete(StudyResource quiz) {
     AlertService().showConfirmDialog(
       context,
@@ -245,11 +285,7 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: accentColor))
           : _quizzes.isEmpty
-              ? Center(
-                  child: Text("No quizzes found.",
-                      style: TextStyle(
-                          color: theme.hintColor,
-                          fontSize: res(context, 14))))
+              ? _buildEmptyState(theme)
               : ListView.builder(
                   padding: EdgeInsets.all(res(context, 20)),
                   itemCount: _quizzes.length,

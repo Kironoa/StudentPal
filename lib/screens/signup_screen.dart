@@ -357,6 +357,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ],
                 ),
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   value: selectedQuestion,
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.help_outline, color: theme.colorScheme.onSurface, size: 18),
@@ -373,7 +374,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       value: q,
                       child: Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6),
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.55),
                         child: Text(
                           q,
                           overflow: TextOverflow.ellipsis,
@@ -393,9 +394,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               SizedBox(height: res(context, 10)),
               _buildField(
                 context,
-                Icons.lock,
+                Icons.question_answer,
                 "Your Answer",
-                isPassword: true,
+                isPassword: false,
                 controller: _answerController,
               ),
               SizedBox(height: res(context, 30)),

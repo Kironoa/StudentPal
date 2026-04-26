@@ -393,66 +393,93 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
     );
   }
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(raw);
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Widget _buildResourceCard(
       StudyResource data, IconData icon, int index, Color accentColor) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(res(context, 24)),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => _handleFileAction(data),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(res(context, 24))),
+    return GestureDetector(
+      onTap: () => _handleFileAction(data),
+      onLongPress: () => _showResourceOptions(data, accentColor),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(res(context, 20)),
+          border: Border.all(
+            color: theme.dividerColor.withValues(alpha: 0.08),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(res(context, 20))),
+                ),
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(res(context, 14)),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(res(context, 16)),
+                    ),
+                    child: Icon(icon, size: res(context, 36), color: accentColor),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: res(context, 12)),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon,
-                      size: res(context, 40),
-                      color: accentColor.withValues(alpha: 0.5)),
-                  SizedBox(height: res(context, 8)),
+                  Text(data.fileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: res(context, 12), fontWeight: FontWeight.bold)),
+                  Text(
+                    _formatDate(data.dateAdded),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.hintColor.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: res(context, 12)),
-            child: Text(data.fileName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: res(context, 12), fontWeight: FontWeight.bold)),
-          ),
-          Padding(
-            padding: EdgeInsets.all(res(context, 10)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildCardAction(Icons.opacity_outlined,
-                    () => _showResourceOptions(data, accentColor), accentColor),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCardAction(IconData icon, VoidCallback onTap, Color color) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: EdgeInsets.all(res(context, 8)),
-        decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12)),
-        child: Icon(icon, size: res(context, 18), color: color),
+            Padding(
+              padding: EdgeInsets.all(res(context, 10)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.more_vert_rounded,
+                        size: res(context, 18),
+                        color: theme.hintColor),
+                    onPressed: () => _showResourceOptions(data, accentColor),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -463,13 +490,28 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon,
-              size: res(context, 60),
-              color: theme.hintColor.withValues(alpha: 0.2)),
+          Container(
+            padding: EdgeInsets.all(res(context, 20)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon,
+                size: res(context, 60),
+                color: theme.hintColor.withValues(alpha: 0.2)),
+          ),
           SizedBox(height: res(context, 16)),
           Text(message,
               style: TextStyle(
-                  color: theme.hintColor, fontWeight: FontWeight.bold)),
+                  color: theme.hintColor, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: res(context, 14))),
+          const SizedBox(height: 8),
+          Text(
+            "Upload a file to get started",
+            style: TextStyle(
+              color: theme.hintColor.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );

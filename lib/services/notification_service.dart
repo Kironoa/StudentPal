@@ -16,9 +16,19 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
 
   static const String channelId = 'studentpal_channel';
   static const String channelName = 'StudentPal Alerts';
+
+  bool _checkInitialized() {
+    if (!_isInitialized) {
+      debugPrint('[NotificationService] Not initialized — skipping.');
+      return false;
+    }
+    return true;
+  }
 
   Future<void> init() async {
     tz_data.initializeTimeZones();
@@ -70,9 +80,11 @@ class NotificationService {
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
+    _isInitialized = true;
   }
 
   Future<void> requestPermissions() async {
+    if (!_checkInitialized()) return;
     if (Platform.isAndroid) {
       final android = _notifications.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -91,6 +103,7 @@ class NotificationService {
     required String subject,
     required DateTime startTime,
   }) async {
+    if (!_checkInitialized()) return;
     await _notifications.cancel(id: id * 10);
     await _notifications.cancel(id: id * 10 + 1);
 
@@ -199,6 +212,7 @@ Future<void> _scheduleNotification({
   }
 
   Future<void> cancelNotification(int id) async {
+    if (!_checkInitialized()) return;
     await _notifications.cancel(id: id * 10);
     await _notifications.cancel(id: id * 10 + 1);
   }
@@ -229,6 +243,7 @@ Future<void> _scheduleNotification({
     required String noteTitle,
     required DateTime reminderTime,
   }) async {
+    if (!_checkInitialized()) return;
     final now = DateTime.now();
     final id = noteId + 2000;
 
@@ -243,6 +258,7 @@ Future<void> _scheduleNotification({
   }
 
   Future<void> cancelNoteReminder(int noteId) async {
+    if (!_checkInitialized()) return;
     final id = noteId + 2000;
     await _notifications.cancel(id: id);
   }

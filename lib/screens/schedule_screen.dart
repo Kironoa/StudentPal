@@ -107,7 +107,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
           _buildDayPicker(),
           Expanded(
             child: filteredSchedules.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(theme)
                 : ListView.builder(
                     padding: EdgeInsets.fromLTRB(res(context, 20),
                         res(context, 10), res(context, 20), res(context, 100)),
@@ -409,22 +409,42 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
-      child: Opacity(
-        opacity: 0.2,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today_rounded,
-                size: res(context, 60),
-                color: Theme.of(context).colorScheme.onSurface),
-            SizedBox(height: res(context, 10)),
-            Text("No classes scheduled",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: res(context, 14))),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(res(context, 20)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.calendar_today_outlined,
+              size: res(context, 60),
+              color: theme.hintColor.withValues(alpha: 0.2),
+            ),
+          ),
+          SizedBox(height: res(context, 16)),
+          Text(
+            "No classes scheduled",
+            style: TextStyle(
+              color: theme.hintColor,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              fontSize: res(context, 14),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Tap + to add your first class",
+            style: TextStyle(
+              color: theme.hintColor.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -483,7 +503,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                     BorderRadius.circular(res(context, 12))),
                           ),
                           onPressed: () {
-                            Navigator.pop(context);
                             _confirmDelete(item.id!);
                           },
                           child: Text("DELETE",
