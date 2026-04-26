@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,7 @@ import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/screens/summaries_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/widgets/live_clock_widget.dart';
+import 'package:mobile_app/utils/responsive.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
@@ -649,13 +651,25 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           ),
           AIFloatingChatHead(
             onPressed: () {
-              showModalBottomSheet(
+              showCenteredModal(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                useSafeArea: true,
-                builder: (context) => const ChatScreen(),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F0F0F),
+                      borderRadius: BorderRadius.circular(28),
+                      border:
+                          Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: const ChatScreen(),
+                    ),
+                  ),
+                ),
               );
             },
           ),

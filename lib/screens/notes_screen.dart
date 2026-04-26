@@ -9,7 +9,6 @@ import 'package:mobile_app/services/notes_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
-import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/utils/responsive.dart';
@@ -26,7 +25,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   final NotesService _notesService = NotesService();
   final AIService _aiService = AIService();
   final StudyResourceService _resourceService = StudyResourceService();
-  final NotificationService _notificationService = NotificationService();
   final AlertService _alertService = AlertService();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
@@ -177,45 +175,45 @@ Text: ${note.description ?? note.content ?? ''}
 
   void _showAiTools(StudyNote note) {
     final theme = Theme.of(context);
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: EdgeInsets.all(res(context, 25)),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("STUDY ASSISTANT",
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: res(context, 16),
-                      letterSpacing: 1.2,
-                      fontFamily: 'Poppins')),
-              SizedBox(height: res(context, 20)),
-              _buildAiTile(Icons.style_rounded, "Create Flashcards",
-                  "Turn this note into study cards", () {
-                Navigator.pop(context);
-                _showQuantityPicker(note, "Flashcards");
-              }),
-              _buildAiTile(Icons.quiz_rounded, "Generate Quiz",
-                  "Test your knowledge on this topic", () {
-                Navigator.pop(context);
-                _showQuantityPicker(note, "Quiz Questions");
-              }),
-              _buildAiTile(Icons.summarize_rounded, "Summarize Note",
-                  "Get a quick breakdown of your content", () {
-                Navigator.pop(context);
-                _generateAISummary(note);
-              }),
-              SizedBox(height: res(context, 10)),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("STUDY ASSISTANT",
+                    style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: res(context, 16),
+                        letterSpacing: 1.2,
+                        fontFamily: 'Poppins')),
+                SizedBox(height: res(context, 20)),
+                _buildAiTile(Icons.style_rounded, "Create Flashcards",
+                    "Turn this note into study cards", () {
+                  Navigator.pop(context);
+                  _showQuantityPicker(note, "Flashcards");
+                }),
+                _buildAiTile(Icons.quiz_rounded, "Generate Quiz",
+                    "Test your knowledge on this topic", () {
+                  Navigator.pop(context);
+                  _showQuantityPicker(note, "Quiz Questions");
+                }),
+                _buildAiTile(Icons.summarize_rounded, "Summarize Note",
+                    "Get a quick breakdown of your content", () {
+                  Navigator.pop(context);
+                  _generateAISummary(note);
+                }),
+                SizedBox(height: res(context, 10)),
+              ],
+            ),
           ),
         ),
       ),
@@ -227,77 +225,76 @@ Text: ${note.description ?? note.content ?? ''}
     final theme = Theme.of(context);
     final accent = ref.read(themeProvider).accentColor;
 
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
+      child: StatefulBuilder(
         builder: (context, setModalState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
             padding: EdgeInsets.all(res(context, 30)),
             decoration: BoxDecoration(
-              color: const Color(0xFF141414).withValues(alpha: 0.95),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(res(context, 30))),
-              border: Border.all(color: Colors.white10),
+              color: theme.colorScheme.surface.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("HOW MANY $type?",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                SizedBox(height: res(context, 30)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildQtyBtn(Icons.remove, () {
-                      if (quantity > 1) setModalState(() => quantity--);
-                    }),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text("$quantity",
-                          style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.w900,
-                              color: accent,
-                              fontFamily: 'Poppins')),
-                    ),
-                    _buildQtyBtn(Icons.add, () {
-                      if (quantity < 20) setModalState(() => quantity++);
-                    }),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Text("Select between 1 and 20",
-                    style: TextStyle(color: Colors.white24, fontSize: 12)),
-                SizedBox(height: res(context, 40)),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      if (type == "Flashcards") {
-                        _generateFlashcards(note, quantity);
-                      } else {
-                        _generateQuiz(note, quantity);
-                      }
-                    },
-                    child: Text("GENERATE NOW",
-                        style: TextStyle(
-                            color: theme.scaffoldBackgroundColor,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2)),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("HOW MANY $type?",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  SizedBox(height: res(context, 30)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildQtyBtn(Icons.remove, () {
+                        if (quantity > 1) setModalState(() => quantity--);
+                      }),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Text("$quantity",
+                            style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.w900,
+                                color: accent,
+                                fontFamily: 'Poppins')),
+                      ),
+                      _buildQtyBtn(Icons.add, () {
+                        if (quantity < 20) setModalState(() => quantity++);
+                      }),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text("Select between 1 and 20",
+                      style: TextStyle(color: theme.hintColor, fontSize: 12)),
+                  SizedBox(height: res(context, 40)),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        if (type == "Flashcards") {
+                          _generateFlashcards(note, quantity);
+                        } else {
+                          _generateQuiz(note, quantity);
+                        }
+                      },
+                      child: Text("GENERATE NOW",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -615,20 +612,17 @@ Text: ${note.description ?? note.content ?? ''}
     final formattedDate = DateFormat('MMMM dd, yyyy • hh:mm a')
         .format(item.createdAt ?? DateTime.now());
 
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.85),
           padding: EdgeInsets.all(res(context, 25)),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -637,7 +631,7 @@ Text: ${note.description ?? note.content ?? ''}
                   width: res(context, 40),
                   height: res(context, 4),
                   decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                      color: theme.hintColor.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(10))),
               SizedBox(height: res(context, 25)),
               Flexible(
@@ -674,14 +668,6 @@ Text: ${note.description ?? note.content ?? ''}
                       icon: Icon(Icons.auto_awesome,
                           color: theme.colorScheme.primary),
                       tooltip: "AI Tools"),
-                  IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showReminderPicker(item);
-                      },
-                      icon:
-                          Icon(Icons.alarm, color: theme.colorScheme.secondary),
-                      tooltip: "Set Reminder"),
                   SizedBox(width: res(context, 10)),
                   Expanded(
                     child: OutlinedButton(
@@ -827,263 +813,88 @@ Text: ${note.description ?? note.content ?? ''}
     _titleController.text = note?.title ?? "";
     _contentController.text = note?.description ?? "";
 
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(res(context, 30)))),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: res(context, 20)),
-                  Text(note == null ? "NEW NOTE" : "EDIT NOTE",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: res(context, 18))),
-                  SizedBox(height: res(context, 20)),
-                  CustomTextField(
-                      controller: _titleController, // Using class field
-                      hintText: "Note Title",
-                      prefixIcon: Icons.title_rounded),
-                  SizedBox(height: res(context, 15)),
-                  CustomTextField(
-                      controller: _contentController, // Using class field
-                      hintText: "Start writing...",
-                      prefixIcon: Icons.notes_rounded,
-                      maxLines: 8),
-                  SizedBox(height: res(context, 25)),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text("CANCEL",
-                                  style: TextStyle(color: theme.hintColor)))),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))),
-                          onPressed: () async {
-                            // Trim text to ensure it's truly not empty
-                            final String title = _titleController.text.trim();
-                            final String desc = _contentController.text.trim();
-
-                            if (title.isNotEmpty) {
-                              final noteData = StudyNote(
-                                  id: note?.id,
-                                  userId: widget.userId,
-                                  title: title,
-                                  description: desc,
-                                  content: note?.content ?? '',
-                                  dateCreated:
-                                      note?.createdAt?.toIso8601String());
-
-                              await _notesService.saveNote(
-                                  widget.userId, noteData);
-
-                              // Clear controllers after saving to reset for next use
-                              _titleController.clear();
-                              _contentController.clear();
-
-                              if (context.mounted) Navigator.pop(context);
-                              _refreshNotes();
-                              _showGlassAlert(note == null
-                                  ? "Note Saved!"
-                                  : "Note Updated!");
-                            } else {
-                              _showGlassAlert("Please enter a title",
-                                  color: Colors.orange);
-                            }
-                          },
-                          child: Text(note == null ? "SAVE" : "UPDATE",
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: res(context, 10)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showReminderPicker(StudyNote note) async {
-    final outerContext = context;
-    final theme = Theme.of(context);
-    final now = DateTime.now();
-    DateTime selectedDate = now.add(const Duration(days: 1));
-    int selectedOption = 0;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.95),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(res(context, 30))),
-            ),
+        child: Container(
+          padding: EdgeInsets.all(res(context, 25)),
+          decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(28)),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("SET REMINDER",
+                SizedBox(height: res(context, 20)),
+                Text(note == null ? "NEW NOTE" : "EDIT NOTE",
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: res(context, 16),
-                        letterSpacing: 1.2)),
+                        fontSize: res(context, 18))),
                 SizedBox(height: res(context, 20)),
-                ListTile(
-                  leading: Icon(Icons.wb_sunny,
-                      color: selectedOption == 0
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Tomorrow",
-                      style: TextStyle(
-                          color: selectedOption == 0
-                              ? theme.colorScheme.primary
-                              : null)),
-                  subtitle: Text(DateFormat('MMM dd, h:mm a')
-                      .format(now.add(const Duration(days: 1)))),
-                  selected: selectedOption == 0,
-                  onTap: () {
-                    setModalState(() {
-                      selectedOption = 0;
-                      selectedDate = now.add(const Duration(days: 1));
-                    });
-                  },
+                CustomTextField(
+                    controller: _titleController,
+                    hintText: "Note Title",
+                    prefixIcon: Icons.title_rounded),
+                SizedBox(height: res(context, 15)),
+                CustomTextField(
+                    controller: _contentController,
+                    hintText: "Start writing...",
+                    prefixIcon: Icons.notes_rounded,
+                    maxLines: 8),
+                SizedBox(height: res(context, 25)),
+                Row(
+                  children: [
+                    Expanded(
+                        child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("CANCEL",
+                                style: TextStyle(color: theme.hintColor)))),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        onPressed: () async {
+                          final String title = _titleController.text.trim();
+                          final String desc = _contentController.text.trim();
+
+                          if (title.isNotEmpty) {
+                            final noteData = StudyNote(
+                                id: note?.id,
+                                userId: widget.userId,
+                                title: title,
+                                description: desc,
+                                content: note?.content ?? '',
+                                dateCreated:
+                                    note?.createdAt?.toIso8601String());
+
+                            await _notesService.saveNote(
+                                widget.userId, noteData);
+
+                            _titleController.clear();
+                            _contentController.clear();
+
+                            if (context.mounted) Navigator.pop(context);
+                            _refreshNotes();
+                            _showGlassAlert(note == null
+                                ? "Note Saved!"
+                                : "Note Updated!");
+                          } else {
+                            _showGlassAlert("Please enter a title",
+                                color: Colors.orange);
+                          }
+                        },
+                        child: Text(note == null ? "SAVE" : "UPDATE",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
-                ListTile(
-                  leading: Icon(Icons.calendar_today,
-                      color: selectedOption == 1
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Next Week",
-                      style: TextStyle(
-                          color: selectedOption == 1
-                              ? theme.colorScheme.primary
-                              : null)),
-                  subtitle: Text(DateFormat('MMM dd, h:mm a')
-                      .format(now.add(const Duration(days: 7)))),
-                  selected: selectedOption == 1,
-                  onTap: () {
-                    setModalState(() {
-                      selectedOption = 1;
-                      selectedDate = now.add(const Duration(days: 7));
-                    });
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.event,
-                      color: selectedOption == 2
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  title: Text("Pick Date",
-                      style: TextStyle(
-                          color: selectedOption == 2
-                              ? theme.colorScheme.primary
-                              : null)),
-                  subtitle: const Text("Choose a custom date"),
-                  selected: selectedOption == 2,
-                  onTap: () async {
-                    if (!outerContext.mounted) return;
-                    Navigator.pop(context);
-                    final date = await showDatePicker(
-                      context: outerContext,
-                      initialDate: selectedDate,
-                      firstDate: now,
-                      lastDate: now.add(const Duration(days: 365)),
-                    );
-                    if (date != null) {
-                      if (!outerContext.mounted) return;
-                      final time = await showTimePicker(
-                        context: outerContext,
-                        initialTime: TimeOfDay.fromDateTime(selectedDate),
-                      );
-                      if (time != null) {
-                        selectedDate = DateTime(
-                          date.year,
-                          date.month,
-                          date.day,
-                          time.hour,
-                          time.minute,
-                        );
-                      }
-                    }
-                    if (note.id != null && selectedDate.isAfter(now)) {
-                      await _notificationService.scheduleNoteReminders(
-                        noteId: note.id!,
-                        noteTitle: note.title.isNotEmpty
-                            ? note.title
-                            : 'Untitled Note',
-                        reminderTime: selectedDate,
-                      );
-                      if (outerContext.mounted) {
-                        _showGlassAlert(
-                            "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
-                      }
-                    }
-                  },
-                ),
-                SizedBox(height: res(context, 20)),
-                if (note.id != null) ...[
-                  OutlinedButton(
-                    onPressed: () async {
-                      await _notificationService.cancelNoteReminder(note.id!);
-                      if (outerContext.mounted) Navigator.pop(outerContext);
-                      if (outerContext.mounted)
-                        _showGlassAlert("Reminder cancelled",
-                            color: Colors.orange);
-                    },
-                    child: const Text("CANCEL REMINDER"),
-                  ),
-                  SizedBox(height: res(context, 10)),
-                ],
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    minimumSize: Size(double.infinity, res(context, 50)),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    if (note.id != null) {
-                      await _notificationService.scheduleNoteReminders(
-                        noteId: note.id!,
-                        noteTitle: note.title.isNotEmpty
-                            ? note.title
-                            : 'Untitled Note',
-                        reminderTime: selectedDate,
-                      );
-                      if (outerContext.mounted) {
-                        _showGlassAlert(
-                            "Reminder set for ${DateFormat('MMM dd, h:mm a').format(selectedDate)}");
-                      }
-                    }
-                  },
-                  child: const Text("SET REMINDER"),
-                ),
+                SizedBox(height: res(context, 10)),
               ],
             ),
           ),

@@ -195,48 +195,53 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
 
   void _showResourceOptions(StudyResource data, Color accent) {
     final theme = Theme.of(context);
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(res(context, 25)),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("RESOURCE OPTIONS",
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: res(context, 16),
-                      letterSpacing: 1.2,
-                      fontFamily: 'Poppins')),
-              SizedBox(height: res(context, 20)),
-              _buildOptionTile(
-                  Icons.visibility_rounded, "View File", "Open this document",
-                  () {
-                Navigator.pop(context);
-                _handleFileAction(data);
-              }),
-              _buildOptionTile(
-                  Icons.edit_note_rounded, "Rename", "Change file name",
-                  () {
-                Navigator.pop(context);
-                _showRenameDialog(data, accent);
-              }),
-              _buildOptionTile(
-                  Icons.delete_outline_rounded, "Delete", "Remove from library",
-                  () {
-                Navigator.pop(context);
-                _confirmDeleteResource(data);
-              }, isDestructive: true),
-              SizedBox(height: res(context, 10)),
-            ],
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            padding: EdgeInsets.all(res(context, 25)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("RESOURCE OPTIONS",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: res(context, 16),
+                          letterSpacing: 1.2,
+                          fontFamily: 'Poppins')),
+                  SizedBox(height: res(context, 20)),
+                  _buildOptionTile(
+                      Icons.visibility_rounded, "View File", "Open this document",
+                      () {
+                    Navigator.pop(context);
+                    _handleFileAction(data);
+                  }),
+                  _buildOptionTile(
+                      Icons.edit_note_rounded, "Rename", "Change file name",
+                      () {
+                    Navigator.pop(context);
+                    _showRenameDialog(data, accent);
+                  }),
+                  _buildOptionTile(
+                      Icons.delete_outline_rounded, "Delete", "Remove from library",
+                      () {
+                    Navigator.pop(context);
+                    _confirmDeleteResource(data);
+                  }, isDestructive: true),
+                  SizedBox(height: res(context, 10)),
+                ],
+              ),
+            ),
           ),
         ),
       ),

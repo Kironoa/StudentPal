@@ -115,81 +115,86 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
 
   void _showQuizOptions(StudyResource quiz, Color accent) {
     final theme = Theme.of(context);
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(res(context, 25)),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: res(context, 40),
-                height: res(context, 4),
-                margin: EdgeInsets.only(bottom: res(context, 15)),
-                decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(10)),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            padding: EdgeInsets.all(res(context, 25)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: res(context, 40),
+                    height: res(context, 4),
+                    margin: EdgeInsets.only(bottom: res(context, 15)),
+                    decoration: BoxDecoration(
+                        color: theme.dividerColor,
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  Text("QUIZ OPTIONS",
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2)),
+                  SizedBox(height: res(context, 20)),
+                  ListTile(
+                    leading: Container(
+                      padding: EdgeInsets.all(res(context, 8)),
+                      decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12)),
+                      child:
+                          Icon(Icons.edit_note_rounded, color: accent),
+                    ),
+                    title: Text("Rename Quiz",
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.bold)),
+                    subtitle: Text("Change the title of this quiz",
+                        style: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showRenameDialog(quiz, accent);
+                    },
+                  ),
+                  ListTile(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmDelete(quiz);
+                    },
+                    leading: Container(
+                      padding: EdgeInsets.all(res(context, 8)),
+                      decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12)),
+                      child:
+                          const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    ),
+                    title: Text("Delete Quiz",
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.bold)),
+                    subtitle: Text("Remove this quiz from your library",
+                        style: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: 11)),
+                  ),
+                  SizedBox(height: res(context, 20)),
+                ],
               ),
-              Text("QUIZ OPTIONS",
-                  style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2)),
-              SizedBox(height: res(context, 20)),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(res(context, 8)),
-                  decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child:
-                      Icon(Icons.edit_note_rounded, color: accent),
-                ),
-                title: Text("Rename Quiz",
-                    style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold)),
-                subtitle: Text("Change the title of this quiz",
-                    style: TextStyle(
-                        color: theme.hintColor,
-                        fontSize: 11)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showRenameDialog(quiz, accent);
-                },
-              ),
-              ListTile(
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmDelete(quiz);
-                },
-                leading: Container(
-                  padding: EdgeInsets.all(res(context, 8)),
-                  decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child:
-                      const Icon(Icons.delete_outline, color: Colors.redAccent),
-                ),
-                title: Text("Delete Quiz",
-                    style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold)),
-                subtitle: Text("Remove this quiz from your library",
-                    style: TextStyle(
-                        color: theme.hintColor,
-                        fontSize: 11)),
-              ),
-              SizedBox(height: res(context, 20)),
-            ],
+            ),
           ),
         ),
       ),
@@ -423,21 +428,21 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
   }
 
   void _showFinishDialog() {
+    final theme = Theme.of(context);
     final themeState = ref.read(themeProvider);
-    final isDark = themeState.brightness == Brightness.dark;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
           title: Text("QUIZ FINISHED",
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2)),
           content: Column(
@@ -450,16 +455,14 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
                       fontWeight: FontWeight.w900)),
               Text("Correct Answers",
                   style: TextStyle(
-                      color: isDark ? Colors.white38 : Colors.black38)),
+                      color: theme.hintColor)),
             ],
           ),
           actions: [
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.05),
+                    backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15))),
@@ -469,7 +472,7 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
                 },
                 child: Text("BACK TO LIBRARY",
                     style:
-                        TextStyle(color: isDark ? Colors.white : Colors.black)),
+                        TextStyle(color: theme.colorScheme.onSurface)),
               ),
             )
           ],
@@ -478,12 +481,11 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeState = ref.read(themeProvider);
     final accent = themeState.accentColor;
-    final isDark = themeState.brightness == Brightness.dark;
 
     if (_questions.isEmpty) {
       return Scaffold(
@@ -553,7 +555,7 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor, width: 2),
                       boxShadow: [
-                        if (!isDark && !_isAnswered)
+                        if (theme.brightness != Brightness.dark && !_isAnswered)
                           BoxShadow(
                               color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 10)
@@ -576,7 +578,7 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
                   onPressed: _next,
                   child: Text("CONTINUE",
                       style: TextStyle(
-                          color: isDark ? Colors.black : Colors.white,
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w900)),
                 ),
               ),
@@ -584,7 +586,7 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
         ),
       ),
     );
-}
+  }
 
 }
 

@@ -151,8 +151,12 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: theme.hintColor, fontSize: 11),
                 ),
-                trailing: Icon(Icons.arrow_forward_ios_rounded,
-                    color: theme.hintColor.withValues(alpha: 0.3), size: 14),
+                trailing: IconButton(
+                  icon: Icon(Icons.more_vert_rounded,
+                      color: theme.hintColor, size: 20),
+                  onPressed: () =>
+                      _showDeleteOptions(summary, accentColor, theme),
+                ),
               ),
             ),
           );
@@ -163,75 +167,83 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
 
   void _showDeleteOptions(
       StudyResource summary, Color accent, ThemeData theme) {
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: EdgeInsets.all(res(context, 25)),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: EdgeInsets.only(bottom: res(context, 20)),
-                decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: EdgeInsets.only(bottom: res(context, 20)),
                   decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Icon(Icons.edit_note_rounded,
-                      color: accent),
+                      color: theme.dividerColor,
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                title: Text("Rename Summary",
-                    style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold)),
-                subtitle: Text("Change the title of this summary",
-                    style: TextStyle(color: theme.hintColor, fontSize: 11)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showRenameDialog(summary, accent, theme);
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.delete_outline_rounded,
-                      color: Colors.redAccent),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.edit_note_rounded,
+                        color: accent),
+                  ),
+                  title: Text("Rename Summary",
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.bold)),
+                  subtitle: Text("Change the title of this summary",
+                      style: TextStyle(color: theme.hintColor, fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRenameDialog(summary, accent, theme);
+                  },
                 ),
-                title: Text("Delete Summary",
-                    style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold)),
-                subtitle: Text("This cannot be undone",
-                    style: TextStyle(color: theme.hintColor, fontSize: 11)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  if (summary.id != null) {
-                    await _resourceService.deleteResource(summary.id!);
-                    _loadSummaries();
-                    _showGlassAlert("Summary Deleted", color: Colors.redAccent);
-                  }
-                },
-              ),
-              SizedBox(height: res(context, 20)),
-            ],
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.redAccent),
+                  ),
+                  title: Text("Delete Summary",
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.bold)),
+                  subtitle: Text("This cannot be undone",
+                      style: TextStyle(color: theme.hintColor, fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    AlertService().showConfirmDialog(
+                      context,
+                      title: 'Delete Summary?',
+                      body: 'This action cannot be undone.',
+                      confirmLabel: 'DELETE',
+                      confirmColor: Colors.redAccent,
+                      onConfirm: () async {
+                        await _resourceService.deleteResource(summary.id!);
+                        _loadSummaries();
+                        _showGlassAlert('Summary Deleted',
+                            color: Colors.redAccent);
+                      },
+                    );
+                  },
+                ),
+                SizedBox(height: res(context, 20)),
+              ],
+            ),
           ),
         ),
       ),
@@ -302,18 +314,15 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
 
   void _viewSummaryDetails(
       StudyResource summary, Color accentColor, ThemeData theme) {
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
           height: MediaQuery.of(context).size.height * 0.85,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.95),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 35))),
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
             border:
                 Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
           ),

@@ -106,52 +106,57 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
 
   void _showGroupOptions(StudyResource group, Color accent) {
     final theme = Theme.of(context);
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(res(context, 25)),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: res(context, 40),
-                height: res(context, 4),
-                margin: EdgeInsets.only(bottom: res(context, 15)),
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            padding: EdgeInsets.all(res(context, 25)),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: res(context, 40),
+                    height: res(context, 4),
+                    margin: EdgeInsets.only(bottom: res(context, 15)),
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Text(
+                    "GROUP OPTIONS",
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w900,
+                      fontSize: res(context, 14),
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  SizedBox(height: res(context, 20)),
+                  _buildOptionTile(Icons.edit_note_rounded, "Rename Set",
+                      "Change the title of this set", () {
+                    Navigator.pop(context);
+                    _showRenameDialog(group, accent);
+                  }, accent),
+                  _buildOptionTile(Icons.delete_outline_rounded, "Delete Set",
+                      "Remove these flashcards forever", () {
+                    Navigator.pop(context);
+                    _confirmDelete(group);
+                  }, Colors.redAccent),
+                  SizedBox(height: res(context, 20)),
+                ],
               ),
-              Text(
-                "GROUP OPTIONS",
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w900,
-                  fontSize: res(context, 14),
-                  letterSpacing: 2,
-                ),
-              ),
-              SizedBox(height: res(context, 20)),
-              _buildOptionTile(Icons.edit_note_rounded, "Rename Set",
-                  "Change the title of this set", () {
-                Navigator.pop(context);
-                _showRenameDialog(group, accent);
-              }, accent),
-              _buildOptionTile(Icons.delete_outline_rounded, "Delete Set",
-                  "Remove these flashcards forever", () {
-                Navigator.pop(context);
-                _confirmDelete(group);
-              }, Colors.redAccent),
-              SizedBox(height: res(context, 20)),
-            ],
+            ),
           ),
         ),
       ),
@@ -247,7 +252,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     final theme = Theme.of(context);
     final themeState = ref.read(themeProvider);
     final accentColor = themeState.accentColor;
-    final isDark = themeState.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -372,7 +377,7 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
     final themeState = ref.read(themeProvider);
     final theme = Theme.of(context);
     final accentColor = themeState.accentColor;
-    final isDark = themeState.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
     if (_cards.isEmpty) {
       return Scaffold(
@@ -452,16 +457,17 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
 
   Widget _buildFace(
       String text, String label, bool isFront, Color accent, bool isDark) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(res(context, 30)),
       decoration: BoxDecoration(
         color: isDark
-            ? (isFront ? const Color(0xFF1A1A1A) : const Color(0xFF121212))
+            ? (isFront ? theme.colorScheme.surface : theme.colorScheme.surface.withValues(alpha: 0.9))
             : Colors.white,
         borderRadius: BorderRadius.circular(res(context, 30)),
         border: Border.all(
             color: isDark
-                ? (isFront ? Colors.white10 : accent.withValues(alpha: 0.3))
+                ? (isFront ? theme.colorScheme.onSurface.withValues(alpha: 0.1) : accent.withValues(alpha: 0.3))
                 : (isFront ? Colors.black12 : accent.withValues(alpha: 0.4)),
             width: 2),
         boxShadow: [
@@ -478,7 +484,7 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
           Text(label,
               style: TextStyle(
                   color: isFront
-                      ? (isDark ? Colors.white24 : Colors.black26)
+                      ? theme.hintColor
                       : accent,
                   fontSize: res(context, 11),
                   fontWeight: FontWeight.w900,
@@ -488,14 +494,14 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
             child: Text(text,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: isDark ? theme.colorScheme.onSurface : Colors.black87,
                     fontSize: res(context, 18),
                     height: 1.5)),
           ),
           const Spacer(),
           Text("TAP TO REVEAL",
               style: TextStyle(
-                  color: isDark ? Colors.white10 : Colors.black12,
+                  color: isDark ? theme.colorScheme.onSurface.withValues(alpha: 0.1) : Colors.black12,
                   fontSize: 10,
                   fontWeight: FontWeight.bold)),
         ],
@@ -504,13 +510,12 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
   }
 
   Widget _navBtn(IconData icon, VoidCallback onTap, bool active, bool isDark) {
+    final theme = Theme.of(context);
     return IconButton(
       icon: Icon(icon,
           color: active
-              ? (isDark ? Colors.white : Colors.black)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black12),
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurface.withValues(alpha: 0.05),
           size: res(context, 28)),
       onPressed: active ? onTap : null,
     );

@@ -451,93 +451,97 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
 
   void _showDetailsModal(ClassModel item) {
     final theme = Theme.of(context);
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) {
         return RepaintBoundary(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: EdgeInsets.all(res(context, 25)),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(res(context, 30))),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: res(context, 40),
-                    height: res(context, 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  SizedBox(height: res(context, 25)),
-                  Text(item.subject,
-                      style: TextStyle(
-                          fontSize: res(context, 22),
-                          fontWeight: FontWeight.bold)),
-                  SizedBox(height: res(context, 20)),
-                  _detailItem(Icons.access_time, "Time",
-                      "${item.displayStartTime} - ${item.displayEndTime}"),
-                  _detailItem(Icons.room_rounded, "Room", item.room),
-                  _detailItem(
-                      Icons.person_outline, "Professor", item.professor),
-                  _detailItem(Icons.calendar_today_outlined, "Days", item.days),
-                  SizedBox(height: res(context, 30)),
-                  Row(
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                padding: EdgeInsets.all(res(context, 25)),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                                vertical: res(context, 15)),
-                            side: const BorderSide(color: Colors.redAccent),
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(res(context, 12))),
-                          ),
-                          onPressed: () {
-                            _confirmDelete(item.id!);
-                          },
-                          child: Text("DELETE",
-                              style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: res(context, 14))),
+                      Container(
+                        width: res(context, 40),
+                        height: res(context, 4),
+                        decoration: BoxDecoration(
+                          color: theme.dividerColor,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      SizedBox(width: res(context, 15)),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            padding: EdgeInsets.symmetric(
-                                vertical: res(context, 15)),
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(res(context, 12))),
+                      SizedBox(height: res(context, 25)),
+                      Text(item.subject,
+                          style: TextStyle(
+                              fontSize: res(context, 22),
+                              fontWeight: FontWeight.bold)),
+                      SizedBox(height: res(context, 20)),
+                      _detailItem(Icons.access_time, "Time",
+                          "${item.displayStartTime} - ${item.displayEndTime}"),
+                      _detailItem(Icons.room_rounded, "Room", item.room),
+                      _detailItem(
+                          Icons.person_outline, "Professor", item.professor),
+                      _detailItem(Icons.calendar_today_outlined, "Days", item.days),
+                      SizedBox(height: res(context, 30)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: res(context, 15)),
+                                side: const BorderSide(color: Colors.redAccent),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(res(context, 12))),
+                              ),
+                              onPressed: () {
+                                _confirmDelete(item.id!);
+                              },
+                              child: Text("DELETE",
+                                  style: TextStyle(
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: res(context, 14))),
+                            ),
                           ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showFormDialog(existingSchedule: item);
-                          },
-                          child: Text("EDIT CLASS",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: res(context, 14),
-                                  color: Colors.white)),
-                        ),
+                          SizedBox(width: res(context, 15)),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                padding: EdgeInsets.symmetric(
+                                    vertical: res(context, 15)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(res(context, 12))),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showFormDialog(existingSchedule: item);
+                              },
+                              child: Text("EDIT CLASS",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: res(context, 14),
+                                      color: Colors.white)),
+                            ),
+                          ),
+                        ],
                       ),
+                      SizedBox(height: res(context, 20)),
                     ],
                   ),
-                  SizedBox(height: res(context, 20)),
-                ],
+                ),
               ),
             ),
           ),
@@ -599,176 +603,173 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     List<String> selectedDays =
         isEdit ? existingSchedule.days.split(", ") : [selectedDayFilter];
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) {
         return RepaintBoundary(
           child: StatefulBuilder(
             builder: (context, setDialogState) {
               return BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(
-                      res(context, 25),
-                      res(context, 25),
-                      res(context, 25),
-                      MediaQuery.of(context).viewInsets.bottom +
-                          res(context, 25)),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(res(context, 30))),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(isEdit ? "Update Class" : "New Class",
-                            style: TextStyle(
-                                fontSize: res(context, 20),
-                                fontWeight: FontWeight.bold)),
-                        SizedBox(height: res(context, 20)),
-                        CustomTextField(
-                          controller: subjectCtrl,
-                          hintText: "Subject Name",
-                          prefixIcon: Icons.book_rounded,
-                        ),
-                        SizedBox(height: res(context, 15)),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CustomTextField(
-                                controller: roomCtrl,
-                                hintText: "Room",
-                                prefixIcon: Icons.room_rounded,
+                child: Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Container(
+                    padding: EdgeInsets.all(res(context, 25)),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(isEdit ? "Update Class" : "New Class",
+                              style: TextStyle(
+                                  fontSize: res(context, 20),
+                                  fontWeight: FontWeight.bold)),
+                          SizedBox(height: res(context, 20)),
+                          CustomTextField(
+                            controller: subjectCtrl,
+                            hintText: "Subject Name",
+                            prefixIcon: Icons.book_rounded,
+                          ),
+                          SizedBox(height: res(context, 15)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CustomTextField(
+                                  controller: roomCtrl,
+                                  hintText: "Room",
+                                  prefixIcon: Icons.room_rounded,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: res(context, 15)),
-                            Expanded(
-                              child: CustomTextField(
-                                controller: profCtrl,
-                                hintText: "Professor",
-                                prefixIcon: Icons.person_rounded,
+                              SizedBox(width: res(context, 15)),
+                              Expanded(
+                                child: CustomTextField(
+                                  controller: profCtrl,
+                                  hintText: "Professor",
+                                  prefixIcon: Icons.person_rounded,
+                                ),
                               ),
+                            ],
+                          ),
+                          SizedBox(height: res(context, 25)),
+                          Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text("Days",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: res(context, 14)))),
+                          SizedBox(height: res(context, 10)),
+                          Wrap(
+                            spacing: res(context, 8),
+                            children: weekDays.map((d) {
+                              bool isSel = selectedDays.contains(d);
+                              return FilterChip(
+                                selected: isSel,
+                                label: Text(d,
+                                    style: TextStyle(
+                                        color: isSel
+                                            ? Colors.white
+                                            : theme.colorScheme.onSurface,
+                                        fontSize: res(context, 12))),
+                                selectedColor: theme.colorScheme.primary,
+                                onSelected: (val) => setDialogState(() => val
+                                    ? selectedDays.add(d)
+                                    : selectedDays.remove(d)),
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: res(context, 20)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _timeTile(
+                                    "Starts",
+                                    startT != null
+                                        ? _formatTimeOfDay(startT!)
+                                        : (existingSchedule?.displayStartTime ??
+                                            "Select"), () async {
+                                  final t = await showTimePicker(
+                                      context: context,
+                                      initialTime: TimeOfDay.now());
+                                  if (t != null) setDialogState(() => startT = t);
+                                }),
+                              ),
+                              SizedBox(width: res(context, 15)),
+                              Expanded(
+                                child: _timeTile(
+                                    "Ends",
+                                    endT != null
+                                        ? _formatTimeOfDay(endT!)
+                                        : (existingSchedule?.displayEndTime ??
+                                            "Select"), () async {
+                                  final t = await showTimePicker(
+                                      context: context,
+                                      initialTime: TimeOfDay.now());
+                                  if (t != null) setDialogState(() => endT = t);
+                                }),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: res(context, 30)),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              minimumSize:
+                                  Size(double.infinity, res(context, 50)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(res(context, 15))),
                             ),
-                          ],
-                        ),
-                        SizedBox(height: res(context, 25)),
-                        Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text("Days",
+                            onPressed: () async {
+                              if (subjectCtrl.text.isNotEmpty) {
+                                String startTimeStr = startT != null
+                                    ? _formatTimeOfDay(startT!)
+                                    : (existingSchedule?.startTime ?? "9:00 AM");
+                                String endTimeStr = endT != null
+                                    ? _formatTimeOfDay(endT!)
+                                    : (existingSchedule?.endTime ?? "10:00 AM");
+                                final classModel = ClassModel(
+                                  id: existingSchedule?.id,
+                                  subject: subjectCtrl.text,
+                                  days: selectedDays.join(", "),
+                                  startTime: startTimeStr,
+                                  endTime: endTimeStr,
+                                  room: roomCtrl.text.isEmpty
+                                      ? "TBA"
+                                      : roomCtrl.text,
+                                  professor: profCtrl.text.isEmpty
+                                      ? "TBA"
+                                      : profCtrl.text,
+                                );
+                                if (isEdit) {
+                                  await _repository.updateClass(classModel);
+                                  ClassUpdateProvider.instance
+                                      .notifyClassUpdate();
+                                } else {
+                                  await _repository.createClass(
+                                      widget.userId, classModel);
+                                  ClassUpdateProvider.instance
+                                      .notifyClassUpdate();
+                                }
+                                _refreshSchedules();
+                                if (context.mounted) Navigator.pop(context);
+                                _showGlassAlert(
+                                    isEdit ? "Schedule updated" : "Class added",
+                                    theme.colorScheme.primary);
+                              }
+                            },
+                            child: Text("SAVE SCHEDULE",
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: res(context, 14)))),
-                        SizedBox(height: res(context, 10)),
-                        Wrap(
-                          spacing: res(context, 8),
-                          children: weekDays.map((d) {
-                            bool isSel = selectedDays.contains(d);
-                            return FilterChip(
-                              selected: isSel,
-                              label: Text(d,
-                                  style: TextStyle(
-                                      color: isSel
-                                          ? Colors.white
-                                          : theme.colorScheme.onSurface,
-                                      fontSize: res(context, 12))),
-                              selectedColor: theme.colorScheme.primary,
-                              onSelected: (val) => setDialogState(() => val
-                                  ? selectedDays.add(d)
-                                  : selectedDays.remove(d)),
-                            );
-                          }).toList(),
-                        ),
-                        SizedBox(height: res(context, 20)),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _timeTile(
-                                  "Starts",
-                                  startT != null
-                                      ? _formatTimeOfDay(startT!)
-                                      : (existingSchedule?.displayStartTime ??
-                                          "Select"), () async {
-                                final t = await showTimePicker(
-                                    context: context,
-                                    initialTime: TimeOfDay.now());
-                                if (t != null) setDialogState(() => startT = t);
-                              }),
-                            ),
-                            SizedBox(width: res(context, 15)),
-                            Expanded(
-                              child: _timeTile(
-                                  "Ends",
-                                  endT != null
-                                      ? _formatTimeOfDay(endT!)
-                                      : (existingSchedule?.displayEndTime ??
-                                          "Select"), () async {
-                                final t = await showTimePicker(
-                                    context: context,
-                                    initialTime: TimeOfDay.now());
-                                if (t != null) setDialogState(() => endT = t);
-                              }),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: res(context, 30)),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            minimumSize:
-                                Size(double.infinity, res(context, 50)),
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(res(context, 15))),
+                                    color: Colors.white,
+                                    fontSize: res(context, 14))),
                           ),
-                          onPressed: () async {
-                            if (subjectCtrl.text.isNotEmpty) {
-                              String startTimeStr = startT != null
-                                  ? _formatTimeOfDay(startT!)
-                                  : (existingSchedule?.startTime ?? "9:00 AM");
-                              String endTimeStr = endT != null
-                                  ? _formatTimeOfDay(endT!)
-                                  : (existingSchedule?.endTime ?? "10:00 AM");
-                              final classModel = ClassModel(
-                                id: existingSchedule?.id,
-                                subject: subjectCtrl.text,
-                                days: selectedDays.join(", "),
-                                startTime: startTimeStr,
-                                endTime: endTimeStr,
-                                room: roomCtrl.text.isEmpty
-                                    ? "TBA"
-                                    : roomCtrl.text,
-                                professor: profCtrl.text.isEmpty
-                                    ? "TBA"
-                                    : profCtrl.text,
-                              );
-                              if (isEdit) {
-                                await _repository.updateClass(classModel);
-                                ClassUpdateProvider.instance
-                                    .notifyClassUpdate();
-                              } else {
-                                await _repository.createClass(
-                                    widget.userId, classModel);
-                                ClassUpdateProvider.instance
-                                    .notifyClassUpdate();
-                              }
-                              _refreshSchedules();
-                              if (context.mounted) Navigator.pop(context);
-                              _showGlassAlert(
-                                  isEdit ? "Schedule updated" : "Class added",
-                                  theme.colorScheme.primary);
-                            }
-                          },
-                          child: Text("SAVE SCHEDULE",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: res(context, 14))),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

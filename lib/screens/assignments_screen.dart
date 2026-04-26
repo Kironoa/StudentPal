@@ -126,8 +126,9 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
   Widget _buildAssignmentTile(Assignment item, int index, int totalItems) {
     final theme = Theme.of(context);
     const priority = "Normal";
-    final priorityColor =
-        priority == "High" ? theme.colorScheme.error : theme.colorScheme.primary;
+    final priorityColor = priority == "High"
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
 
     return IntrinsicHeight(
       child: Row(
@@ -184,7 +185,8 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                           children: [
                             Text("DUE: ${formatDeadline(item.deadline)}",
                                 style: TextStyle(
-                                    color: _getDeadlineColor(item.deadline, priorityColor),
+                                    color: _getDeadlineColor(
+                                        item.deadline, priorityColor),
                                     fontWeight: FontWeight.bold,
                                     fontSize: res(context, 11))),
                             Icon(Icons.more_vert_rounded,
@@ -236,21 +238,16 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
         TextEditingController(text: isEdit ? assignment.description : "");
     DateTime? tempDeadline = assignment?.deadlineDate;
 
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(res(context, 35))),
-            ),
+      child: StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.all(res(context, 25)),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -351,50 +348,41 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
   void _viewDetailsSheet(Assignment item) {
     final theme = Theme.of(context);
 
-    showModalBottomSheet(
+    showCenteredModal(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled:
-          true, // Crucial for letting the sheet expand with keyboard/long text
-      builder: (context) => BackdropFilter(
+      child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          // Limits the height to 80% of the screen so it doesn't feel like a full page
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
           padding: EdgeInsets.fromLTRB(
-            res(context, 25),
-            res(context, 15), // Reduced top padding for the handle
+            res(context, 15),
+            res(context, 15),
             res(context, 25),
             res(context, 25),
           ),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(res(context, 30))),
+            color: theme.colorScheme.surface.withValues(alpha: 0.97),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Keeps it compact if text is short
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag Handle
               Container(
                 width: res(context, 40),
                 height: res(context, 4),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
+                  color: theme.hintColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               SizedBox(height: res(context, 25)),
-
-              // Scrollable Content Area
               Flexible(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
-                      // Title
                       Text(
                         item.title,
                         textAlign: TextAlign.center,
@@ -404,15 +392,12 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                         ),
                       ),
                       SizedBox(height: res(context, 20)),
-
-                      // Detail Items
                       _detailItem(Icons.book_rounded, "Subject",
                           item.subject ?? "General"),
-                      _detailItem(
-                          Icons.event_note_rounded,
-                          "Deadline",
+                      _detailItem(Icons.event_note_rounded, "Deadline",
                           formatDeadline(item.deadline),
-                          valueColor: _getDeadlineColor(item.deadline, theme.colorScheme.primary)),
+                          valueColor: _getDeadlineColor(
+                              item.deadline, theme.colorScheme.primary)),
                       _detailItem(
                           Icons.notes_rounded,
                           "Description",
@@ -420,71 +405,72 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                                   item.description!.isEmpty)
                               ? "No additional notes."
                               : item.description!),
-
-                      // Extra spacing inside scroll area to prevent buttons from hiding text
                       SizedBox(height: res(context, 20)),
                     ],
                   ),
                 ),
               ),
-
               SizedBox(height: res(context, 20)),
-
-              // Action Buttons - Stays at the bottom
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(vertical: res(context, 15)),
-                        side: const BorderSide(color: Colors.redAccent),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(res(context, 12)),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: res(context, 8)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding:
+                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            side: const BorderSide(color: Colors.redAccent),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(res(context, 12)),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            if (item.id != null) {
+                              _confirmDelete(item.id!);
+                            }
+                          },
+                          child: Text(
+                            "DELETE",
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: res(context, 14),
+                            ),
+                          ),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        if (item.id != null) {
-                          _confirmDelete(item.id!);
-                        }
-                      },
-                      child: Text(
-                        "DELETE",
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: res(context, 14),
+                      SizedBox(width: res(context, 15)),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            padding:
+                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(res(context, 12)),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showForm(assignment: item);
+                          },
+                          child: Text(
+                            "EDIT TASK",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: res(context, 14),
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(width: res(context, 15)),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        padding:
-                            EdgeInsets.symmetric(vertical: res(context, 15)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(res(context, 12)),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showForm(assignment: item);
-                      },
-                      child: Text(
-                        "EDIT TASK",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: res(context, 14),
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -493,14 +479,17 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
     );
   }
 
-  Widget _detailItem(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _detailItem(IconData icon, String label, String value,
+      {Color? valueColor}) {
     final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(vertical: res(context, 8)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: res(context, 20), color: valueColor ?? theme.colorScheme.primary),
+          Icon(icon,
+              size: res(context, 20),
+              color: valueColor ?? theme.colorScheme.primary),
           SizedBox(width: res(context, 15)),
           Expanded(
             child: Column(
@@ -572,12 +561,12 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
               fontSize: res(context, 14),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: res(context, 8)),
           Text(
             "Tap + to add a task",
             style: TextStyle(
               color: theme.hintColor.withValues(alpha: 0.5),
-              fontSize: 11,
+              fontSize: res(context, 11),
             ),
           ),
         ],
