@@ -4,10 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
-
-/// Schedules and cancels local push notifications for class reminders.
-const String noteChannelId = 'student_pal_note_reminders';
-const String noteChannelName = 'Study Note Reminders';
+import 'battery_optimization_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -19,8 +16,9 @@ class NotificationService {
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
 
-  static const String channelId = 'studentpal_channel';
-  static const String channelName = 'StudentPal Alerts';
+  static const String meowChannelId = 'student_pal_meow_v1';
+  static const String meowChannelName = 'Student Pal Alerts';
+  static const String meowSoundName = 'meow';
 
   bool _checkInitialized() {
     if (!_isInitialized) {
@@ -39,7 +37,8 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation('Asia/Manila'));
     }
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -58,21 +57,25 @@ class NotificationService {
     );
 
     if (Platform.isAndroid) {
-      final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin =
+          _notifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
 
       await androidPlugin?.createNotificationChannel(
         const AndroidNotificationChannel(
-          channelId,
-          channelName,
+          meowChannelId,
+          meowChannelName,
           importance: Importance.max,
           playSound: true,
+          sound: RawResourceAndroidNotificationSound(meowSoundName),
           enableVibration: true,
         ),
       );
 
       await androidPlugin?.requestExactAlarmsPermission();
     }
+
+    await BatteryOptimizationService().checkAndPrompt();
 
     if (Platform.isIOS) {
       await _notifications
@@ -184,7 +187,7 @@ class NotificationService {
     }
   }
 
-Future<void> _scheduleNotification({
+  Future<void> _scheduleNotification({
     required int id,
     required String title,
     required String body,
@@ -199,11 +202,12 @@ Future<void> _scheduleNotification({
       scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          channelId,
-          channelName,
+          meowChannelId,
+          meowChannelName,
           importance: Importance.max,
           priority: Priority.max,
           showWhen: true,
+          sound: RawResourceAndroidNotificationSound(meowSoundName),
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -230,11 +234,35 @@ Future<void> _scheduleNotification({
   }
 
   Future<void> sendTestNotification() async {
-    await _scheduleNotification(
+    await _showImmediateNotification(
       id: 9999,
       title: "Test Alert",
       body: "If you see this, local notifications are working!",
-      scheduledTime: DateTime.now().add(const Duration(seconds: 5)),
+    );
+  }
+
+  Future<void> _showImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    debugPrint("Showing immediate notification $id: $title");
+
+    await _notifications.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          meowChannelId,
+          meowChannelName,
+          importance: Importance.max,
+          priority: Priority.max,
+          showWhen: true,
+          sound: RawResourceAndroidNotificationSound(meowSoundName),
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
     );
   }
 
