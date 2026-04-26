@@ -199,11 +199,6 @@ Text: ${note.description ?? note.content ?? ''}
                       letterSpacing: 1.2,
                       fontFamily: 'Poppins')),
               SizedBox(height: res(context, 20)),
-              _buildAiTile(Icons.summarize_rounded, "Summarize Note",
-                  "Get a quick breakdown of your content", () {
-                Navigator.pop(context);
-                _generateAISummary(note);
-              }),
               _buildAiTile(Icons.style_rounded, "Create Flashcards",
                   "Turn this note into study cards", () {
                 Navigator.pop(context);
@@ -213,6 +208,11 @@ Text: ${note.description ?? note.content ?? ''}
                   "Test your knowledge on this topic", () {
                 Navigator.pop(context);
                 _showQuantityPicker(note, "Quiz Questions");
+              }),
+              _buildAiTile(Icons.summarize_rounded, "Summarize Note",
+                  "Get a quick breakdown of your content", () {
+                Navigator.pop(context);
+                _generateAISummary(note);
               }),
               SizedBox(height: res(context, 10)),
             ],
@@ -394,56 +394,64 @@ Text: ${note.description ?? note.content ?? ''}
                 if (_isSearching)
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      res(context, 16), res(context, 8),
-                      res(context, 16), 0),
+                        res(context, 16), res(context, 8), res(context, 16), 0),
                     child: Container(
                       decoration: BoxDecoration(
                         color: theme.cardColor,
                         borderRadius: BorderRadius.circular(res(context, 12)),
                         border: Border.all(
-                          color: accentColor.withValues(alpha: 0.4)),
+                            color: accentColor.withValues(alpha: 0.4)),
                       ),
                       child: TextField(
                         controller: _searchController,
                         autofocus: true,
                         style: TextStyle(
-                          fontSize: res(context, 14),
-                          color: theme.colorScheme.onSurface),
+                            fontSize: res(context, 14),
+                            color: theme.colorScheme.onSurface),
                         decoration: InputDecoration(
                           hintText: 'Search notes...',
                           hintStyle: TextStyle(
-                            color: theme.hintColor,
-                            fontSize: res(context, 13)),
+                              color: theme.hintColor,
+                              fontSize: res(context, 13)),
                           prefixIcon: Icon(Icons.search_rounded,
-                            color: accentColor, size: 20),
+                              color: accentColor, size: 20),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: res(context, 12)),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: res(context, 12)),
                         ),
-                        onChanged: (v) => setState(
-                          () => _searchQuery = v.toLowerCase()),
+                        onChanged: (v) =>
+                            setState(() => _searchQuery = v.toLowerCase()),
                       ),
                     ),
                   ),
                 Expanded(
                   child: _notesFuture == null
-                      ? Center(child: CircularProgressIndicator(color: accentColor))
+                      ? Center(
+                          child: CircularProgressIndicator(color: accentColor))
                       : FutureBuilder<List<StudyNote>>(
                           future: _notesFuture,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return Center(
-                                  child:
-                                      CircularProgressIndicator(color: accentColor));
+                                  child: CircularProgressIndicator(
+                                      color: accentColor));
                             }
                             final allNotes = snapshot.data ?? [];
                             final data = _searchQuery.isEmpty
-                              ? allNotes
-                              : allNotes.where((n) =>
-                                  n.title.toLowerCase().contains(_searchQuery) ||
-                                  (n.description ?? '').toLowerCase().contains(_searchQuery) ||
-                                  (n.content ?? '').toLowerCase().contains(_searchQuery)
-                                ).toList();
+                                ? allNotes
+                                : allNotes
+                                    .where((n) =>
+                                        n.title
+                                            .toLowerCase()
+                                            .contains(_searchQuery) ||
+                                        (n.description ?? '')
+                                            .toLowerCase()
+                                            .contains(_searchQuery) ||
+                                        (n.content ?? '')
+                                            .toLowerCase()
+                                            .contains(_searchQuery))
+                                    .toList();
 
                             if (data.isEmpty && _searchQuery.isNotEmpty) {
                               return Center(
@@ -451,13 +459,14 @@ Text: ${note.description ?? note.content ?? ''}
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.search_off_rounded,
-                                      size: res(context, 50),
-                                      color: theme.hintColor.withValues(alpha: 0.2)),
+                                        size: res(context, 50),
+                                        color: theme.hintColor
+                                            .withValues(alpha: 0.2)),
                                     SizedBox(height: res(context, 12)),
                                     Text('No notes match "$_searchQuery"',
-                                      style: TextStyle(
-                                        color: theme.hintColor,
-                                        fontSize: res(context, 13))),
+                                        style: TextStyle(
+                                            color: theme.hintColor,
+                                            fontSize: res(context, 13))),
                                   ],
                                 ),
                               );
@@ -473,8 +482,8 @@ Text: ${note.description ?? note.content ?? ''}
                                 res(context, 100),
                               ),
                               itemCount: data.length,
-                              itemBuilder: (context, index) =>
-                                  _buildNoteTile(data[index], index, data.length),
+                              itemBuilder: (context, index) => _buildNoteTile(
+                                  data[index], index, data.length),
                             );
                           },
                         ),
@@ -1044,8 +1053,9 @@ Text: ${note.description ?? note.content ?? ''}
                     onPressed: () async {
                       await _notificationService.cancelNoteReminder(note.id!);
                       if (outerContext.mounted) Navigator.pop(outerContext);
-                      if (outerContext.mounted) _showGlassAlert("Reminder cancelled",
-                          color: Colors.orange);
+                      if (outerContext.mounted)
+                        _showGlassAlert("Reminder cancelled",
+                            color: Colors.orange);
                     },
                     child: const Text("CANCEL REMINDER"),
                   ),
