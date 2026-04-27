@@ -65,17 +65,21 @@ class NotificationService {
         const AndroidNotificationChannel(
           meowChannelId,
           meowChannelName,
+          description: 'Student Pal class and assignment alerts',
           importance: Importance.max,
           playSound: true,
           sound: RawResourceAndroidNotificationSound(meowSoundName),
           enableVibration: true,
+          enableLights: true,
+          showBadge: true,
+          bypassDnd: true,
         ),
       );
 
       await androidPlugin?.requestExactAlarmsPermission();
     }
 
-    await BatteryOptimizationService().checkAndPrompt();
+    await BatteryOptimizationService().checkAndPrompt('');
 
     if (Platform.isIOS) {
       await _notifications
@@ -208,6 +212,10 @@ class NotificationService {
           priority: Priority.max,
           showWhen: true,
           sound: RawResourceAndroidNotificationSound(meowSoundName),
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.alarm,
+          visibility: NotificationVisibility.public,
+          autoCancel: true,
         ),
         iOS: DarwinNotificationDetails(),
       ),

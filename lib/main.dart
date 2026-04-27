@@ -6,8 +6,10 @@ import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
 import 'package:mobile_app/services/auth_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/services/ai_service.dart';
+import 'package:mobile_app/services/battery_optimization_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -43,6 +45,9 @@ void main() async {
   try {
     await notificationService.init();
     await notificationService.requestPermissions();
+    final info = await PackageInfo.fromPlatform();
+    await BatteryOptimizationService()
+        .checkAndPrompt(info.packageName);
   } catch (e) {
     debugPrint('NotificationService init skipped: $e');
   }
