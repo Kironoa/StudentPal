@@ -12,7 +12,6 @@ import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/services/battery_optimization_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
-import 'package:timezone/timezone.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,11 +19,6 @@ void main() async {
   await AIService.initialize();
 
   tz_data.initializeTimeZones();
-  try {
-    tz.setLocalLocation(tz.getLocation('Asia/Manila'));
-  } catch (e) {
-    debugPrint("Timezone Error: $e");
-  }
 
   if (Platform.isAndroid || Platform.isIOS) {
     try {

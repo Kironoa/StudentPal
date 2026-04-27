@@ -4,7 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
-import 'battery_optimization_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -78,8 +77,6 @@ class NotificationService {
 
       await androidPlugin?.requestExactAlarmsPermission();
     }
-
-    await BatteryOptimizationService().checkAndPrompt('');
 
     if (Platform.isIOS) {
       await _notifications
