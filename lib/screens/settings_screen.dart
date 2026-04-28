@@ -122,15 +122,15 @@ class SettingsScreen extends ConsumerWidget {
                    ),
                   Divider(indent: scale * 16, endIndent: scale * 16),
                    _buildSectionHeader("Other Settings", primaryColor, context, scale),
-                  _buildListTile(Icons.notifications_none, "Reminders", "Control when the app reminds you", () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => const NotificationSettingsSheet(),
-                    );
-                  }, scale),
-                  _buildListTile(Icons.lock_outline, "Your Privacy", () {
+                  _buildListTile(context, Icons.notifications_none, "Reminders", "Control when the app reminds you", () {
+                     showModalBottomSheet(
+                       context: context,
+                       isScrollControlled: true,
+                       backgroundColor: Colors.transparent,
+                       builder: (_) => const NotificationSettingsSheet(),
+                     );
+                   }, scale),
+                  _buildListTile(context, Icons.lock_outline, "Your Privacy", "", () {
                     showModalBottomSheet(
                       context: context,
                       shape: const RoundedRectangleBorder(
@@ -168,15 +168,17 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     );
                   }, scale),
-                  _buildListTile(Icons.help_outline, "Common Questions (FAQ)", "Find quick answers to common questions", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
-                  }, scale),
-                  _buildListTile(Icons.support_agent_outlined, "Talk to Support", "Get help from our support team", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
-                  }, scale),
+                  _buildListTile(context, Icons.help_outline, "Common Questions (FAQ)", "Find quick answers to common questions", () {
+                     Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
+                   }, scale),
+                  _buildListTile(context, Icons.support_agent_outlined, "Talk to Support", "Get help from our support team", () {
+                     Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                   }, scale),
                   _buildListTile(
+                    context,
                     Icons.info_outline,
                     "About",
+                    "",
                     () {
                       Navigator.push(
                         context,
@@ -218,7 +220,7 @@ class SettingsScreen extends ConsumerWidget {
     return isDark ? "Switch to light mode" : "Switch to dark mode";
   }
 
-  Widget _buildListTile(IconData icon, String title, String subtitle, VoidCallback onTap, double scale) {
+  Widget _buildListTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap, double scale) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),

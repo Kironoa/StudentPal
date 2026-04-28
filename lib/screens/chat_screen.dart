@@ -46,6 +46,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 "content": msg['content'] as String,
               }));
         });
+        // Replay history into AI session so the AI has context
+        _aiService.restoreHistory(history.map((msg) => {
+          'role': msg['role'] as String,
+          'content': msg['content'] as String,
+        }).toList());
       }
     } catch (_) {
       if (_messages.isEmpty) {
@@ -131,6 +136,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _messages.add({"role": "bot", "content": _defaultWelcome});
       });
       await DatabaseHelper().saveChatMessage(widget.userId, 'bot', _defaultWelcome);
+      _aiService.resetSession();
     }
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mobile_app/config/env.dart';
 
-/// Singleton wrapper for the Gemini AI chat session.
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
@@ -26,6 +25,19 @@ class AIService {
 
   void resetSession() {
     _chatSession = _model.startChat();
+  }
+
+  void restoreHistory(List<Map<String, String>> messages) {
+    try {
+      final history = messages.map((msg) {
+        final role = msg['role'] == 'user' ? 'user' : 'model';
+        return Content(role, [TextPart(msg['content'] ?? '')]);
+      }).toList();
+      _chatSession = _model.startChat(history: history);
+    } catch (e) {
+      debugPrint('Failed to restore chat history: $e');
+      _chatSession = _model.startChat();
+    }
   }
 
   bool get isReady => _chatSession != null;

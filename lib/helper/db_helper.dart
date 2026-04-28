@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:sqflite_common_ffi/sqflite_common_ffi.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/models/schedule_model.dart';
@@ -249,7 +249,7 @@ class DatabaseHelper {
 
   Future<void> _createRemindersTable(Database db) async {
     await db.execute('''
-      CREATE TABLE reminders(
+      CREATE TABLE IF NOT EXISTS reminders(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         userId INTEGER,
         title TEXT NOT NULL,
@@ -263,7 +263,7 @@ class DatabaseHelper {
 
   Future<void> _createChatMessagesTable(Database db) async {
     await db.execute('''
-      CREATE TABLE chat_messages(
+      CREATE TABLE IF NOT EXISTS chat_messages(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         userId INTEGER,
         role TEXT NOT NULL,

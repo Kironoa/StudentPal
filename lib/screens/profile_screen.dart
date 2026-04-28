@@ -80,7 +80,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (displayName.isNotEmpty) {
         await DatabaseHelper().saveSettings(name: displayName);
-        ref.read(themeProvider.notifier).loadSettings();
+        if (mounted) {
+          ref.read(themeProvider.notifier).loadSettings();
+        }
       }
 
       setState(() => _isEditing = false);

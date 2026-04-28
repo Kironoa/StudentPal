@@ -485,6 +485,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     title: title,
                     reminderTime: updatedReminderTime,
                     note: note.isNotEmpty ? note : null,
+                    createdAt: reminder['createdAt'] != null
+                        ? DateTime.tryParse(reminder['createdAt']) ?? DateTime.now()
+                        : DateTime.now(),
                   );
 
                   await DatabaseHelper().updateReminder(updatedReminder);
