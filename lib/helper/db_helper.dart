@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi/sqflite_common_ffi.dart';
 import 'package:path/path.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/models/class_model.dart';
+import 'package:mobile_app/models/reminder_model.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/core/crypto_utils.dart';
 import 'package:path_provider/path_provider.dart';
@@ -34,7 +35,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 21,
+        version: 23,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -55,6 +56,8 @@ class DatabaseHelper {
         await _createNotesTable(db);
         await _createResourcesTable(db);
         await _createAiCacheTable(db);
+        await _createRemindersTable(db);
+        await _createChatMessagesTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createSchedulesTable(db);
@@ -138,6 +141,29 @@ class DatabaseHelper {
             await db.execute('ALTER TABLE settings ADD COLUMN notifyAssignments INTEGER DEFAULT 1');
           }
         }
+        if (oldVersion < 22) {
+          await _createRemindersTable(db);
+        }
+        if (oldVersion < 23) {
+          var userColumns = await db.rawQuery('PRAGMA table_info(users)');
+          var userColNames = userColumns.map((c) => c['name'] as String).toList();
+          if (!userColNames.contains('fullName')) {
+            await db.execute('ALTER TABLE users ADD COLUMN fullName TEXT');
+          }
+          if (!userColNames.contains('nickname')) {
+            await db.execute('ALTER TABLE users ADD COLUMN nickname TEXT');
+          }
+          if (!userColNames.contains('school')) {
+            await db.execute('ALTER TABLE users ADD COLUMN school TEXT');
+          }
+          if (!userColNames.contains('course')) {
+            await db.execute('ALTER TABLE users ADD COLUMN course TEXT');
+          }
+          if (!userColNames.contains('yearLevel')) {
+            await db.execute('ALTER TABLE users ADD COLUMN yearLevel TEXT');
+          }
+          await _createChatMessagesTable(db);
+        }
       },
     );
   }
@@ -219,6 +245,129 @@ class DatabaseHelper {
         UNIQUE(resourceId, type)
       )
     ''');
+  }
+
+  Future<void> _createRemindersTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE reminders(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        title TEXT NOT NULL,
+        reminderTime TEXT NOT NULL,
+        note TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_reminders_userId ON reminders(userId)');
+  }
+
+  Future<void> _createChatMessagesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE chat_messages(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_userId ON chat_messages(userId)');
+  }
+
+  Future<void> saveChatMessage(int userId, String role, String content) async {
+    final db = await database;
+    await db.insert('chat_messages', {
+      'userId': userId,
+      'role': role,
+      'content': content,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getChatHistory(int userId) async {
+    final db = await database;
+    return await db.query(
+      'chat_messages',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'timestamp ASC',
+    );
+  }
+
+  Future<void> clearChatHistory(int userId) async {
+    final db = await database;
+    await db.delete('chat_messages', where: 'userId = ?', whereArgs: [userId]);
+  }
+
+  Future<int> insertReminder(int userId, String title, DateTime reminderTime, {String? note}) async {
+    final db = await database;
+    final id = await db.insert('reminders', {
+      'userId': userId,
+      'title': title,
+      'reminderTime': reminderTime.toIso8601String(),
+      'note': note,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+    return id;
+  }
+
+  Future<List<Map<String, dynamic>>> getRemindersForDate(int userId, DateTime date) async {
+    final db = await database;
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    return await db.query('reminders',
+      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+      whereArgs: [userId, startOfDay.toIso8601String(), endOfDay.toIso8601String()],
+      orderBy: 'reminderTime ASC');
+  }
+
+  Future<Map<DateTime, List<Map<String, dynamic>>>> getRemindersForMonth(int userId, int year, int month) async {
+    final db = await database;
+    final startOfMonth = DateTime(year, month, 1);
+    final endOfMonth = DateTime(year, month + 1, 1);
+    final results = await db.query('reminders',
+      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+      whereArgs: [userId, startOfMonth.toIso8601String(), endOfMonth.toIso8601String()]);
+
+    final Map<DateTime, List<Map<String, dynamic>>> remindersByDate = {};
+    for (final reminder in results) {
+      final reminderTime = DateTime.tryParse(reminder['reminderTime'] as String);
+      if (reminderTime != null) {
+        final dateKey = DateTime(reminderTime.year, reminderTime.month, reminderTime.day);
+        remindersByDate.putIfAbsent(dateKey, () => []).add(reminder);
+      }
+    }
+    return remindersByDate;
+  }
+
+  Future<List<Map<String, dynamic>>> getRemindersForDateRange(int userId, DateTime start, DateTime end) async {
+    final db = await database;
+    return await db.query('reminders',
+      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+      whereArgs: [userId, start.toIso8601String(), end.toIso8601String()],
+      orderBy: 'reminderTime ASC');
+  }
+
+  Future<int> updateReminder(Reminder reminder) async {
+    final db = await database;
+    return await db.update(
+      'reminders',
+      reminder.toMap(),
+      where: 'id = ?',
+      whereArgs: [reminder.id],
+    );
+  }
+
+  Future<int> deleteReminder(int id) async {
+    final db = await database;
+    return await db.delete('reminders', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteRemindersByTimeRange(int userId, DateTime start, DateTime end) async {
+    final db = await database;
+    return await db.delete('reminders',
+      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+      whereArgs: [userId, start.toIso8601String(), end.toIso8601String()]);
   }
 
   Future<String?> getCachedAIContent(int resourceId, String type) async {
@@ -429,6 +578,24 @@ class DatabaseHelper {
   Future<int> updateUserProfilePhoto(int userId, String? imagePath) async {
     final db = await database;
     return await db.update('users', {'profilePath': imagePath},
+        where: 'id = ?', whereArgs: [userId]);
+  }
+
+  Future<int> updateUserProfile(int userId, {
+    String? fullName,
+    String? nickname,
+    String? school,
+    String? course,
+    String? yearLevel,
+  }) async {
+    final db = await database;
+    final data = <String, dynamic>{};
+    if (fullName != null) data['fullName'] = fullName;
+    if (nickname != null) data['nickname'] = nickname;
+    if (school != null) data['school'] = school;
+    if (course != null) data['course'] = course;
+    if (yearLevel != null) data['yearLevel'] = yearLevel;
+    return await db.update('users', data,
         where: 'id = ?', whereArgs: [userId]);
   }
 

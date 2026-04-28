@@ -47,11 +47,11 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader("Appearance", primaryColor, context, scale),
+                  _buildSectionHeader("Look & Feel", primaryColor, context, scale),
                   ListTile(
                     leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
-                    title: const Text("Brightness Mode"),
-                    subtitle: Text(isDark ? "Dark Mode Active" : "Light Mode Active"),
+                    title: const Text("Dark Mode"),
+                    subtitle: Text(isDark ? "Using dark colors" : "Using light colors"),
                     trailing: Switch(
                       value: isDark,
                       activeThumbColor: primaryColor,
@@ -63,8 +63,8 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.palette_outlined),
-                    title: const Text("Theme Color"),
-                    subtitle: const Text("Select your favorite accent"),
+                    title: const Text("App Color"),
+                    subtitle: const Text("Pick your favorite color"),
                     trailing: Container(
                       width: 24,
                       height: 24,
@@ -114,8 +114,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   Divider(indent: scale * 16, endIndent: scale * 16),
-                  _buildSectionHeader("General", primaryColor, context, scale),
-                  _buildListTile(Icons.notifications_none, "Notifications", () {
+                  _buildSectionHeader("More Options", primaryColor, context, scale),
+                  _buildListTile(Icons.notifications_none, "Reminders", () {
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -123,7 +123,7 @@ class SettingsScreen extends ConsumerWidget {
                       builder: (_) => const NotificationSettingsSheet(),
                     );
                   }, scale),
-                  _buildListTile(Icons.lock_outline, "Privacy & Security", () {
+                  _buildListTile(Icons.lock_outline, "Your Privacy", () {
                     showModalBottomSheet(
                       context: context,
                       shape: const RoundedRectangleBorder(
@@ -145,15 +145,15 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Text("Privacy & Security",
+                            Text("Your Privacy",
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 12),
                             const Text(
-                              "StudentPal stores all your data locally on your device. No data is ever sent to "
-                              "external servers except AI chat messages, which are sent to Google Gemini for processing.\n\n"
-                              "Your password is protected with SHA-256 hashing and a unique random salt. "
-                              "Your security question answer is stored locally on-device only.\n\n"
-                              "You can delete all your data permanently by uninstalling the app.",
+                              "Your info stays on your phone. We don't send your data to anyone. "
+                              "Only chat messages go to Google Gemini to get answers.\n\n"
+                              "Your password is kept safe with special protection. "
+                              "Your security answer is only stored on your phone.\n\n"
+                              "To delete everything, just uninstall the app.",
                             ),
                             const SizedBox(height: 24),
                           ],
@@ -161,10 +161,10 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     );
                   }, scale),
-                  _buildListTile(Icons.help_outline, "FAQ", () {
+                  _buildListTile(Icons.help_outline, "Questions & Answers", () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
                   }, scale),
-                  _buildListTile(Icons.support_agent_outlined, "Help & Support", () {
+                  _buildListTile(Icons.support_agent_outlined, "Get Help", () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
                   }, scale),
                   _buildListTile(
@@ -201,6 +201,14 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _getAppearanceLabel(bool isDark) {
+    return isDark ? "Dark mode on" : "Light mode on";
+  }
+
+  String _getBrightnessLabel(bool isDark) {
+    return isDark ? "Switch to light mode" : "Switch to dark mode";
   }
 
   Widget _buildListTile(IconData icon, String title, VoidCallback onTap, double scale) {

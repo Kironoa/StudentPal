@@ -707,7 +707,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
             ],
           ),
         ),
-        LiveClockWidget(r: r, accent: accent),
+        LiveClockWidget(r: r, accent: accent, userId: widget.userId),
         SizedBox(width: r(8)),
         _buildProfileAvatar(onSurface, accent, r),
       ],

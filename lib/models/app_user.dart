@@ -4,6 +4,11 @@ class AppUser {
   final String? profilePath;
   final String? secretQuestion;
   final String? recoveryToken;
+  final String? fullName;
+  final String? nickname;
+  final String? school;
+  final String? course;
+  final String? yearLevel;
 
   const AppUser({
     required this.id,
@@ -11,6 +16,11 @@ class AppUser {
     this.profilePath,
     this.secretQuestion,
     this.recoveryToken,
+    this.fullName,
+    this.nickname,
+    this.school,
+    this.course,
+    this.yearLevel,
   });
 
   factory AppUser.fromMap(Map<String, dynamic> map) {
@@ -20,6 +30,11 @@ class AppUser {
       profilePath: map['profilePath']?.toString(),
       secretQuestion: map['secretQuestion']?.toString(),
       recoveryToken: map['recoveryToken']?.toString(),
+      fullName: map['fullName']?.toString(),
+      nickname: map['nickname']?.toString(),
+      school: map['school']?.toString(),
+      course: map['course']?.toString(),
+      yearLevel: map['yearLevel']?.toString(),
     );
   }
 
@@ -29,6 +44,11 @@ class AppUser {
     String? profilePath,
     String? secretQuestion,
     String? recoveryToken,
+    String? fullName,
+    String? nickname,
+    String? school,
+    String? course,
+    String? yearLevel,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -36,6 +56,11 @@ class AppUser {
       profilePath: profilePath ?? this.profilePath,
       secretQuestion: secretQuestion ?? this.secretQuestion,
       recoveryToken: recoveryToken ?? this.recoveryToken,
+      fullName: fullName ?? this.fullName,
+      nickname: nickname ?? this.nickname,
+      school: school ?? this.school,
+      course: course ?? this.course,
+      yearLevel: yearLevel ?? this.yearLevel,
     );
   }
 }

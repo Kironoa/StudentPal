@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/services/notification_service.dart';
+import 'package:mobile_app/helper/db_helper.dart';
 
 class LiveClockWidget extends StatefulWidget {
   final double Function(double) r;
   final Color accent;
+  final int userId;
 
-  const LiveClockWidget({super.key, required this.r, required this.accent});
+  const LiveClockWidget({super.key, required this.r, required this.accent, required this.userId});
 
   @override
   State<LiveClockWidget> createState() => _LiveClockWidgetState();
@@ -42,7 +44,7 @@ class _LiveClockWidgetState extends State<LiveClockWidget> {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     return GestureDetector(
-      onTap: () => _showCalendarDialog(context),
+      onTap: () => _showCalendarDialog(context, widget.userId),
       child: Container(
         decoration: BoxDecoration(
           color: theme.cardColor.withValues(alpha: 0.85),
@@ -83,7 +85,7 @@ class _LiveClockWidgetState extends State<LiveClockWidget> {
     );
   }
 
-  void _showCalendarDialog(BuildContext context) {
+  void _showCalendarDialog(BuildContext context, int userId) {
     final now = DateTime.now();
     showDialog(
       context: context,
@@ -132,6 +134,7 @@ class _LiveClockWidgetState extends State<LiveClockWidget> {
               CalendarWidget(
                 accent: widget.accent,
                 today: now,
+                userId: userId,
               ),
             ],
           ),
@@ -144,8 +147,9 @@ class _LiveClockWidgetState extends State<LiveClockWidget> {
 class CalendarWidget extends StatefulWidget {
   final Color accent;
   final DateTime today;
+  final int userId;
   const CalendarWidget(
-    {super.key, required this.accent, required this.today});
+    {super.key, required this.accent, required this.today, required this.userId});
 
   @override
   State<CalendarWidget> createState() => _CalendarWidgetState();
@@ -153,20 +157,133 @@ class CalendarWidget extends StatefulWidget {
 
 class _CalendarWidgetState extends State<CalendarWidget> {
   late DateTime _displayed;
+  Map<DateTime, List<Map<String, dynamic>>> _remindersByDate = {};
 
   @override
   void initState() {
     super.initState();
     _displayed = DateTime(widget.today.year, widget.today.month);
+    _loadReminders();
   }
 
-  void _prev() => setState(() =>
-    _displayed = DateTime(_displayed.year, _displayed.month - 1));
+  @override
+  void didUpdateWidget(covariant CalendarWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId || oldWidget.today != widget.today) {
+      _loadReminders();
+    }
+  }
 
-  void _next() => setState(() =>
-    _displayed = DateTime(_displayed.year, _displayed.month + 1));
+  Future<void> _loadReminders() async {
+    final data = await DatabaseHelper().getRemindersForMonth(
+      widget.userId, _displayed.year, _displayed.month);
+    if (mounted) setState(() => _remindersByDate = data);
+  }
+
+  void _prev() {
+    setState(() {
+      _displayed = DateTime(_displayed.year, _displayed.month - 1);
+      _loadReminders();
+    });
+  }
+
+  void _next() {
+    setState(() {
+      _displayed = DateTime(_displayed.year, _displayed.month + 1);
+      _loadReminders();
+    });
+  }
+
+  bool _hasReminder(DateTime date) {
+    final key = DateTime(date.year, date.month, date.day);
+    return _remindersByDate.containsKey(key);
+  }
+
+  List<Map<String, dynamic>> _getRemindersForDay(DateTime date) {
+    final key = DateTime(date.year, date.month, date.day);
+    return _remindersByDate[key] ?? [];
+  }
 
   void _onDayTapped(BuildContext context, DateTime date) {
+    if (date.isBefore(DateTime.now().subtract(const Duration(days: 1)))) return;
+    final reminders = _getRemindersForDay(date);
+    if (reminders.isNotEmpty) {
+      _showRemindersBottomSheet(context, date, reminders);
+      return;
+    }
+    _showSetReminderDialog(context, date);
+  }
+
+  void _showRemindersBottomSheet(BuildContext context, DateTime date, List<Map<String, dynamic>> reminders) {
+    final theme = Theme.of(context);
+    final reminderWidgets = reminders.map((r) {
+      final reminderTime = DateTime.tryParse(r['reminderTime'] ?? '');
+      final timeStr = reminderTime != null ? DateFormat('h:mm a').format(reminderTime) : '';
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.notifications_active_rounded, color: widget.accent, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(r['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(timeStr, style: TextStyle(color: theme.hintColor, fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: widget.accent.withValues(alpha: 0.3)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: theme.dividerColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(DateFormat('EEE, MMM d').format(date),
+              style: TextStyle(fontWeight: FontWeight.w900, color: widget.accent, fontSize: 16)),
+            const SizedBox(height: 12),
+            ...reminderWidgets,
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('CLOSE', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSetReminderDialog(BuildContext context, DateTime date) {
     if (date.isBefore(DateTime.now().subtract(const Duration(days: 1)))) return;
     final theme = Theme.of(context);
     showDialog(
@@ -196,7 +313,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     return;
                   }
                   try {
-                    await NotificationService().scheduleNoteReminders(noteId: date.millisecondsSinceEpoch % 100000, noteTitle: title, reminderTime: reminderTime);
+                    final id = await DatabaseHelper().insertReminder(widget.userId, title, reminderTime);
+                    await NotificationService().scheduleNoteReminders(noteId: id, noteTitle: title, reminderTime: reminderTime);
+                    await _loadReminders();
                   } catch (_) {}
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
@@ -294,6 +413,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 _displayed.month == widget.today.month &&
                 _displayed.year == widget.today.year;
               final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+              final hasReminder = _hasReminder(date);
               return GestureDetector(
                 onTap: isPast ? null : () => _onDayTapped(context, date),
                 child: Container(
@@ -304,15 +424,33 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isToday
-                          ? FontWeight.w900 : FontWeight.normal,
-                        color: isToday
-                          ? Colors.white
-                          : onSurface.withValues(alpha: isPast ? 0.3 : 0.8)),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isToday
+                              ? FontWeight.w900 : FontWeight.normal,
+                            color: isToday
+                              ? Colors.white
+                              : onSurface.withValues(alpha: isPast ? 0.3 : 0.8)),
+                        ),
+                        if (hasReminder)
+                          Positioned(
+                            bottom: -2,
+                            child: Container(
+                              width: 5,
+                              height: 5,
+                              decoration: const BoxDecoration(
+                                color: Colors.redAccent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
