@@ -7,14 +7,6 @@ import 'package:mobile_app/utils/responsive.dart';
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
-  static final List<Map<String, String>> _persistentMessages = [
-    {
-      "role": "bot",
-      "content":
-          "Hello! I'm your Student Pal. How can I help you with your studies today?"
-    }
-  ];
-
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
@@ -24,6 +16,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final AIService _aiService = AIService();
   bool _isLoading = false;
+  final List<Map<String, String>> _messages = [
+    {
+      "role": "bot",
+      "content":
+          "Hello! I'm your Student Pal. How can I help you with your studies today?"
+    }
+  ];
 
   @override
   void initState() {
@@ -51,7 +50,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (text.isEmpty) return;
 
     setState(() {
-      ChatScreen._persistentMessages.add({"role": "user", "content": text});
+      _messages.add({"role": "user", "content": text});
       _isLoading = true;
       _controller.clear();
     });
@@ -60,13 +59,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       final response = await _aiService.sendMessage(text);
       setState(() {
-        ChatScreen._persistentMessages
-            .add({"role": "bot", "content": response});
+        _messages.add({"role": "bot", "content": response});
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        ChatScreen._persistentMessages.add({
+        _messages.add({
           "role": "bot",
           "content": "Sorry, I encountered an error. Please try again."
         });
@@ -146,13 +144,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _scrollController,
               padding: EdgeInsets.all(res(context, 20)),
               itemCount:
-                  ChatScreen._persistentMessages.length + (_isLoading ? 1 : 0),
+                  _messages.length + (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index == ChatScreen._persistentMessages.length) {
+                if (index == _messages.length) {
                   return _buildLoadingBubble(accentColor);
                 }
 
-                final msg = ChatScreen._persistentMessages[index];
+                final msg = _messages[index];
                 final isUser = msg["role"] == "user";
 
                 return Align(
@@ -224,9 +222,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 SizedBox(width: res(context, 10)),
                 GestureDetector(
-                  onTap: _handleSendMessage,
+                  onTap: _isLoading ? null : _handleSendMessage,
                   child: CircleAvatar(
-                    backgroundColor: accentColor,
+                    backgroundColor: _isLoading ? accentColor.withValues(alpha: 0.4) : accentColor,
                     radius: res(context, 24),
                     child: const Icon(Icons.send_rounded,
                         color: Colors.black, size: 20),

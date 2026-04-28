@@ -10,6 +10,7 @@ import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/widgets/app_back_button.dart';
+import 'package:mobile_app/helper/db_helper.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
@@ -36,6 +37,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   void initState() {
     super.initState();
     _refreshSchedules();
+    _loadEvents();
   }
 
   void _refreshSchedules() async {

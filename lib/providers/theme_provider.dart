@@ -73,8 +73,7 @@ class ThemeProvider extends ChangeNotifier {
           _accentColor = Color(settings['accentColor'] as int);
         }
 
-        if (_uiScale >= 0.8 && _uiScale <= 1.2) {
-        } else {
+        if (_uiScale < 0.8 || _uiScale > 1.2) {
           _uiScale = 1.0;
         }
 

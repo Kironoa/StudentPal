@@ -54,9 +54,7 @@ class ClassRepository {
     try {
       final db = await _dbHelper.database;
       final row = classModel.toMap();
-      row['userId'] = userId;
       row.remove('id');
-      row.remove('userId');
       row['userId'] = userId;
       final id = await db.insert('schedules', row);
       debugPrint('[ClassRepository] createClass: SUCCESS with id=$id');

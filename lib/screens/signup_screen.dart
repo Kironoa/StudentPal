@@ -71,7 +71,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
 
     if (password.length < 6) {
-      _showModal("Error", "Password must be at least 6 characters.", isError: true);
+      _showModal("Error", "Password must be at least 6 characters.",
+          isError: true);
       return;
     }
 
@@ -94,12 +95,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final question = selectedQuestion;
 
     if (question == null || answer.isEmpty) {
-      _showModal("Error", "Please select a question and provide an answer.", isError: true);
+      _showModal("Error", "Please select a question and provide an answer.",
+          isError: true);
       return;
     }
 
     if (answer.length < 2) {
-      _showModal("Error", "Answer must be at least 2 characters.", isError: true);
+      _showModal("Error", "Answer must be at least 2 characters.",
+          isError: true);
       return;
     }
 
@@ -170,7 +173,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           MaterialPageRoute(builder: (_) => const StudentPalLogin()),
         );
       },
-      confirmText: "I've saved it",
+      confirmText: "After saving it, just press close",
       showConfirm: true,
     );
   }
@@ -188,7 +191,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             isError ? theme.colorScheme.error : theme.colorScheme.primary,
           ),
           SizedBox(height: res(context, 20)),
-          Text(msg, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+          Text(msg,
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
         ],
       ),
     );
@@ -232,7 +237,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   decoration: _buildOuterDecoration(theme),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    child: isStep2 ? _buildStep2Card(theme) : _buildStep1Card(theme),
+                    child: isStep2
+                        ? _buildStep2Card(theme)
+                        : _buildStep1Card(theme),
                   ),
                 ),
               ),
@@ -360,28 +367,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   isExpanded: true,
                   value: selectedQuestion,
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.help_outline, color: theme.colorScheme.onSurface, size: 18),
+                    prefixIcon: Icon(Icons.help_outline,
+                        color: theme.colorScheme.onSurface, size: 18),
                     hintText: "Select a question",
                     hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.24),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.24),
                       fontSize: res(context, 14),
                     ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: res(context, 15)),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: res(context, 15)),
                   ),
                   items: secretQuestions.map((q) {
                     return DropdownMenuItem(
                       value: q,
                       child: Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.55),
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.55),
                         child: Text(
                           q,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                           softWrap: true,
                           style: TextStyle(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.8),
                             fontSize: res(context, 13),
                           ),
                         ),
@@ -429,8 +441,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
       boxShadow: [
         BoxShadow(
-          color:
-              theme.colorScheme.primary.withValues(alpha: isPressed ? 0.5 : 0.2),
+          color: theme.colorScheme.primary
+              .withValues(alpha: isPressed ? 0.5 : 0.2),
           blurRadius: isPressed ? res(context, 35) : res(context, 20),
           spreadRadius: 1,
         ),
@@ -461,11 +473,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       child: TextField(
         controller: controller,
         obscureText: isPassword,
-        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+        style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: theme.colorScheme.onSurface, size: 18),
           hintText: hint,
-          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.24), fontSize: res(context, 14)),
+          hintStyle: TextStyle(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.24),
+              fontSize: res(context, 14)),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: res(context, 15)),
         ),

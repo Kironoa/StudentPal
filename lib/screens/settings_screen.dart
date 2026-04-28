@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/themes/app_themes.dart';
 import 'package:mobile_app/widgets/about.dart';
+import 'package:mobile_app/screens/notification_settings_sheet.dart';
+import 'package:mobile_app/screens/faq_screen.dart';
+import 'package:mobile_app/screens/help_support_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -112,8 +115,58 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   Divider(indent: scale * 16, endIndent: scale * 16),
                   _buildSectionHeader("General", primaryColor, context, scale),
-                  _buildListTile(Icons.notifications_none, "Notifications", () {}, scale),
-                  _buildListTile(Icons.lock_outline, "Privacy & Security", () {}, scale),
+                  _buildListTile(Icons.notifications_none, "Notifications", () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const NotificationSettingsSheet(),
+                    );
+                  }, scale),
+                  _buildListTile(Icons.lock_outline, "Privacy & Security", () {
+                    showModalBottomSheet(
+                      context: context,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      builder: (_) => Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 40, height: 4,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).dividerColor,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text("Privacy & Security",
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 12),
+                            const Text(
+                              "StudentPal stores all your data locally on your device. No data is ever sent to "
+                              "external servers except AI chat messages, which are sent to Google Gemini for processing.\n\n"
+                              "Your password is protected with SHA-256 hashing and a unique random salt. "
+                              "Your security question answer is stored locally on-device only.\n\n"
+                              "You can delete all your data permanently by uninstalling the app.",
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    );
+                  }, scale),
+                  _buildListTile(Icons.help_outline, "FAQ", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
+                  }, scale),
+                  _buildListTile(Icons.support_agent_outlined, "Help & Support", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
+                  }, scale),
                   _buildListTile(
                     Icons.info_outline,
                     "About",

@@ -34,7 +34,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 20,
+        version: 21,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -67,6 +67,9 @@ class DatabaseHelper {
         if (oldVersion < 5) {
           await _createAssignmentsTable(db);
           await _createNotesTable(db);
+        }
+        if (oldVersion < 6) {
+          // No schema changes in v6. Entry exists to close the migration gap.
         }
         if (oldVersion < 7) await _createSettingsTable(db);
         if (oldVersion < 8) {
@@ -125,6 +128,16 @@ class DatabaseHelper {
         if (oldVersion < 20) {
           await db.execute('ALTER TABLE users RENAME COLUMN secretAnswerHash TO secretAnswer');
         }
+        if (oldVersion < 21) {
+          final cols = await db.rawQuery('PRAGMA table_info(settings)');
+          final names = cols.map((c) => c['name'] as String).toList();
+          if (!names.contains('notifyClasses')) {
+            await db.execute('ALTER TABLE settings ADD COLUMN notifyClasses INTEGER DEFAULT 1');
+          }
+          if (!names.contains('notifyAssignments')) {
+            await db.execute('ALTER TABLE settings ADD COLUMN notifyAssignments INTEGER DEFAULT 1');
+          }
+        }
       },
     );
   }
@@ -137,11 +150,15 @@ class DatabaseHelper {
         isDarkMode INTEGER DEFAULT 0,
         isLoggedIn INTEGER DEFAULT 0,
         accentColor INTEGER DEFAULT 4278238035,
-        uiScale REAL DEFAULT 1.0
+        uiScale REAL DEFAULT 1.0,
+        notifyClasses INTEGER DEFAULT 1,
+        notifyAssignments INTEGER DEFAULT 1
       )
     ''');
     await db.insert('settings',
-        {'id': 1, 'username': 'Student', 'isDarkMode': 0, 'isLoggedIn': 0, 'accentColor': 4278238035, 'uiScale': 1.0});
+        {'id': 1, 'username': 'Student', 'isDarkMode': 0, 'isLoggedIn': 0,
+         'accentColor': 4278238035, 'uiScale': 1.0,
+         'notifyClasses': 1, 'notifyAssignments': 1});
   }
 
   Future<void> _createSchedulesTable(Database db) async {

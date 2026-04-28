@@ -4,7 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:mobile_app/helper/db_helper.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -15,6 +14,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
+  final Set<int> _scheduledNoteIds = {};
 
   static const String meowChannelId = 'student_pal_meow_v1';
   static const String meowChannelName = 'Student Pal Alerts';
@@ -289,17 +289,20 @@ class NotificationService {
         scheduledTime: reminderTime,
       );
     }
+    _scheduledNoteIds.add(id);
   }
 
   Future<void> cancelNoteReminder(int noteId) async {
     if (!_checkInitialized()) return;
     final id = noteId + 2000;
     await _notifications.cancel(id: id);
+    _scheduledNoteIds.remove(id);
   }
 
   Future<void> cancelAllNoteReminders() async {
-    for (int i = 0; i < 1000; i++) {
-      await _notifications.cancel(id: 2000 + i);
+    for (final id in _scheduledNoteIds) {
+      await _notifications.cancel(id: id);
     }
+    _scheduledNoteIds.clear();
   }
 }

@@ -47,6 +47,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Schedule? _currentClass;
   Schedule? _nextClass;
 
+  @override
   void initState() {
     super.initState();
     _fetchUserData();

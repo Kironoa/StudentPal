@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'faq_screen.dart';
 import 'package:mobile_app/widgets/app_back_button.dart';
 
@@ -11,6 +12,8 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  String _version = 'Loading...';
+
   @override
   void initState() {
     super.initState();
@@ -18,7 +21,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   }
 
   Future<void> _loadVersion() async {
-    setState(() {});
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _version = info.version);
+    } catch (_) {
+      if (mounted) setState(() => _version = 'Unknown');
+    }
   }
 
   @override
@@ -63,6 +71,28 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 MaterialPageRoute(builder: (_) => const FaqScreen()),
               );
             },
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('App Version',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text('Version $_version',
+                        style: TextStyle(color: Theme.of(context).hintColor)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
