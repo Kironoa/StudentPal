@@ -7,7 +7,6 @@ import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
-import 'package:mobile_app/widgets/app_back_button.dart';
 
 class AssignmentsScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -290,6 +289,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                         firstDate: DateTime.now(),
                         lastDate: DateTime(2030));
                     if (date != null) {
+                      if (!context.mounted) return;
                       final time = await showTimePicker(
                           context: context,
                           initialTime: tempDeadline != null
@@ -421,11 +421,12 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            padding:
-                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            padding: EdgeInsets.symmetric(
+                                vertical: res(context, 15)),
                             side: const BorderSide(color: Colors.redAccent),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(res(context, 12)),
+                              borderRadius:
+                                  BorderRadius.circular(res(context, 12)),
                             ),
                           ),
                           onPressed: () {
@@ -449,10 +450,11 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
-                            padding:
-                                EdgeInsets.symmetric(vertical: res(context, 15)),
+                            padding: EdgeInsets.symmetric(
+                                vertical: res(context, 15)),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(res(context, 12)),
+                              borderRadius:
+                                  BorderRadius.circular(res(context, 12)),
                             ),
                           ),
                           onPressed: () {

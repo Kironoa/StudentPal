@@ -21,7 +21,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _courseController = TextEditingController();
   final _yearLevelController = TextEditingController();
 
-  Map<String, dynamic>? _userData;
   String? _profileImagePath;
   bool _isEditing = false;
   bool _isLoading = true;
@@ -37,7 +36,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final user = await DatabaseHelper().getUser(widget.userId);
       if (mounted && user != null) {
         setState(() {
-          _userData = user;
           _fullNameController.text = user['fullName'] ?? '';
           _nicknameController.text = user['nickname'] ?? '';
           _schoolController.text = user['school'] ?? '';

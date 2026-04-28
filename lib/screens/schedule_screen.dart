@@ -9,7 +9,6 @@ import 'package:mobile_app/utils/schedule_utils.dart';
 import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
-import 'package:mobile_app/widgets/app_back_button.dart';
 
 class SchedulePage extends ConsumerStatefulWidget {
   final int userId;
@@ -70,8 +69,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     return sd.contains(fd);
   }
 
-
-
   void _showGlassAlert(String msg, Color themeColor) {
     AlertService().showGlassAlert(context, msg, color: themeColor);
   }
@@ -79,6 +76,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -94,8 +92,12 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
             letterSpacing: 1.5,
           ),
         ),
-          leading: const AppBackButton(),
+        leading: IconButton(
+          visualDensity: VisualDensity.compact,
+          icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
+          onPressed: () => Navigator.pop(context),
         ),
+      ),
       body: Column(
         children: [
           if (conflicts.isNotEmpty) _buildConflictBanner(theme),
@@ -460,7 +462,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Container(
                 padding: EdgeInsets.all(res(context, 25)),
                 decoration: BoxDecoration(
@@ -490,7 +493,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                       _detailItem(Icons.room_rounded, "Room", item.room),
                       _detailItem(
                           Icons.person_outline, "Professor", item.professor),
-                      _detailItem(Icons.calendar_today_outlined, "Days", item.days),
+                      _detailItem(
+                          Icons.calendar_today_outlined, "Days", item.days),
                       SizedBox(height: res(context, 30)),
                       Row(
                         children: [
@@ -501,8 +505,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                     vertical: res(context, 15)),
                                 side: const BorderSide(color: Colors.redAccent),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(res(context, 12))),
+                                    borderRadius: BorderRadius.circular(
+                                        res(context, 12))),
                               ),
                               onPressed: () {
                                 _confirmDelete(item.id!);
@@ -522,8 +526,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                 padding: EdgeInsets.symmetric(
                                     vertical: res(context, 15)),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(res(context, 12))),
+                                    borderRadius: BorderRadius.circular(
+                                        res(context, 12))),
                               ),
                               onPressed: () {
                                 Navigator.pop(context);
@@ -614,7 +618,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                 child: Dialog(
                   backgroundColor: Colors.transparent,
-                  insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  insetPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                   child: Container(
                     padding: EdgeInsets.all(res(context, 25)),
                     decoration: BoxDecoration(
@@ -695,7 +700,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                   final t = await showTimePicker(
                                       context: context,
                                       initialTime: TimeOfDay.now());
-                                  if (t != null) setDialogState(() => startT = t);
+                                  if (t != null)
+                                    setDialogState(() => startT = t);
                                 }),
                               ),
                               SizedBox(width: res(context, 15)),
@@ -728,7 +734,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                               if (subjectCtrl.text.isNotEmpty) {
                                 String startTimeStr = startT != null
                                     ? _formatTimeOfDay(startT!)
-                                    : (existingSchedule?.startTime ?? "9:00 AM");
+                                    : (existingSchedule?.startTime ??
+                                        "9:00 AM");
                                 String endTimeStr = endT != null
                                     ? _formatTimeOfDay(endT!)
                                     : (existingSchedule?.endTime ?? "10:00 AM");

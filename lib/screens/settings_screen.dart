@@ -212,14 +212,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  String _getAppearanceLabel(bool isDark) {
-    return isDark ? "Dark mode on" : "Light mode on";
-  }
-
-  String _getBrightnessLabel(bool isDark) {
-    return isDark ? "Switch to light mode" : "Switch to dark mode";
-  }
-
   Widget _buildListTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap, double scale) {
     return ListTile(
       leading: Icon(icon),
@@ -270,7 +262,7 @@ class SettingsScreen extends ConsumerWidget {
                           ? const Icon(Icons.check, color: Colors.white)
                           : null,
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       entry.key,
                       style: const TextStyle(fontSize: 12),
