@@ -75,47 +75,54 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     onTap: () => _showThemeDialog(context, ref),
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: scale * 16.0,
-                      vertical: scale * 8.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Interface Scale",
-                              style: TextStyle(fontSize: scale * 16),
-                            ),
-                            Text(
-                              "${(scale * 100).round()}%",
-                              style: TextStyle(
-                                color: primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Slider(
-                          value: scale,
-                          min: 0.8,
-                          max: 1.2,
-                          divisions: 4,
-                          label: "${(scale * 100).round()}%",
-                          activeColor: primaryColor,
-                          onChanged: (double value) {
-                            ref.read(themeProvider.notifier).setScale(value);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
+                   Padding(
+                     padding: EdgeInsets.symmetric(
+                       horizontal: scale * 16.0,
+                       vertical: scale * 8.0,
+                     ),
+                     child: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Row(
+                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                           children: [
+                             Text(
+                               "Text & Button Size",
+                               style: TextStyle(fontSize: scale * 16),
+                             ),
+                             Text(
+                               "${(scale * 100).round()}%",
+                               style: TextStyle(
+                                 color: primaryColor,
+                                 fontWeight: FontWeight.bold,
+                               ),
+                             ),
+                           ],
+                         ),
+                         Slider(
+                           value: scale,
+                           min: 0.8,
+                           max: 1.2,
+                           divisions: 4,
+                           label: "${(scale * 100).round()}%",
+                           activeColor: primaryColor,
+                           onChanged: (double value) {
+                             ref.read(themeProvider.notifier).setScale(value);
+                           },
+                         ),
+                         Text(
+                           "Make everything bigger or smaller to fit your screen",
+                           style: TextStyle(
+                             fontSize: scale * 12,
+                             color: Theme.of(context).hintColor,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
                   Divider(indent: scale * 16, endIndent: scale * 16),
-                  _buildSectionHeader("More Options", primaryColor, context, scale),
-                  _buildListTile(Icons.notifications_none, "Reminders", () {
+                   _buildSectionHeader("Other Settings", primaryColor, context, scale),
+                  _buildListTile(Icons.notifications_none, "Reminders", "Control when the app reminds you", () {
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -161,10 +168,10 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     );
                   }, scale),
-                  _buildListTile(Icons.help_outline, "Questions & Answers", () {
+                  _buildListTile(Icons.help_outline, "Common Questions (FAQ)", "Find quick answers to common questions", () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
                   }, scale),
-                  _buildListTile(Icons.support_agent_outlined, "Get Help", () {
+                  _buildListTile(Icons.support_agent_outlined, "Talk to Support", "Get help from our support team", () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
                   }, scale),
                   _buildListTile(
@@ -211,10 +218,11 @@ class SettingsScreen extends ConsumerWidget {
     return isDark ? "Switch to light mode" : "Switch to dark mode";
   }
 
-  Widget _buildListTile(IconData icon, String title, VoidCallback onTap, double scale) {
+  Widget _buildListTile(IconData icon, String title, String subtitle, VoidCallback onTap, double scale) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: scale * 12, color: Theme.of(context).hintColor)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
       onTap: onTap,
     );

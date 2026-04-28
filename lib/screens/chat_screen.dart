@@ -3,9 +3,11 @@ import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/utils/responsive.dart';
+import 'package:mobile_app/helper/db_helper.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  final int userId;
+  const ChatScreen({super.key, required this.userId});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -16,19 +18,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final AIService _aiService = AIService();
   bool _isLoading = false;
-  final List<Map<String, String>> _messages = [
-    {
-      "role": "bot",
-      "content":
-          "Hello! I'm your Student Pal. How can I help you with your studies today?"
-    }
-  ];
+  final List<Map<String, String>> _messages = [];
+
+  final String _defaultWelcome = "Hello! I'm your Student Pal. How can I help you with your studies today?";
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _scrollToBottom(instant: true));
+    _loadChatHistory();
+  }
+
+  Future<void> _loadChatHistory() async {
+    try {
+      final history = await DatabaseHelper().getChatHistory(widget.userId);
+      if (history.isEmpty) {
+        setState(() {
+          _messages.add({"role": "bot", "content": _defaultWelcome});
+        });
+        await DatabaseHelper().saveChatMessage(widget.userId, 'bot', _defaultWelcome);
+      } else {
+        setState(() {
+          _messages.clear();
+          _messages.addAll(history.map((msg) => {
+                "role": msg['role'] as String,
+                "content": msg['content'] as String,
+              }));
+        });
+      }
+    } catch (_) {
+      if (_messages.isEmpty) {
+        setState(() {
+          _messages.add({"role": "bot", "content": _defaultWelcome});
+        });
+      }
+    }
+    _scrollToBottom(instant: true);
   }
 
   void _scrollToBottom({bool instant = false}) {
@@ -57,11 +83,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollToBottom();
 
     try {
+      await DatabaseHelper().saveChatMessage(widget.userId, 'user', text);
       final response = await _aiService.sendMessage(text);
       setState(() {
         _messages.add({"role": "bot", "content": response});
         _isLoading = false;
       });
+      await DatabaseHelper().saveChatMessage(widget.userId, 'bot', response);
     } catch (e) {
       setState(() {
         _messages.add({
@@ -72,6 +100,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       });
     }
     _scrollToBottom();
+  }
+
+  Future<void> _clearChat() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Clear Chat', style: TextStyle(color: Colors.white)),
+        content: const Text('Delete all chat messages? This cannot be undone.',
+            style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('CLEAR', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await DatabaseHelper().clearChatHistory(widget.userId);
+      setState(() {
+        _messages.clear();
+        _messages.add({"role": "bot", "content": _defaultWelcome});
+      });
+      await DatabaseHelper().saveChatMessage(widget.userId, 'bot', _defaultWelcome);
+    }
   }
 
   @override
@@ -131,6 +191,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ],
                   ),
                 ),
+                IconButton(
+                    onPressed: _clearChat,
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.white38, size: 22)),
                 IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.keyboard_arrow_down_rounded,

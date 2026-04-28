@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/helper/db_helper.dart';
+import 'package:mobile_app/models/reminder_model.dart';
 
 class LiveClockWidget extends StatefulWidget {
   final double Function(double) r;
@@ -205,20 +206,27 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   }
 
   void _onDayTapped(BuildContext context, DateTime date) {
-    if (date.isBefore(DateTime.now().subtract(const Duration(days: 1)))) return;
     final reminders = _getRemindersForDay(date);
+    final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+
+    if (isPast && reminders.isEmpty) return;
+
     if (reminders.isNotEmpty) {
-      _showRemindersBottomSheet(context, date, reminders);
+      _showRemindersBottomSheet(context, date, reminders, isPast: isPast);
       return;
     }
-    _showSetReminderDialog(context, date);
+
+    if (!isPast) {
+      _showSetReminderDialog(context, date);
+    }
   }
 
-  void _showRemindersBottomSheet(BuildContext context, DateTime date, List<Map<String, dynamic>> reminders) {
+  void _showRemindersBottomSheet(BuildContext context, DateTime date, List<Map<String, dynamic>> reminders, {bool isPast = false}) {
     final theme = Theme.of(context);
     final reminderWidgets = reminders.map((r) {
       final reminderTime = DateTime.tryParse(r['reminderTime'] ?? '');
       final timeStr = reminderTime != null ? DateFormat('h:mm a').format(reminderTime) : '';
+      final note = r['note'] as String?;
       return Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
@@ -238,8 +246,61 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                   Text(r['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                   const SizedBox(height: 2),
                   Text(timeStr, style: TextStyle(color: theme.hintColor, fontSize: 12)),
+                  if (note != null && note.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(note, style: TextStyle(color: theme.hintColor, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
                 ],
               ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, color: widget.accent, size: 20),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showEditReminderDialog(context, date, r);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete Reminder'),
+                        content: const Text('Delete this reminder?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('DELETE', style: TextStyle(color: Colors.redAccent)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await DatabaseHelper().deleteReminder(r['id']);
+                      await _loadReminders();
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Reminder deleted', style: TextStyle(color: Colors.white)),
+                              backgroundColor: widget.accent,
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -272,6 +333,17 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               style: TextStyle(fontWeight: FontWeight.w900, color: widget.accent, fontSize: 16)),
             const SizedBox(height: 12),
             ...reminderWidgets,
+            if (!isPast) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showSetReminderDialog(context, date);
+                },
+                icon: Icon(Icons.add_alarm_rounded, color: widget.accent),
+                label: Text('Add Another Reminder', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w700)),
+              ),
+            ],
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -290,6 +362,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       context: context,
       builder: (ctx) {
         final titleController = TextEditingController();
+        final noteController = TextEditingController();
         TimeOfDay selectedTime = TimeOfDay.now();
         return StatefulBuilder(
           builder: (ctx, setS) {
@@ -301,6 +374,16 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 TextField(controller: titleController, decoration: InputDecoration(hintText: 'Reminder title', hintStyle: TextStyle(color: theme.hintColor), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
                 const SizedBox(height: 12),
                 ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.access_time_rounded, color: widget.accent), title: Text(selectedTime.format(ctx), style: const TextStyle(fontWeight: FontWeight.w600)), onTap: () async { final t = await showTimePicker(context: ctx, initialTime: selectedTime); if (t != null) setS(() => selectedTime = t); }),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    hintText: 'Add a note (optional)',
+                    hintStyle: TextStyle(color: theme.hintColor),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  maxLines: 3,
+                ),
               ]),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx), child: Text('CANCEL', style: TextStyle(color: theme.hintColor))),
@@ -313,7 +396,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     return;
                   }
                   try {
-                    final id = await DatabaseHelper().insertReminder(widget.userId, title, reminderTime);
+                    final note = noteController.text.trim();
+                    final id = await DatabaseHelper().insertReminder(widget.userId, title, reminderTime, note: note.isNotEmpty ? note : null);
                     await NotificationService().scheduleNoteReminders(noteId: id, noteTitle: title, reminderTime: reminderTime);
                     await _loadReminders();
                   } catch (_) {}
@@ -330,6 +414,100 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     );
                   }
                 }, child: Text('SET', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900))),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditReminderDialog(BuildContext context, DateTime date, Map<String, dynamic> reminder) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final titleController = TextEditingController(text: reminder['title'] ?? '');
+        final noteController = TextEditingController(text: reminder['note'] ?? '');
+        TimeOfDay selectedTime;
+        final reminderTimeStr = reminder['reminderTime'];
+        if (reminderTimeStr != null) {
+          final parsedTime = DateTime.tryParse(reminderTimeStr);
+          if (parsedTime != null) {
+            selectedTime = TimeOfDay(hour: parsedTime.hour, minute: parsedTime.minute);
+          } else {
+            selectedTime = TimeOfDay.now();
+          }
+        } else {
+          selectedTime = TimeOfDay.now();
+        }
+
+        return StatefulBuilder(
+          builder: (ctx, setS) {
+            return AlertDialog(
+              backgroundColor: theme.colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text('Edit Reminder', style: TextStyle(fontWeight: FontWeight.w900, color: widget.accent, fontSize: 15)),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                TextField(controller: titleController, decoration: InputDecoration(hintText: 'Reminder title', hintStyle: TextStyle(color: theme.hintColor), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.access_time_rounded, color: widget.accent),
+                  title: Text(selectedTime.format(ctx), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () async {
+                    final t = await showTimePicker(context: ctx, initialTime: selectedTime);
+                    if (t != null) setS(() => selectedTime = t);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    hintText: 'Add a note (optional)',
+                    hintStyle: TextStyle(color: theme.hintColor),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  maxLines: 3,
+                ),
+              ]),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('CANCEL', style: TextStyle(color: theme.hintColor))),
+                TextButton(onPressed: () async {
+                  final title = titleController.text.trim();
+                  if (title.isEmpty) return;
+                  final updatedReminderTime = DateTime(date.year, date.month, date.day, selectedTime.hour, selectedTime.minute);
+                  final note = noteController.text.trim();
+
+                  final updatedReminder = Reminder(
+                    id: reminder['id'],
+                    userId: widget.userId,
+                    title: title,
+                    reminderTime: updatedReminderTime,
+                    note: note.isNotEmpty ? note : null,
+                  );
+
+                  await DatabaseHelper().updateReminder(updatedReminder);
+                  await NotificationService().scheduleNoteReminders(
+                    noteId: reminder['id'],
+                    noteTitle: title,
+                    reminderTime: updatedReminderTime,
+                  );
+                  await _loadReminders();
+
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Reminder updated: $title', style: const TextStyle(color: Colors.white)),
+                        backgroundColor: widget.accent,
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  }
+                }, child: Text('SAVE', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900))),
               ],
             );
           },
@@ -415,7 +593,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               final isPast = date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
               final hasReminder = _hasReminder(date);
               return GestureDetector(
-                onTap: isPast ? null : () => _onDayTapped(context, date),
+                onTap: (isPast && !hasReminder) ? null : () => _onDayTapped(context, date),
                 child: Container(
                   decoration: BoxDecoration(
                     color: isToday
@@ -436,7 +614,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                               ? FontWeight.w900 : FontWeight.normal,
                             color: isToday
                               ? Colors.white
-                              : onSurface.withValues(alpha: isPast ? 0.3 : 0.8)),
+                              : onSurface.withValues(alpha: (isPast && !hasReminder) ? 0.3 : 0.8)),
                         ),
                         if (hasReminder)
                           Positioned(

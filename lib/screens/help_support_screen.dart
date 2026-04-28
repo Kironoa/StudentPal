@@ -42,8 +42,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           _buildCard(
             icon: Icons.email_outlined,
             title: 'Send Feedback',
-            body: 'Have a bug to report or a feature request? Reach out at '
-                'kirigayaroro@gmail.com or visit our GitHub issues page.',
+            body: 'Found something you don\'t like or have an idea to make the app better? Send us a message!',
             onTap: () => launchUrl(Uri.parse('mailto:kirigayaroro@gmail.com')),
           ),
           const SizedBox(height: 12),
@@ -51,8 +50,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             icon: Icons.bug_report_outlined,
             title: 'Report a Bug',
             body:
-                'Encountered something broken? Describe what happened, what you expected, and your '
-                'device model. Screenshots help a lot.',
+                'Something not working right? Let us know what happened and we\'ll try to fix it. A screenshot helps a lot!',
             onTap: () => launchUrl(
               Uri.parse(
                   'mailto:kirigayaroro@gmail.com?subject=Bug Report — StudentPal'),
@@ -63,8 +61,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             icon: Icons.menu_book_outlined,
             title: 'User Guide',
             body:
-                'New to StudentPal? Check the FAQ section for step-by-step answers to the most '
-                'common questions.',
+                'New to StudentPal? Tap here to see answers to the most common questions students ask.',
             onTap: () {
               Navigator.push(
                 context,

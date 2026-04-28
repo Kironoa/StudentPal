@@ -18,9 +18,9 @@ class FaqScreen extends StatelessWidget {
     },
     {
       'question': 'Why am I not receiving notifications?',
-      'answer': 'Check that notifications are enabled in Settings > Notifications. On Android, also make '
-          'sure StudentPal is excluded from battery optimization (Settings > Battery > Battery '
-          'Optimization > StudentPal > Don\'t optimize). You may also need to grant exact alarm permission.'
+      'answer': 'Make sure you allowed notifications when you first opened the app. If not, go to your '
+          'phone\'s Settings, find StudentPal, and turn on Notifications. On Android, also make sure '
+          'the app is not being blocked by battery saver.'
     },
     {
       'question': 'What does the AI chat do?',
@@ -36,14 +36,13 @@ class FaqScreen extends StatelessWidget {
     },
     {
       'question': 'Is my data backed up to the cloud?',
-      'answer': 'No. All data (notes, assignments, schedules) is stored locally on your device. '
-          'If you uninstall the app or switch devices, your data will not be transferred. '
-          'Export important notes before uninstalling.'
+      'answer': 'No. Everything you save (notes, schedules, assignments) is only stored on your phone. '
+          'If you delete the app, your data will be gone too. Write down important things before uninstalling!'
     },
     {
       'question': 'How do flashcards work?',
-      'answer': 'Open a study resource in the Resources tab. Tap "Flashcards" to auto-generate cards '
-          'from the content using AI. Tap a card to flip it. Swipe or use the arrows to navigate.'
+      'answer': 'Go to the Resources tab and open any study material. Tap Flashcards and the app will '
+          'automatically make flashcards for you using AI. Tap a card to flip it and see the answer.'
     },
     {
       'question': 'Can I change the app\'s appearance?',

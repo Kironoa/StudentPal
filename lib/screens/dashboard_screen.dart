@@ -16,6 +16,7 @@ import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/screens/notes_screen.dart';
 import 'package:mobile_app/screens/assignments_screen.dart';
 import 'package:mobile_app/screens/chat_screen.dart';
+import 'package:mobile_app/screens/profile_screen.dart';
 import 'package:mobile_app/screens/quizzes_screen.dart';
 import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/screens/summaries_screen.dart';
@@ -667,7 +668,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
-                      child: const ChatScreen(),
+                      child: ChatScreen(userId: widget.userId),
                     ),
                   ),
                 ),
@@ -725,13 +726,21 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: onSurface.withValues(alpha: 0.05))),
       onSelected: (value) {
-        if (value == 1) _pickImage();
-        if (value == 2)
+        if (value == 0) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => ProfileScreen(userId: widget.userId)));
+        } else if (value == 1) {
+          _pickImage();
+        } else if (value == 2) {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => const SettingsScreen()));
-        if (value == 3) _handleLogout();
+        } else if (value == 3) {
+          _handleLogout();
+        }
       },
       itemBuilder: (context) => [
+        _buildPopupItem(0, Icons.person_rounded, "My Profile", accent, r),
+        const PopupMenuDivider(height: 1),
         _buildPopupItem(1, Icons.image_outlined, "Change Photo", accent, r),
         _buildPopupItem(2, Icons.settings_rounded, "Settings", accent, r),
         const PopupMenuDivider(height: 1),
