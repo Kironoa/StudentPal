@@ -9,6 +9,9 @@ import 'package:mobile_app/utils/schedule_utils.dart';
 import 'package:mobile_app/glass_modal.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
+import 'package:mobile_app/widgets/app_back_button.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 class SchedulePage extends ConsumerStatefulWidget {
   final int userId;
@@ -24,6 +27,10 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   List<List<ClassModel>> conflicts = [];
   String selectedDayFilter = 'M';
   final List<String> weekDays = ['M', 'T', 'W', 'Th', 'F', 'S', 'Sun'];
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  Map<DateTime, List<dynamic>> _events = {};
 
   @override
   void initState() {
@@ -69,6 +76,55 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     return sd.contains(fd);
   }
 
+  List<dynamic> _getEventsForDay(DateTime day) {
+    final key = DateTime(day.year, day.month, day.day);
+    return _events[key] ?? [];
+  }
+
+  Future<void> _loadEvents() async {
+    final assignments = await DatabaseHelper().getAssignments(widget.userId);
+    final schedules = await DatabaseHelper().getAllSchedules(widget.userId);
+    final Map<DateTime, List<dynamic>> events = {};
+
+    for (final a in assignments) {
+      final deadline = DateTime.tryParse(a['deadline'] ?? '');
+      if (deadline != null) {
+        final key = DateTime(deadline.year, deadline.month, deadline.day);
+        events[key] = [...(events[key] ?? []), {'type': 'assignment', 'data': a}];
+      }
+    }
+
+    for (final s in schedules) {
+      final days = (s.days ?? '').toUpperCase();
+      final now = DateTime.now();
+      for (int i = 0; i < 90; i++) {
+        final day = now.add(Duration(days: i));
+        final dayName = DateFormat('EEE').format(day).toUpperCase();
+        bool matchesDay = false;
+        if (days.contains(dayName)) {
+          matchesDay = true;
+        } else if (dayName == 'MON' && days.contains('M')) {
+          matchesDay = true;
+        } else if (dayName == 'TUE' && days.contains('T') && !days.contains('TH')) {
+          matchesDay = true;
+        } else if (dayName == 'WED' && (days.contains('WED') || days.contains('W'))) {
+          matchesDay = true;
+        } else if (dayName == 'THU' && (days.contains('THU') || days.contains('TH'))) {
+          matchesDay = true;
+        } else if (dayName == 'FRI' && days.contains('FRI')) {
+          matchesDay = true;
+        } else if (dayName == 'SAT' && (days.contains('SAT') || days.contains('S'))) {
+          matchesDay = true;
+        }
+        if (matchesDay) {
+          final key = DateTime(day.year, day.month, day.day);
+          events[key] = [...(events[key] ?? []), {'type': 'class', 'data': s}];
+        }
+      }
+    }
+    setState(() => _events = events);
+  }
+
   void _showGlassAlert(String msg, Color themeColor) {
     AlertService().showGlassAlert(context, msg, color: themeColor);
   }
@@ -91,31 +147,108 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
             letterSpacing: 1.5,
           ),
         ),
-        leading: IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(
-            Icons.grid_view_rounded,
-            color: theme.colorScheme.primary,
-            size: 22,
-          ),
-          onPressed: () => Navigator.pop(context),
+          leading: const AppBackButton(),
         ),
-      ),
       body: Column(
         children: [
           if (conflicts.isNotEmpty) _buildConflictBanner(theme),
-          _buildDayPicker(),
-          Expanded(
-            child: filteredSchedules.isEmpty
-                ? _buildEmptyState(theme)
-                : ListView.builder(
-                    padding: EdgeInsets.fromLTRB(res(context, 20),
-                        res(context, 10), res(context, 20), res(context, 100)),
-                    itemCount: filteredSchedules.length,
-                    itemBuilder: (context, index) =>
-                        _buildTimelineTile(filteredSchedules[index], index),
-                  ),
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            eventLoader: (day) => _getEventsForDay(day),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              markerDecoration: BoxDecoration(
+                color: theme.colorScheme.secondary,
+                shape: BoxShape.circle,
+              ),
+              markersMaxCount: 3,
+              outsideDaysVisible: false,
+            ),
+            headerStyle: HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+              titleTextStyle: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+              leftChevronIcon: Icon(Icons.chevron_left, color: theme.colorScheme.primary),
+              rightChevronIcon: Icon(Icons.chevron_right, color: theme.colorScheme.primary),
+            ),
           ),
+          const SizedBox(height: 8),
+          if (_selectedDay == null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                "Select a date to see your schedule",
+                style: TextStyle(color: theme.hintColor),
+              ),
+            )
+          else if (_getEventsForDay(_selectedDay!).isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                "Nothing scheduled for this day",
+                style: TextStyle(color: theme.hintColor),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: _getEventsForDay(_selectedDay!).map((event) {
+                  final type = event['type'] as String;
+                  final data = event['data'];
+                  if (type == 'assignment') {
+                    final deadline = DateTime.tryParse(data['deadline'] ?? '');
+                    return ListTile(
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      title: Text(data['title'] ?? 'Assignment'),
+                      subtitle: Text(
+                        'Due ${deadline != null ? DateFormat('h:mm a').format(deadline) : ''}',
+                      ),
+                    );
+                  } else {
+                    final s = data as ClassModel;
+                    return ListTile(
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      title: Text(s.subject),
+                      subtitle: Text('${s.room} • ${s.startTime} - ${s.endTime}'),
+                    );
+                  }
+                }).toList(),
+              ),
+            ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

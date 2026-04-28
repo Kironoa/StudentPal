@@ -7,6 +7,7 @@ import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
+import 'package:mobile_app/widgets/app_back_button.dart';
 
 class AssignmentsScreen extends ConsumerStatefulWidget {
   final int userId;
