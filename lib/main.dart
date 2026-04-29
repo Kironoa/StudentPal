@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
@@ -15,6 +16,8 @@ import 'package:timezone/data/latest.dart' as tz_data;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
 
   await AIService.initialize();
 
