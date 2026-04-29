@@ -605,6 +605,11 @@ class DatabaseHelper {
         where: 'id = ?', whereArgs: [userId]);
   }
 
+  Future<int> updateUser(int id, Map<String, dynamic> data) async {
+    final db = await database;
+    return await db.update('users', data, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int> insertAssignment(int userId, String subject, String title,
       String desc, String? deadline) async {
     final db = await database;

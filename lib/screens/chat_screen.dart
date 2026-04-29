@@ -20,7 +20,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isLoading = false;
   final List<Map<String, String>> _messages = [];
 
-  final String _defaultWelcome = "Hello! I'm your Student Pal. How can I help you with your studies today?";
+  final String _defaultWelcome =
+      "Hello! I'm your Student Pal. How can I help you with your studies today?";
 
   @override
   void initState() {
@@ -37,7 +38,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         setState(() {
           _messages.add({"role": "bot", "content": _defaultWelcome});
         });
-        await DatabaseHelper().saveChatMessage(widget.userId, 'bot', _defaultWelcome);
+        await DatabaseHelper()
+            .saveChatMessage(widget.userId, 'bot', _defaultWelcome);
       } else {
         setState(() {
           _messages.clear();
@@ -47,10 +49,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               }));
         });
         // Replay history into AI session so the AI has context
-        _aiService.restoreHistory(history.map((msg) => {
-          'role': msg['role'] as String,
-          'content': msg['content'] as String,
-        }).toList());
+        _aiService.restoreHistory(history
+            .map((msg) => {
+                  'role': msg['role'] as String,
+                  'content': msg['content'] as String,
+                })
+            .toList());
       }
     } catch (_) {
       if (_messages.isEmpty) {
@@ -119,11 +123,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            child:
+                const Text('CANCEL', style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('CLEAR', style: TextStyle(color: Colors.redAccent)),
+            child:
+                const Text('CLEAR', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -135,23 +141,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _messages.clear();
         _messages.add({"role": "bot", "content": _defaultWelcome});
       });
-      await DatabaseHelper().saveChatMessage(widget.userId, 'bot', _defaultWelcome);
+      await DatabaseHelper()
+          .saveChatMessage(widget.userId, 'bot', _defaultWelcome);
       _aiService.resetSession();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final accentColor = ref.read(themeProvider).accentColor;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: theme.scaffoldBackgroundColor,
         borderRadius:
             BorderRadius.vertical(top: Radius.circular(res(context, 30))),
         border:
-            Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+            Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), width: 0.5),
       ),
       child: Column(
         children: [
@@ -161,7 +169,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             width: res(context, 40),
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white10,
+              color: theme.dividerColor,
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -189,35 +197,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               fontSize: res(context, 14),
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.5,
-                              color: Colors.white)),
+                              color: theme.colorScheme.onSurface)),
                       Text("Always here to help",
                           style: TextStyle(
                               fontSize: res(context, 11),
-                              color: Colors.white38)),
+                              color: theme.hintColor)),
                     ],
                   ),
                 ),
                 IconButton(
                     onPressed: _clearChat,
-                    icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.white38, size: 22)),
+                    icon: Icon(Icons.delete_outline_rounded,
+                        color: theme.hintColor, size: 22)),
                 IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white38, size: 28)),
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: theme.hintColor, size: 28)),
               ],
             ),
           ),
-          const Divider(color: Colors.white10, height: 1),
+          Divider(color: theme.dividerColor, height: 1),
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: EdgeInsets.all(res(context, 20)),
-              itemCount:
-                  _messages.length + (_isLoading ? 1 : 0),
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == _messages.length) {
-                  return _buildLoadingBubble(accentColor);
+                  return _buildLoadingBubble(accentColor, theme);
                 }
 
                 final msg = _messages[index];
@@ -235,8 +242,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         maxWidth: MediaQuery.of(context).size.width * 0.75),
                     decoration: BoxDecoration(
                       color: isUser
-                          ? accentColor
-                          : Colors.white.withValues(alpha: 0.05),
+                          ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                          : theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(20).copyWith(
                         bottomRight: isUser
                             ? const Radius.circular(0)
@@ -249,7 +256,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     child: Text(
                       msg["content"]!,
                       style: TextStyle(
-                        color: isUser ? Colors.black : Colors.white,
+                        color: theme.colorScheme.onSurface,
                         fontWeight:
                             isUser ? FontWeight.bold : FontWeight.normal,
                         fontSize: res(context, 14),
@@ -274,17 +281,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: res(context, 20)),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: TextField(
                       controller: _controller,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: theme.colorScheme.onSurface),
                       onSubmitted: (_) => _handleSendMessage(),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: "Type a message...",
-                        hintStyle: TextStyle(color: Colors.white24),
+                        hintStyle: TextStyle(color: theme.hintColor),
                         border: InputBorder.none,
                       ),
                     ),
@@ -294,10 +301,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 GestureDetector(
                   onTap: _isLoading ? null : _handleSendMessage,
                   child: CircleAvatar(
-                    backgroundColor: _isLoading ? accentColor.withValues(alpha: 0.4) : accentColor,
+                    backgroundColor: _isLoading
+                        ? accentColor.withValues(alpha: 0.4)
+                        : accentColor,
                     radius: res(context, 24),
-                    child: const Icon(Icons.send_rounded,
-                        color: Colors.black, size: 20),
+                    child: Icon(Icons.send_rounded,
+                        color: theme.colorScheme.onPrimary, size: 20),
                   ),
                 ),
               ],
@@ -308,13 +317,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildLoadingBubble(Color accent) {
+  Widget _buildLoadingBubble(Color accent, ThemeData theme) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         padding: EdgeInsets.all(res(context, 12)),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(15),
         ),
         child: SizedBox(

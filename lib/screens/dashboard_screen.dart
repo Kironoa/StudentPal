@@ -730,21 +730,18 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           Navigator.push(context,
               MaterialPageRoute(builder: (_) => ProfileScreen(userId: widget.userId)));
         } else if (value == 1) {
-          _pickImage();
-        } else if (value == 2) {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => const SettingsScreen()));
-        } else if (value == 3) {
+        } else if (value == 2) {
           _handleLogout();
         }
       },
       itemBuilder: (context) => [
         _buildPopupItem(0, Icons.person_rounded, "My Profile", accent, r),
         const PopupMenuDivider(height: 1),
-        _buildPopupItem(1, Icons.image_outlined, "Change Photo", accent, r),
-        _buildPopupItem(2, Icons.settings_rounded, "Settings", accent, r),
+        _buildPopupItem(1, Icons.settings_rounded, "Settings", accent, r),
         const PopupMenuDivider(height: 1),
-        _buildPopupItem(3, Icons.logout_rounded, "Logout", accent, r,
+        _buildPopupItem(2, Icons.logout_rounded, "Logout", accent, r,
             isDestructive: true),
       ],
       child: Container(

@@ -56,7 +56,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       imageQuality: 80,
     );
     if (pickedFile != null) {
-      await DatabaseHelper().updateUserProfilePhoto(widget.userId, pickedFile.path);
+      await DatabaseHelper()
+          .updateUserProfilePhoto(widget.userId, pickedFile.path);
       setState(() => _profileImagePath = pickedFile.path);
     }
   }
@@ -65,11 +66,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       await DatabaseHelper().updateUserProfile(
         widget.userId,
-        fullName: _fullNameController.text.trim().isNotEmpty ? _fullNameController.text.trim() : null,
-        nickname: _nicknameController.text.trim().isNotEmpty ? _nicknameController.text.trim() : null,
-        school: _schoolController.text.trim().isNotEmpty ? _schoolController.text.trim() : null,
-        course: _courseController.text.trim().isNotEmpty ? _courseController.text.trim() : null,
-        yearLevel: _yearLevelController.text.trim().isNotEmpty ? _yearLevelController.text.trim() : null,
+        fullName: _fullNameController.text.trim().isNotEmpty
+            ? _fullNameController.text.trim()
+            : null,
+        nickname: _nicknameController.text.trim().isNotEmpty
+            ? _nicknameController.text.trim()
+            : null,
+        school: _schoolController.text.trim().isNotEmpty
+            ? _schoolController.text.trim()
+            : null,
+        course: _courseController.text.trim().isNotEmpty
+            ? _courseController.text.trim()
+            : null,
+        yearLevel: _yearLevelController.text.trim().isNotEmpty
+            ? _yearLevelController.text.trim()
+            : null,
       );
 
       final displayName = _nicknameController.text.trim().isNotEmpty
@@ -87,10 +98,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Profile updated!', style: TextStyle(color: Colors.white)),
+            content: const Text('Profile updated!',
+                style: TextStyle(color: Colors.white)),
             backgroundColor: Theme.of(context).primaryColor,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -100,14 +113,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = theme.primaryColor;
+    final accent = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: accent),
+          visualDensity: VisualDensity.compact,
+          icon: Icon(Icons.grid_view_rounded, color: theme.colorScheme.primary, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('MY PROFILE',
@@ -121,7 +135,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             TextButton.icon(
               onPressed: () => setState(() => _isEditing = true),
               icon: Icon(Icons.edit_outlined, color: accent, size: 18),
-              label: Text('EDIT', style: TextStyle(color: accent, fontWeight: FontWeight.w900)),
+              label: Text('EDIT',
+                  style: TextStyle(color: accent, fontWeight: FontWeight.w900)),
             ),
         ],
       ),
@@ -139,7 +154,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: accent.withValues(alpha: 0.3), width: 2),
+                          border: Border.all(
+                              color: accent.withValues(alpha: 0.3), width: 2),
                         ),
                         child: CircleAvatar(
                           radius: 60,
@@ -150,7 +166,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               : null,
                           child: (_profileImagePath == null ||
                                   !File(_profileImagePath!).existsSync())
-                              ? Icon(Icons.person_rounded, color: accent, size: 50)
+                              ? Icon(Icons.person_rounded,
+                                  color: accent, size: 50)
                               : null,
                         ),
                       ),
@@ -159,7 +176,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       TextButton(
                         onPressed: _pickImage,
                         child: Text('Change Photo',
-                            style: TextStyle(color: accent, fontWeight: FontWeight.w600)),
+                            style: TextStyle(
+                                color: accent, fontWeight: FontWeight.w600)),
                       ),
                     const SizedBox(height: 24),
                     _buildProfileCard(theme, accent),
@@ -169,12 +187,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => setState(() => _isEditing = false),
+                              onPressed: () =>
+                                  setState(() => _isEditing = false),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: theme.hintColor),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                               ),
                               child: Text('CANCEL',
                                   style: TextStyle(
@@ -190,7 +210,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 backgroundColor: accent,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                               ),
                               child: const Text('SAVE',
                                   style: TextStyle(
@@ -217,21 +238,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _buildField('Full Name', Icons.person_rounded, _fullNameController, _isEditing),
+          _buildField('Full Name', Icons.person_rounded, _fullNameController,
+              _isEditing),
           _buildDivider(),
-          _buildField('Nickname', Icons.face_rounded, _nicknameController, _isEditing),
+          _buildField(
+              'Nickname', Icons.face_rounded, _nicknameController, _isEditing),
           _buildDivider(),
-          _buildField('School/University', Icons.school_rounded, _schoolController, _isEditing),
+          _buildField('School/University', Icons.school_rounded,
+              _schoolController, _isEditing),
           _buildDivider(),
-          _buildField('Course/Program', Icons.menu_book_rounded, _courseController, _isEditing),
+          _buildField('Course/Program', Icons.menu_book_rounded,
+              _courseController, _isEditing),
           _buildDivider(),
-          _buildField('Year Level', Icons.calendar_today_rounded, _yearLevelController, _isEditing),
+          _buildField('Year Level', Icons.calendar_today_rounded,
+              _yearLevelController, _isEditing),
         ],
       ),
     );
   }
 
-  Widget _buildField(String label, IconData icon, TextEditingController controller, bool isEditing) {
+  Widget _buildField(String label, IconData icon,
+      TextEditingController controller, bool isEditing) {
     final theme = Theme.of(context);
     final accent = theme.primaryColor;
 
@@ -268,7 +295,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       )
                     : Text(
-                        controller.text.isNotEmpty ? controller.text : 'Not set',
+                        controller.text.isNotEmpty
+                            ? controller.text
+                            : 'Not set',
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
