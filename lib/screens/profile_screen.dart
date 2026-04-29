@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
+import 'package:mobile_app/providers/user_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -59,6 +60,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await DatabaseHelper()
           .updateUserProfilePhoto(widget.userId, pickedFile.path);
       setState(() => _profileImagePath = pickedFile.path);
+      if (mounted) {
+        ref.invalidate(userProvider(widget.userId));
+      }
     }
   }
 
@@ -95,6 +99,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
 
       setState(() => _isEditing = false);
+      if (mounted) {
+        ref.invalidate(userProvider(widget.userId));
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

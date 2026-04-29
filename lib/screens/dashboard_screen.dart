@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/models/schedule_model.dart';
@@ -12,6 +11,7 @@ import 'package:mobile_app/screens/resource_screen.dart';
 import 'package:mobile_app/screens/schedule_screen.dart';
 import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
+import 'package:mobile_app/providers/user_provider.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/screens/notes_screen.dart';
 import 'package:mobile_app/screens/assignments_screen.dart';
@@ -37,9 +37,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   late Timer _classTimer;
   late AnimationController _bgAnimationController;
   late ScrollController _scrollController;
-  String? _profileImagePath;
 
-  final ImagePicker _picker = ImagePicker();
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final NotificationService _notifService = NotificationService();
 
@@ -51,7 +49,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
     _loadDashboardData();
     _scrollController = ScrollController(keepScrollOffset: true);
     _bgAnimationController = AnimationController(
@@ -61,20 +58,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   }
 
   double res(BuildContext context, double value) => value;
-
-  Future<void> _fetchUserData() async {
-    final user = await _dbHelper.getUser(widget.userId);
-    if (user != null) {
-      if (user['profilePath'] != null) {
-        setState(() => _profileImagePath = user['profilePath']);
-      }
-      final username = user['username'] as String?;
-      if (username != null && username.isNotEmpty) {
-        await DatabaseHelper().saveSettings(name: username);
-        ref.read(themeProvider.notifier).loadSettings();
-      }
-    }
-  }
 
   DateTime _parseTime(String timeStr) {
     final now = DateTime.now();
@@ -277,17 +260,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       MaterialPageRoute(builder: (context) => const StudentPalLogin()),
       (Route<dynamic> route) => false,
     );
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (pickedFile != null) {
-      await _dbHelper.updateUserProfilePhoto(widget.userId, pickedFile.path);
-      setState(() => _profileImagePath = pickedFile.path);
-    }
   }
 
   void _showSingleScheduleDetail(
@@ -663,8 +635,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     decoration: BoxDecoration(
                       color: const Color(0xFF0F0F0F),
                       borderRadius: BorderRadius.circular(28),
-                      border:
-                          Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          width: 0.5),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
@@ -727,8 +700,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           side: BorderSide(color: onSurface.withValues(alpha: 0.05))),
       onSelected: (value) {
         if (value == 0) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => ProfileScreen(userId: widget.userId)));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: widget.userId)));
         } else if (value == 1) {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => const SettingsScreen()));
@@ -744,27 +719,33 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         _buildPopupItem(2, Icons.logout_rounded, "Logout", accent, r,
             isDestructive: true),
       ],
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border:
-                Border.all(color: accent.withValues(alpha: 0.2), width: 1.5)),
-        child: CircleAvatar(
-          radius: r(14),
-          backgroundColor: accent.withValues(alpha: 0.1),
-          backgroundImage: (_profileImagePath != null &&
-                  File(_profileImagePath!).existsSync())
-              ? FileImage(File(_profileImagePath!))
-              : null,
-          child: (_profileImagePath == null ||
-                  !File(_profileImagePath!).existsSync())
-              ? Icon(Icons.person_rounded, color: accent, size: r(16))
-              : null,
-        ),
-      ),
-    );
-  }
+       child: Container(
+         padding: const EdgeInsets.all(2),
+         decoration: BoxDecoration(
+             shape: BoxShape.circle,
+             border:
+                 Border.all(color: accent.withValues(alpha: 0.2), width: 1.5)),
+         child: Consumer(
+           builder: (context, ref, _) {
+             final userAsync = ref.watch(userProvider(widget.userId));
+             final profileImagePath = userAsync.asData?.value?['profilePath'] as String?;
+             return CircleAvatar(
+               radius: r(14),
+               backgroundColor: accent.withValues(alpha: 0.1),
+               backgroundImage: (profileImagePath != null &&
+                       File(profileImagePath).existsSync())
+                   ? FileImage(File(profileImagePath))
+                   : null,
+               child: (profileImagePath == null ||
+                       !File(profileImagePath).existsSync())
+                   ? Icon(Icons.person_rounded, color: accent, size: r(16))
+                   : null,
+             );
+           },
+         ),
+       ),
+     );
+   }
 
   PopupMenuItem<int> _buildPopupItem(int value, IconData icon, String title,
       Color accent, double Function(double) r,
