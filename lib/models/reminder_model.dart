@@ -16,13 +16,29 @@ class Reminder {
   });
 
   factory Reminder.fromMap(Map<String, dynamic> map) {
+    DateTime parseReminderTime() {
+      if (map.containsKey('reminderTime') && map['reminderTime'] != null) {
+        return DateTime.parse(map['reminderTime'] as String);
+      }
+      if (map.containsKey('date') && map.containsKey('time')) {
+        final dateStr = map['date'] as String;
+        final timeStr = map['time'] as String;
+        final date = DateTime.parse(dateStr);
+        final parts = timeStr.split(':');
+        return DateTime(date.year, date.month, date.day, int.parse(parts[0]), int.parse(parts[1]));
+      }
+      return DateTime.now();
+    }
+
     return Reminder(
       id: map['id'] as int?,
       userId: map['userId'] as int,
       title: map['title'] as String,
-      reminderTime: DateTime.parse(map['reminderTime'] as String),
-      note: map['note'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      reminderTime: parseReminderTime(),
+      note: (map['note'] ?? map['description']) as String?,
+      createdAt: map.containsKey('createdAt') && map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 

@@ -35,7 +35,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 23,
+        version: 24,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -142,7 +142,7 @@ class DatabaseHelper {
           }
         }
         if (oldVersion < 22) {
-          await _createRemindersTable(db);
+        await db.execute('CREATE TABLE reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, title TEXT, description TEXT, date TEXT, time TEXT)');
         }
         if (oldVersion < 23) {
           var userColumns = await db.rawQuery('PRAGMA table_info(users)');
@@ -163,6 +163,10 @@ class DatabaseHelper {
             await db.execute('ALTER TABLE users ADD COLUMN yearLevel TEXT');
           }
           await _createChatMessagesTable(db);
+        }
+        if (oldVersion < 24) {
+          await db.execute('DROP TABLE IF EXISTS reminders');
+          await _createRemindersTable(db);
         }
       },
     );
@@ -299,14 +303,14 @@ class DatabaseHelper {
     await db.delete('chat_messages', where: 'userId = ?', whereArgs: [userId]);
   }
 
-  Future<int> insertReminder(int userId, String title, DateTime reminderTime, {String? note}) async {
+  Future<int> insertReminder(Reminder reminder) async {
     final db = await database;
     final id = await db.insert('reminders', {
-      'userId': userId,
-      'title': title,
-      'reminderTime': reminderTime.toIso8601String(),
-      'note': note,
-      'createdAt': DateTime.now().toIso8601String(),
+      'userId': reminder.userId,
+      'title': reminder.title,
+      'reminderTime': reminder.reminderTime.toIso8601String(),
+      'note': reminder.note,
+      'createdAt': reminder.createdAt.toIso8601String(),
     });
     return id;
   }
@@ -323,19 +327,17 @@ class DatabaseHelper {
 
   Future<Map<DateTime, List<Map<String, dynamic>>>> getRemindersForMonth(int userId, int year, int month) async {
     final db = await database;
-    final startOfMonth = DateTime(year, month, 1);
-    final endOfMonth = DateTime(year, month + 1, 1);
+    final startOfMonth = DateTime(year, month);
+    final endOfMonth = DateTime(year, month + 1);
     final results = await db.query('reminders',
       where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
       whereArgs: [userId, startOfMonth.toIso8601String(), endOfMonth.toIso8601String()]);
 
     final Map<DateTime, List<Map<String, dynamic>>> remindersByDate = {};
     for (final reminder in results) {
-      final reminderTime = DateTime.tryParse(reminder['reminderTime'] as String);
-      if (reminderTime != null) {
-        final dateKey = DateTime(reminderTime.year, reminderTime.month, reminderTime.day);
-        remindersByDate.putIfAbsent(dateKey, () => []).add(reminder);
-      }
+      final dateTime = DateTime.parse(reminder['reminderTime'] as String);
+      final dateKey = DateTime(dateTime.year, dateTime.month, dateTime.day);
+      remindersByDate.putIfAbsent(dateKey, () => []).add(reminder);
     }
     return remindersByDate;
   }
@@ -352,7 +354,11 @@ class DatabaseHelper {
     final db = await database;
     return await db.update(
       'reminders',
-      reminder.toMap(),
+      {
+        'title': reminder.title,
+        'reminderTime': reminder.reminderTime.toIso8601String(),
+        'note': reminder.note,
+      },
       where: 'id = ?',
       whereArgs: [reminder.id],
     );

@@ -224,9 +224,20 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   void _showRemindersBottomSheet(BuildContext context, DateTime date, List<Map<String, dynamic>> reminders, {bool isPast = false}) {
     final theme = Theme.of(context);
     final reminderWidgets = reminders.map((r) {
-      final reminderTime = DateTime.tryParse(r['reminderTime'] ?? '');
-      final timeStr = reminderTime != null ? DateFormat('h:mm a').format(reminderTime) : '';
-      final note = r['note'] as String?;
+      final timeStr = r['time'] as String? ?? '';
+      String displayTime = '';
+      if (timeStr.isNotEmpty) {
+        try {
+          final parts = timeStr.split(':');
+          final hour = int.parse(parts[0]);
+          final minute = int.parse(parts[1]);
+          final dt = DateTime(2024, 1, 1, hour, minute);
+          displayTime = DateFormat('h:mm a').format(dt);
+        } catch (_) {
+          displayTime = timeStr;
+        }
+      }
+      final note = (r['note'] ?? r['description']) as String?;
       return Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
@@ -245,7 +256,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 children: [
                   Text(r['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text(timeStr, style: TextStyle(color: theme.hintColor, fontSize: 12)),
+                  Text(displayTime, style: TextStyle(color: theme.hintColor, fontSize: 12)),
                   if (note != null && note.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(note, style: TextStyle(color: theme.hintColor, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -397,7 +408,14 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                   }
                   try {
                     final note = noteController.text.trim();
-                    final id = await DatabaseHelper().insertReminder(widget.userId, title, reminderTime, note: note.isNotEmpty ? note : null);
+                    final reminder = Reminder(
+                      userId: widget.userId,
+                      title: title,
+                      reminderTime: reminderTime,
+                      note: note.isNotEmpty ? note : null,
+                      createdAt: DateTime.now(),
+                    );
+                    final id = await DatabaseHelper().insertReminder(reminder);
                     await NotificationService().scheduleNoteReminders(noteId: id, noteTitle: title, reminderTime: reminderTime);
                     await _loadReminders();
                   } catch (_) {}
@@ -428,18 +446,30 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       context: context,
       builder: (ctx) {
         final titleController = TextEditingController(text: reminder['title'] ?? '');
-        final noteController = TextEditingController(text: reminder['note'] ?? '');
+        final noteController = TextEditingController(text: (reminder['note'] ?? reminder['description']) ?? '');
         TimeOfDay selectedTime;
-        final reminderTimeStr = reminder['reminderTime'];
-        if (reminderTimeStr != null) {
-          final parsedTime = DateTime.tryParse(reminderTimeStr);
-          if (parsedTime != null) {
-            selectedTime = TimeOfDay(hour: parsedTime.hour, minute: parsedTime.minute);
-          } else {
+        
+        final dateStr = reminder['date'] as String?;
+        final timeStr = reminder['time'] as String?;
+        if (dateStr != null && timeStr != null) {
+          try {
+            final parts = timeStr.split(':');
+            selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+          } catch (_) {
             selectedTime = TimeOfDay.now();
           }
         } else {
-          selectedTime = TimeOfDay.now();
+          final reminderTimeStr = reminder['reminderTime'];
+          if (reminderTimeStr != null) {
+            final parsedTime = DateTime.tryParse(reminderTimeStr);
+            if (parsedTime != null) {
+              selectedTime = TimeOfDay(hour: parsedTime.hour, minute: parsedTime.minute);
+            } else {
+              selectedTime = TimeOfDay.now();
+            }
+          } else {
+            selectedTime = TimeOfDay.now();
+          }
         }
 
         return StatefulBuilder(
@@ -526,7 +556,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final daysInMonth = DateUtils.getDaysInMonth(
       _displayed.year, _displayed.month);
     final firstWeekday = DateTime(
-      _displayed.year, _displayed.month, 1).weekday % 7;
+      _displayed.year, _displayed.month).weekday % 7;
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -547,13 +577,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 onPressed: _prev,
                 icon: Icon(Icons.chevron_left_rounded,
                   color: onSurface.withValues(alpha: 0.6))),
-              Text(
-                DateFormat('MMMM yyyy').format(_displayed),
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: onSurface),
-              ),
+                 Text(
+                 DateFormat('MMMM yyyy').format(_displayed),
+                 style: const TextStyle(
+                   fontWeight: FontWeight.w700,
+                   fontSize: 13,
+                 ),
+               ),
               IconButton(
                 onPressed: _next,
                 icon: Icon(Icons.chevron_right_rounded,
@@ -583,7 +613,6 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               crossAxisCount: 7,
               mainAxisSpacing: 2,
               crossAxisSpacing: 2,
-              childAspectRatio: 1,
             ),
             itemCount: firstWeekday + daysInMonth,
             itemBuilder: (ctx, i) {

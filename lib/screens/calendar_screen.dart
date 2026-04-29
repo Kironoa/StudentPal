@@ -249,12 +249,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
                 Navigator.of(context).pop();
                 await DatabaseHelper().insertReminder(
-                  widget.userId,
-                  titleController.text.trim(),
-                  dateTime,
-                  note: noteController.text.trim().isEmpty
-                      ? null
-                      : noteController.text.trim(),
+                  Reminder(
+                    userId: widget.userId,
+                    title: titleController.text.trim(),
+                    reminderTime: dateTime,
+                    note: noteController.text.trim().isEmpty
+                        ? null
+                        : noteController.text.trim(),
+                    createdAt: DateTime.now(),
+                  ),
                 );
 
                 if (mounted) {
@@ -431,7 +434,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       body: Column(
         children: [
           TableCalendar<Reminder>(
-            firstDay: DateTime.utc(2020, 1, 1),
+            firstDay: DateTime.utc(2020),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -460,6 +463,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 color: accentColor.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
+            ),
+            calendarBuilders: CalendarBuilders<Reminder>(
+              markerBuilder: (context, date, reminders) {
+                if (reminders.isNotEmpty) {
+                  return Positioned(
+                    bottom: 1,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.cyan,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }
+                return null;
+              },
             ),
             headerStyle: const HeaderStyle(
               titleCentered: true,
