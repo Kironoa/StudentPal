@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// Displays animated glass overlay alerts and delete confirmation dialogs.
 class AlertService {
   static final AlertService _instance = AlertService._internal();
   factory AlertService() => _instance;
@@ -83,7 +82,8 @@ class AlertService {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               cancelLabel,
-              style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: theme.hintColor, fontWeight: FontWeight.bold),
             ),
           ),
           TextButton(
@@ -112,7 +112,8 @@ class AlertService {
     return result ?? false;
   }
 
-  Future<void> showDeleteDialog(BuildContext context, String itemName, VoidCallback onConfirm) async {
+  Future<void> showDeleteDialog(
+      BuildContext context, String itemName, VoidCallback onConfirm) async {
     showConfirmDialog(
       context,
       title: 'Delete $itemName?',
@@ -190,8 +191,8 @@ class _GlassAlertAnimatedState extends State<_GlassAlertAnimated>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 18, horizontal: 35),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 18, horizontal: 35),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -256,13 +257,15 @@ class _DeleteConfirmDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context, false),
           child: Text(
             "CANCEL",
-            style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
+            style:
+                TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.redAccent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           onPressed: () => Navigator.pop(context, true),
           child: const Text(
