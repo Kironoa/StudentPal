@@ -72,10 +72,8 @@ class AboutScreen extends ConsumerWidget {
                 color: accent,
               ),
             ),
-            const Text("Version 2.0.0", style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 30),
 
-            // Main Info Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(

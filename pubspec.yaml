@@ -26,6 +26,7 @@ dependencies:
   flutter_local_notifications: ^20.1.0
   timezone: ^0.10.1
   flutter_timezone: ^5.0.1
+  alarm: ^4.0.0
   google_generative_ai: ^0.4.4
   flutter_dotenv: ^5.1.0
   flip_card: ^0.7.0
@@ -59,6 +60,7 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
+    - assets/meow.wav
     - .env
   fonts:
     - family: Poppins
