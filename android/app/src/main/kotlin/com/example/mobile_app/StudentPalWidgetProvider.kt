@@ -1,6 +1,4 @@
 package com.example.mobile_app
-
-import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -8,83 +6,38 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
-import kotlin.math.max
 
 class StudentPalWidgetProvider : AppWidgetProvider() {
 
     companion object {
         private const val SHARED_PREFS_NAME = "HomeWidgetPlugin"
-        private const val KEY_TITLE              = "widget_title"
-        private const val KEY_SUBTITLE           = "widget_subtitle"
-        private const val KEY_COUNTDOWN          = "widget_countdown"
-        private const val KEY_TYPE               = "widget_type"
-        private const val KEY_EMPTY_MESSAGE      = "widget_empty_message"
-        private const val KEY_DEADLINE_TIMESTAMP = "widget_deadline_timestamp"
-        private const val KEY_NICKNAME           = "widget_nickname"
-
-        private const val ACTION_TICK         = "com.example.mobile_app.WIDGET_TICK"
-        private const val ACTION_FORCE_UPDATE = "com.example.mobile_app.WIDGET_FORCE_UPDATE"
-
-        private var tickHandler: Handler? = null
-        private var tickRunnable: Runnable? = null
-        private var isTicking = false
+        
+        // Current Class
+        private const val KEY_CURRENT_SUBJECT = "widget_current_subject"
+        private const val KEY_CURRENT_TIME = "widget_current_time"
+        private const val KEY_CURRENT_VISIBLE = "widget_current_visible"
+        
+        // Next Class
+        private const val KEY_NEXT_SUBJECT = "widget_next_subject"
+        private const val KEY_NEXT_COUNTDOWN = "widget_next_countdown"
+        private const val KEY_NEXT_VISIBLE = "widget_next_visible"
+        
+        // Today's Schedule
+        private const val KEY_SCHEDULE_COUNT = "widget_schedule_count"
+        private const val KEY_SCHEDULE_VISIBLE = "widget_schedule_visible"
+        
+        // Assignments
+        private const val KEY_ASSIGNMENTS_COUNT = "widget_assignments_count"
+        private const val KEY_ASSIGNMENTS_VISIBLE = "widget_assignments_visible"
+        
+        // Error state
+        private const val KEY_ERROR_MESSAGE = "widget_error_message"
+        private const val KEY_HAS_ERROR = "widget_has_error"
 
         private fun prefs(context: Context): SharedPreferences =
             context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
-
-        // home_widget plugin saves all values as Strings; read deadline safely
-        private fun readDeadlineMillis(prefs: SharedPreferences): Long {
-            return try {
-                prefs.getString(KEY_DEADLINE_TIMESTAMP, "0")?.toLongOrNull() ?: 0L
-            } catch (e: ClassCastException) {
-                prefs.getLong(KEY_DEADLINE_TIMESTAMP, 0L)
-            }
-        }
-
-        fun triggerForceUpdate(context: Context) {
-            context.sendBroadcast(
-                Intent(context, StudentPalWidgetProvider::class.java).apply {
-                    action = ACTION_FORCE_UPDATE
-                }
-            )
-        }
-
-        private fun startTicking(
-            context: Context,
-            mgr: AppWidgetManager,
-            widgetId: Int,
-            deadlineMs: Long
-        ) {
-            stopTicking()
-            isTicking = true
-            tickHandler = Handler(Looper.getMainLooper())
-            tickRunnable = object : Runnable {
-                override fun run() {
-                    if (!isTicking) return
-                    val remaining = max(0L, deadlineMs - System.currentTimeMillis())
-                    val h = remaining / 3_600_000
-                    val m = (remaining % 3_600_000) / 60_000
-                    val views = RemoteViews(context.packageName, R.layout.widget_layout)
-                    views.setTextViewText(R.id.widget_countdown, "%02d:%02d".format(h, m))
-                    mgr.partiallyUpdateAppWidget(widgetId, views)
-                    if (remaining > 0) tickHandler?.postDelayed(this, 30_000)
-                    else isTicking = false
-                }
-            }
-            tickHandler?.post(tickRunnable!!)
-        }
-
-        private fun stopTicking() {
-            isTicking = false
-            tickHandler?.removeCallbacksAndMessages(null)
-            tickHandler = null
-            tickRunnable = null
-        }
     }
 
     override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
@@ -93,105 +46,91 @@ class StudentPalWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_TICK || intent.action == ACTION_FORCE_UPDATE) {
+        if (intent.action == "com.example.mobile_app.WIDGET_FORCE_UPDATE") {
             val mgr = AppWidgetManager.getInstance(context)
             val cn = android.content.ComponentName(context, StudentPalWidgetProvider::class.java)
             for (id in mgr.getAppWidgetIds(cn)) updateAppWidget(context, mgr, id)
         }
     }
 
-    override fun onEnabled(context: Context) {
-        super.onEnabled(context)
-        scheduleAlarm(context)
-    }
-
-    override fun onDisabled(context: Context) {
-        super.onDisabled(context)
-        stopTicking()
-        cancelAlarm(context)
-    }
-
     private fun updateAppWidget(context: Context, mgr: AppWidgetManager, widgetId: Int) {
         val p = prefs(context)
-        val title      = p.getString(KEY_TITLE, "")                         ?: ""
-        val subtitle   = p.getString(KEY_SUBTITLE, "")                      ?: ""
-        val countdown  = p.getString(KEY_COUNTDOWN, "")                     ?: ""
-        val type       = p.getString(KEY_TYPE, "empty")                     ?: "empty"
-        val emptyMsg   = p.getString(KEY_EMPTY_MESSAGE, "Stay Productive!") ?: "Stay Productive!"
-        val deadlineMs = readDeadlineMillis(p)
-        val nickname   = p.getString(KEY_NICKNAME, "")                      ?: ""
-
-        stopTicking()
-
+        
+        val hasError = p.getBoolean(KEY_HAS_ERROR, false)
+        val errorMessage = p.getString(KEY_ERROR_MESSAGE, "") ?: ""
+        
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
-
-        if (type == "empty" || title.isEmpty()) {
-            views.setViewVisibility(R.id.widget_empty_message, View.VISIBLE)
-            views.setViewVisibility(R.id.widget_content,       View.GONE)
-            views.setTextViewText(
-                R.id.widget_empty_message,
-                emptyMsg.ifEmpty { "Stay Productive!" }
-            )
+        
+        if (hasError || errorMessage.isNotEmpty()) {
+            // Show error state
+            views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
+            views.setViewVisibility(R.id.widget_grid, View.GONE)
+            views.setTextViewText(R.id.widget_empty_message, errorMessage.ifEmpty { "Oops! Something went wrong" })
+            views.setTextViewText(R.id.widget_empty_sub, "Tap to open StudentPal")
         } else {
-            views.setViewVisibility(R.id.widget_empty_message, View.GONE)
-            views.setViewVisibility(R.id.widget_content,       View.VISIBLE)
-
-            if (nickname.isNotEmpty()) {
-                views.setTextViewText(R.id.widget_nickname, "@$nickname")
-                views.setViewVisibility(R.id.widget_nickname, View.VISIBLE)
+            // Show grid
+            views.setViewVisibility(R.id.widget_empty_state, View.GONE)
+            views.setViewVisibility(R.id.widget_grid, View.VISIBLE)
+            
+            // Current Class Section
+            val currentVisible = p.getBoolean(KEY_CURRENT_VISIBLE, false)
+            if (currentVisible) {
+                val currentSubject = p.getString(KEY_CURRENT_SUBJECT, "--") ?: "--"
+                val currentTime = p.getString(KEY_CURRENT_TIME, "") ?: ""
+                views.setTextViewText(R.id.widget_current_subject, currentSubject)
+                views.setTextViewText(R.id.widget_current_time, currentTime)
             } else {
-                views.setViewVisibility(R.id.widget_nickname, View.GONE)
+                views.setTextViewText(R.id.widget_current_subject, "No class")
+                views.setTextViewText(R.id.widget_current_time, "right now")
             }
-
-            val accent = if (type == "assignment")
-                Color.parseColor("#FFD700")
-            else
-                Color.parseColor("#00FF7F")
-
-            views.setTextViewText(R.id.widget_subtitle, subtitle.uppercase())
-            views.setTextColor(R.id.widget_subtitle, accent)
-            views.setTextViewText(R.id.widget_title, title)
-            views.setTextViewText(R.id.widget_countdown, countdown.ifEmpty { "00:00" })
-            views.setTextColor(R.id.widget_countdown, accent)
-
-            if (deadlineMs > System.currentTimeMillis()) {
-                startTicking(context, mgr, widgetId, deadlineMs)
+            
+            // Next Class Section
+            val nextVisible = p.getBoolean(KEY_NEXT_VISIBLE, false)
+            if (nextVisible) {
+                val nextSubject = p.getString(KEY_NEXT_SUBJECT, "--") ?: "--"
+                val nextCountdown = p.getString(KEY_NEXT_COUNTDOWN, "--") ?: "--"
+                views.setTextViewText(R.id.widget_next_subject, nextSubject)
+                views.setTextViewText(R.id.widget_next_countdown, nextCountdown)
+            } else {
+                views.setTextViewText(R.id.widget_next_subject, "No more")
+                views.setTextViewText(R.id.widget_next_countdown, "classes today")
+            }
+            
+            // Today's Schedule Section
+            val scheduleVisible = p.getBoolean(KEY_SCHEDULE_VISIBLE, false)
+            val scheduleCount = p.getInt(KEY_SCHEDULE_COUNT, 0)
+            if (scheduleVisible) {
+                views.setTextViewText(R.id.widget_schedule_count, scheduleCount.toString())
+                views.setTextViewText(R.id.widget_schedule_sublabel, 
+                    if (scheduleCount == 1) "class left" else "classes left")
+            } else {
+                views.setTextViewText(R.id.widget_schedule_count, "0")
+                views.setTextViewText(R.id.widget_schedule_sublabel, "classes left")
+            }
+            
+            // Assignments Section
+            val assignmentsVisible = p.getBoolean(KEY_ASSIGNMENTS_VISIBLE, false)
+            val assignmentsCount = p.getInt(KEY_ASSIGNMENTS_COUNT, 0)
+            if (assignmentsVisible) {
+                views.setTextViewText(R.id.widget_assignments_count, assignmentsCount.toString())
+                views.setTextViewText(R.id.widget_assignments_sublabel,
+                    if (assignmentsCount == 1) "pending" else "pending")
+            } else {
+                views.setTextViewText(R.id.widget_assignments_count, "0")
+                views.setTextViewText(R.id.widget_assignments_sublabel, "pending")
             }
         }
-
+        
+        // Set click intent to open app
         val tap = PendingIntent.getActivity(
             context, 0,
             Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                data  = Uri.parse("studentpal://widget")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.widget_root, tap)
-
+        
         mgr.updateAppWidget(widgetId, views)
-    }
-
-    private fun alarmPendingIntent(context: Context): PendingIntent =
-        PendingIntent.getBroadcast(
-            context, 1,
-            Intent(context, StudentPalWidgetProvider::class.java).apply {
-                action = ACTION_TICK
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-    private fun scheduleAlarm(context: Context) {
-        (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager)
-            .setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                System.currentTimeMillis() + 60_000,
-                alarmPendingIntent(context)
-            )
-    }
-
-    private fun cancelAlarm(context: Context) {
-        (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager)
-            .cancel(alarmPendingIntent(context))
     }
 }

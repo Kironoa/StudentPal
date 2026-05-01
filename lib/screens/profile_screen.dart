@@ -79,16 +79,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       await DatabaseHelper().updateUserProfile(
         widget.userId,
-        fullName: _fullNameController.text.trim().isNotEmpty
-            ? _fullNameController.text.trim() : null,
-        nickname: _nicknameController.text.trim().isNotEmpty
-            ? _nicknameController.text.trim() : null,
-        school: _schoolController.text.trim().isNotEmpty
-            ? _schoolController.text.trim() : null,
-        course: _courseController.text.trim().isNotEmpty
-            ? _courseController.text.trim() : null,
-        yearLevel: _yearLevelController.text.trim().isNotEmpty
-            ? _yearLevelController.text.trim() : null,
+        fullName: _fullNameController.text.trim(),
+        nickname: _nicknameController.text.trim(),
+        school: _schoolController.text.trim(),
+        course: _courseController.text.trim(),
+        yearLevel: _yearLevelController.text.trim(),
       );
 
       final displayName = _nicknameController.text.trim().isNotEmpty
@@ -96,25 +91,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           : _fullNameController.text.trim();
 
       if (displayName.isNotEmpty) {
-        await DatabaseHelper().saveSettings(name: displayName);
+        // Use upsert so missing row id=1 is never a silent failure
+        final db = DatabaseHelper();
+        await db.upsertSettings(name: displayName);
         if (mounted) ref.read(themeProvider.notifier).loadSettings();
       }
 
+      if (!mounted) return;
       setState(() => _isEditing = false);
-      if (mounted) ref.invalidate(userProvider(widget.userId));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profile updated!',
-                style: TextStyle(color: Colors.white)),
-            backgroundColor: Theme.of(context).primaryColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    } catch (_) {}
+      ref.invalidate(userProvider(widget.userId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Profile updated!',
+              style: TextStyle(color: Colors.white)),
+          backgroundColor: Theme.of(context).primaryColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[ProfileScreen] _saveProfile error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Save failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

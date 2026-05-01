@@ -35,18 +35,23 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 24,
+        version: 25,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            username TEXT, 
-            password TEXT, 
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT,
             passwordSalt TEXT,
             profilePath TEXT,
             secretQuestion TEXT,
             secretAnswer TEXT,
-            recoveryToken TEXT
+            recoveryToken TEXT,
+            fullName TEXT,
+            nickname TEXT,
+            school TEXT,
+            course TEXT,
+            yearLevel TEXT
           )
         ''');
 
@@ -167,6 +172,25 @@ class DatabaseHelper {
         if (oldVersion < 24) {
           await db.execute('DROP TABLE IF EXISTS reminders');
           await _createRemindersTable(db);
+        }
+        if (oldVersion < 25) {
+          final userColumns = await db.rawQuery('PRAGMA table_info(users)');
+          final userColNames = userColumns.map((c) => c['name'] as String).toList();
+          if (!userColNames.contains('fullName')) {
+            await db.execute('ALTER TABLE users ADD COLUMN fullName TEXT');
+          }
+          if (!userColNames.contains('nickname')) {
+            await db.execute('ALTER TABLE users ADD COLUMN nickname TEXT');
+          }
+          if (!userColNames.contains('school')) {
+            await db.execute('ALTER TABLE users ADD COLUMN school TEXT');
+          }
+          if (!userColNames.contains('course')) {
+            await db.execute('ALTER TABLE users ADD COLUMN course TEXT');
+          }
+          if (!userColNames.contains('yearLevel')) {
+            await db.execute('ALTER TABLE users ADD COLUMN yearLevel TEXT');
+          }
         }
       },
     );
@@ -452,6 +476,31 @@ class DatabaseHelper {
     }
   }
 
+  Future<void> upsertSettings({String? name, bool? dark, int? accentColor, double? uiScale}) async {
+    final db = await database;
+    final data = <String, dynamic>{};
+    if (name != null) data['username'] = name;
+    if (dark != null) data['isDarkMode'] = dark ? 1 : 0;
+    if (accentColor != null) data['accentColor'] = accentColor;
+    if (uiScale != null) data['uiScale'] = uiScale;
+    if (data.isEmpty) return;
+    // Try update first; if nothing updated, insert a full default row
+    final updated = await db.update('settings', data, where: 'id = 1');
+    if (updated == 0) {
+      await db.insert('settings', {
+        'id': 1,
+        'username': name ?? 'Student',
+        'isDarkMode': 0,
+        'isLoggedIn': 0,
+        'accentColor': accentColor ?? 4278238035,
+        'uiScale': uiScale ?? 1.0,
+        'notifyClasses': 1,
+        'notifyAssignments': 1,
+        ...data,
+      });
+    }
+  }
+
   Future<int> registerUser(String username, String password) async {
     final db = await database;
     final salt = CryptoUtils.generateSalt();
@@ -608,6 +657,15 @@ class DatabaseHelper {
     }
   }
 
+  /// Factory reset: deletes the database file so it gets recreated with the latest schema.
+  /// Call this from a dev-only screen or temporarily from main() to fix corrupted/mismatched schemas.
+  Future<void> resetDatabase() async {
+    final directory = await getApplicationSupportDirectory();
+    final path = join(directory.path, 'student_pal.db');
+    await databaseFactory.deleteDatabase(path);
+    _database = null;
+  }
+
   Future<int> updateUserProfilePhoto(int userId, String? imagePath) async {
     final db = await database;
     return await db.update('users', {'profilePath': imagePath},
@@ -628,6 +686,7 @@ class DatabaseHelper {
     if (school != null) data['school'] = school;
     if (course != null) data['course'] = course;
     if (yearLevel != null) data['yearLevel'] = yearLevel;
+    if (data.isEmpty) return 0;
     return await db.update('users', data,
         where: 'id = ?', whereArgs: [userId]);
   }

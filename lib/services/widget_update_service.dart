@@ -17,14 +17,23 @@ class WidgetUpdateService {
 
   static const int _alarmId = 99999;
 
-  static const String _keyTitle = 'widget_title';
-  static const String _keySubtitle = 'widget_subtitle';
-  static const String _keyCountdown = 'widget_countdown';
-  static const String _keyType = 'widget_type';
-  static const String _keyEmptyMessage = 'widget_empty_message';
-  static const String _keyLastUpdate = 'widget_last_update';
-  static const String _keyDeadlineTimestamp = 'widget_deadline_timestamp';
-  static const String _keyNickname = 'widget_nickname';
+  // Shared preference keys for 2x2 grid
+  static const String _keyCurrentSubject = 'widget_current_subject';
+  static const String _keyCurrentTime = 'widget_current_time';
+  static const String _keyCurrentVisible = 'widget_current_visible';
+
+  static const String _keyNextSubject = 'widget_next_subject';
+  static const String _keyNextCountdown = 'widget_next_countdown';
+  static const String _keyNextVisible = 'widget_next_visible';
+
+  static const String _keyScheduleCount = 'widget_schedule_count';
+  static const String _keyScheduleVisible = 'widget_schedule_visible';
+
+  static const String _keyAssignmentsCount = 'widget_assignments_count';
+  static const String _keyAssignmentsVisible = 'widget_assignments_visible';
+
+  static const String _keyErrorMessage = 'widget_error_message';
+  static const String _keyHasError = 'widget_has_error';
 
   Future<void> startPeriodicUpdates({int? userId}) async {
     await _initBackgroundService(userId: userId);
@@ -51,8 +60,8 @@ class WidgetUpdateService {
     await service.configure(
       androidConfiguration: AndroidConfiguration(
         onStart: _onStart,
-        autoStart: true,
-        isForegroundMode: true,
+        autoStart: false,
+        isForegroundMode: false,
         notificationChannelId: 'widget_update_channel',
         initialNotificationTitle: 'Student Pal Widget',
         initialNotificationContent: 'Keeping your widget up to date',
@@ -65,6 +74,12 @@ class WidgetUpdateService {
       ),
     );
 
+    final isRunning = await service.isRunning();
+    if (!isRunning) {
+      await service.startService();
+    }
+
+    await Future.delayed(const Duration(milliseconds: 800));
     service.invoke('setUserId', {'userId': userId});
   }
 
@@ -75,28 +90,29 @@ class WidgetUpdateService {
     int? userId;
     Timer? timer;
 
-    if (service is AndroidServiceInstance) {
-      service.on('setUserId').listen((event) {
-        if (event != null && event['userId'] != null) {
-          userId = event['userId'] as int;
-        }
-      });
-    }
-
-    service.on('stop').listen((event) async {
+    service.on('stop').listen((_) async {
       timer?.cancel();
       await service.stopSelf();
     });
 
-    if (userId != null) {
-      await _performWidgetUpdate(userId);
-    }
-
-    timer = Timer.periodic(const Duration(seconds: 60), (timer) async {
-      if (userId != null) {
-        await _performWidgetUpdate(userId);
+    service.on('setUserId').listen((event) async {
+      if (event != null && event['userId'] != null) {
+        userId = event['userId'] as int;
       }
+      await _performWidgetUpdate(userId);
+      timer?.cancel();
+      timer = Timer.periodic(const Duration(seconds: 60), (_) async {
+        await _performWidgetUpdate(userId);
+      });
     });
+
+    await Future.delayed(const Duration(seconds: 5));
+    if (userId == null) {
+      await _performWidgetUpdate(null);
+      timer ??= Timer.periodic(const Duration(seconds: 60), (_) async {
+        await _performWidgetUpdate(userId);
+      });
+    }
   }
 
   @pragma('vm:entry-point')
@@ -109,64 +125,159 @@ class WidgetUpdateService {
   @pragma('vm:entry-point')
   static Future<void> _performWidgetUpdate(int? userId) async {
     try {
+      // Get user ID from SharedPreferences if not provided
       if (userId == null) {
         final prefs = await SharedPreferences.getInstance();
         final storedUserId = prefs.getInt('userId');
         final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
         if (!isLoggedIn || storedUserId == null) {
-          await HomeWidget.saveWidgetData(_keyNickname, '');
-          await _setEmptyState('Stay Productive!');
+          debugPrint(
+              '[WidgetUpdateService] Not logged in — showing empty state');
+          await _setErrorState('Welcome to StudentPal!', true);
           return;
         }
         userId = storedUserId;
       }
 
+      debugPrint(
+          '[WidgetUpdateService] Updating 2x2 widget for userId=$userId');
+
       final db = DatabaseHelper();
+
+      // Verify user exists
       final userData = await db.getUser(userId);
       if (userData == null) {
-        await HomeWidget.saveWidgetData(_keyNickname, '');
-        await _setEmptyState('Stay Productive!');
+        debugPrint('[WidgetUpdateService] User not found in DB');
+        await _setErrorState('Unable to load your data', true);
         return;
       }
-      final nickname = userData['nickname'] as String? ?? '';
-      await HomeWidget.saveWidgetData(_keyNickname, nickname);
 
-      final currentClass = await _findCurrentClass(db, userId);
+      // Clear any previous error state
+      await HomeWidget.saveWidgetData(_keyHasError, false);
+      await HomeWidget.saveWidgetData(_keyErrorMessage, '');
+
+      // Get all classes for the user
+      final allClasses = await db.getAllClassModels(userId);
+      if (allClasses.isEmpty) {
+        debugPrint('[WidgetUpdateService] No classes found');
+        await _setEmptyGrid('No classes scheduled');
+        return;
+      }
+
+      final now = DateTime.now();
+      final todayIndex = now.weekday;
+      final dayMap = {
+        1: 'MON',
+        2: 'TUE',
+        3: 'WED',
+        4: 'THU',
+        5: 'FRI',
+        6: 'SAT',
+        7: 'SUN'
+      };
+      final todayAbbrev = dayMap[todayIndex]!;
+
+      // === TOP LEFT: Current Class ===
+      ClassModel? currentClass;
+      for (final classItem in allClasses) {
+        final classDays = classItem.days.toUpperCase();
+        if (_dayMatches(classDays, todayAbbrev)) {
+          if (TimeHelper.isClassActive(
+              classItem.startTime, classItem.endTime)) {
+            currentClass = classItem;
+            break;
+          }
+        }
+      }
+
       if (currentClass != null) {
-        await _setCurrentClass(currentClass);
-        return;
-      }
-
-      final nextClass = await _findNextClass(db, userId);
-      final nextAssignment = await _findNextAssignment(db, userId);
-
-      if (nextClass == null && nextAssignment == null) {
-        await _setEmptyState('No upcoming tasks');
-        return;
-      }
-
-      if (nextClass == null) {
-        await _setNextAssignment(nextAssignment!);
-        return;
-      }
-
-      if (nextAssignment == null) {
-        await _setNextClass(nextClass);
-        return;
-      }
-
-      final nextClassTime = _getNextClassDateTime(nextClass);
-      final assignmentTime = nextAssignment.deadlineDate ?? DateTime(2099);
-
-      if (nextClassTime.isBefore(assignmentTime)) {
-        await _setNextClass(nextClass);
+        await HomeWidget.saveWidgetData(
+            _keyCurrentSubject, currentClass.subject);
+        await HomeWidget.saveWidgetData(_keyCurrentTime,
+            '${currentClass.displayStartTime} - ${currentClass.displayEndTime}');
+        await HomeWidget.saveWidgetData(_keyCurrentVisible, true);
+        debugPrint(
+            '[WidgetUpdateService] Current class: ${currentClass.subject}');
       } else {
-        await _setNextAssignment(nextAssignment);
+        await HomeWidget.saveWidgetData(_keyCurrentVisible, false);
       }
-    } catch (e) {
-      debugPrint('[WidgetUpdateService] _performWidgetUpdate error: $e');
-      await HomeWidget.saveWidgetData(_keyNickname, '');
-      await _setEmptyState('Stay Productive!');
+
+      // === TOP RIGHT: Next Class with Countdown ===
+      ClassModel? nextClass;
+      int closestDiff = 999999;
+
+      for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+        final checkDayIndex = ((todayIndex - 1 + dayOffset) % 7) + 1;
+        final dayAbbrev = dayMap[checkDayIndex]!;
+
+        for (final classItem in allClasses) {
+          if (!_dayMatches(classItem.days.toUpperCase(), dayAbbrev)) continue;
+
+          final startMinutes = TimeHelper.convertToMinutes(classItem.startTime);
+          if (dayOffset == 0 && startMinutes <= TimeHelper.getCurrentMinutes())
+            continue;
+
+          final diff = (dayOffset * 1440) +
+              (startMinutes - TimeHelper.getCurrentMinutes());
+          if (diff < closestDiff && diff > 0) {
+            closestDiff = diff;
+            nextClass = classItem;
+          }
+        }
+
+        if (nextClass != null) break;
+      }
+
+      if (nextClass != null) {
+        await HomeWidget.saveWidgetData(_keyNextSubject, nextClass.subject);
+        final nextClassTime =
+            _getNextClassDateTime(nextClass, todayIndex, dayMap);
+        final remaining = nextClassTime.difference(DateTime.now());
+        await HomeWidget.saveWidgetData(
+            _keyNextCountdown, _formatCountdown(remaining));
+        await HomeWidget.saveWidgetData(_keyNextVisible, true);
+        debugPrint(
+            '[WidgetUpdateService] Next class: ${nextClass.subject} in ${_formatCountdown(remaining)}');
+      } else {
+        await HomeWidget.saveWidgetData(_keyNextVisible, false);
+      }
+
+      // === BOTTOM LEFT: Today's Remaining Classes ===
+      int classesToday = 0;
+      final currentMinutes = TimeHelper.getCurrentMinutes();
+
+      for (final classItem in allClasses) {
+        if (!_dayMatches(classItem.days.toUpperCase(), todayAbbrev)) continue;
+        final startMinutes = TimeHelper.convertToMinutes(classItem.startTime);
+        if (startMinutes > currentMinutes) {
+          classesToday++;
+        }
+      }
+
+      await HomeWidget.saveWidgetData(_keyScheduleCount, classesToday);
+      await HomeWidget.saveWidgetData(_keyScheduleVisible, true);
+      debugPrint('[WidgetUpdateService] Classes left today: $classesToday');
+
+      // === BOTTOM RIGHT: Pending Assignments ===
+      final assignmentsData = await db.getAssignments(userId);
+      int pendingAssignments = 0;
+
+      for (final data in assignmentsData) {
+        final assignment = Assignment.fromMap(data);
+        if (!assignment.isDone) {
+          pendingAssignments++;
+        }
+      }
+
+      await HomeWidget.saveWidgetData(_keyAssignmentsCount, pendingAssignments);
+      await HomeWidget.saveWidgetData(_keyAssignmentsVisible, true);
+      debugPrint(
+          '[WidgetUpdateService] Pending assignments: $pendingAssignments');
+
+      await _triggerNativeUpdate();
+    } catch (e, st) {
+      debugPrint('[WidgetUpdateService] Error updating widget: $e\n$st');
+      await _setErrorState('Having trouble loading data', true);
     }
   }
 
@@ -177,7 +288,6 @@ class WidgetUpdateService {
       _alarmCallback,
       exact: true,
       wakeup: true,
-      allowWhileIdle: true,
       rescheduleOnReboot: true,
     );
   }
@@ -187,91 +297,30 @@ class WidgetUpdateService {
     await _performWidgetUpdate(null);
   }
 
-  static Future<ClassModel?> _findCurrentClass(DatabaseHelper db, int userId) async {
-    final allClasses = await db.getAllClassModels(userId);
-    final now = DateTime.now();
-    final todayIndex = now.weekday;
-    final dayMap = {1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI', 6: 'SAT', 7: 'SUN'};
-    final todayAbbrev = dayMap[todayIndex]!;
-
-    for (final classItem in allClasses) {
-      final classDays = classItem.days.toUpperCase();
-      if (_dayMatches(classDays, todayAbbrev)) {
-        if (TimeHelper.isClassActive(classItem.startTime, classItem.endTime)) {
-          return classItem;
-        }
-      }
-    }
-    return null;
+  static bool _dayMatches(String classDays, String targetDay) {
+    if (classDays.contains(targetDay)) return true;
+    if (targetDay == 'WED' &&
+        classDays.contains('W') &&
+        !classDays.contains('TUE') &&
+        !classDays.contains('FRI')) return true;
+    if (targetDay == 'MON' &&
+        classDays.contains('M') &&
+        !classDays.contains('MON')) return true;
+    if (targetDay == 'SAT' &&
+        classDays.contains('S') &&
+        !classDays.contains('SUN')) return true;
+    return false;
   }
 
-  static Future<ClassModel?> _findNextClass(DatabaseHelper db, int userId) async {
-    final allClasses = await db.getAllClassModels(userId);
-    final now = DateTime.now();
-    final currentMinutes = TimeHelper.getCurrentMinutes();
-    final todayIndex = now.weekday;
-    final dayMap = {1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI', 6: 'SAT', 7: 'SUN'};
-
-    ClassModel? closestClass;
-    int closestDiff = 999999;
-
-    for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-      final checkDayIndex = ((todayIndex - 1 + dayOffset) % 7) + 1;
-      final dayAbbrev = dayMap[checkDayIndex]!;
-
-      final dayClasses = allClasses.where((c) {
-        return _dayMatches(c.days.toUpperCase(), dayAbbrev);
-      }).toList();
-
-      for (final classItem in dayClasses) {
-        final startMinutes = TimeHelper.convertToMinutes(classItem.startTime);
-        if (dayOffset == 0 && startMinutes <= currentMinutes) continue;
-
-        final diff = (dayOffset * 1440) + (startMinutes - currentMinutes);
-        if (diff < closestDiff && diff > 0) {
-          closestDiff = diff;
-          closestClass = classItem;
-        }
-      }
-
-      if (closestClass != null) break;
-    }
-
-    return closestClass;
-  }
-
-  static Future<Assignment?> _findNextAssignment(DatabaseHelper db, int userId) async {
-    final assignmentsData = await db.getAssignments(userId);
-    final now = DateTime.now();
-
-    Assignment? closest;
-    DateTime? closestDate;
-
-    for (final data in assignmentsData) {
-      final assignment = Assignment.fromMap(data);
-      if (assignment.isDone) continue;
-
-      final deadline = assignment.deadlineDate;
-      if (deadline == null || deadline.isBefore(now)) continue;
-
-      if (closestDate == null || deadline.isBefore(closestDate)) {
-        closestDate = deadline;
-        closest = assignment;
-      }
-    }
-
-    return closest;
-  }
-
-  static DateTime _getNextClassDateTime(ClassModel classItem) {
+  static DateTime _getNextClassDateTime(
+      ClassModel classItem, int todayIndex, Map<int, String> dayMap) {
     final now = DateTime.now();
     final startMinutes = TimeHelper.convertToMinutes(classItem.startTime);
-    final todayIndex = now.weekday;
-    final dayMap = {1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI', 6: 'SAT', 7: 'SUN'};
     final todayAbbrev = dayMap[todayIndex]!;
 
     if (_dayMatches(classItem.days.toUpperCase(), todayAbbrev)) {
-      final classTime = DateTime(now.year, now.month, now.day, startMinutes ~/ 60, startMinutes % 60);
+      final classTime = DateTime(
+          now.year, now.month, now.day, startMinutes ~/ 60, startMinutes % 60);
       if (classTime.isAfter(now)) return classTime;
     }
 
@@ -281,89 +330,49 @@ class WidgetUpdateService {
 
       if (_dayMatches(classItem.days.toUpperCase(), dayAbbrev)) {
         final futureDate = now.add(Duration(days: dayOffset));
-        return DateTime(futureDate.year, futureDate.month, futureDate.day, startMinutes ~/ 60, startMinutes % 60);
+        return DateTime(futureDate.year, futureDate.month, futureDate.day,
+            startMinutes ~/ 60, startMinutes % 60);
       }
     }
 
     return now.add(const Duration(days: 7));
   }
 
-  static bool _dayMatches(String classDays, String targetDay) {
-    if (classDays.contains(targetDay)) return true;
-    if (targetDay == 'WED' && classDays.contains('W') && !classDays.contains('TUE') && !classDays.contains('FRI')) return true;
-    if (targetDay == 'MON' && classDays.contains('M') && !classDays.contains('MON')) return true;
-    if (targetDay == 'SAT' && classDays.contains('S') && !classDays.contains('SUN')) return true;
-    return false;
-  }
-
-  static Future<void> _setCurrentClass(ClassModel classItem) async {
-    final now = DateTime.now();
-    final endMinutes = TimeHelper.convertToMinutes(classItem.endTime);
-    final endTime = DateTime(now.year, now.month, now.day, endMinutes ~/ 60, endMinutes % 60);
-    final remaining = endTime.difference(now);
-
-    await HomeWidget.saveWidgetData(_keyTitle, classItem.subject);
-    await HomeWidget.saveWidgetData(_keySubtitle, 'Current Class');
-    await HomeWidget.saveWidgetData(_keyCountdown, _formatCountdown(remaining));
-    await HomeWidget.saveWidgetData(_keyType, 'current_class');
-    await HomeWidget.saveWidgetData(_keyEmptyMessage, '');
-    await HomeWidget.saveWidgetData(_keyLastUpdate, now.millisecondsSinceEpoch);
-    await HomeWidget.saveWidgetData(_keyDeadlineTimestamp, endTime.millisecondsSinceEpoch);
-
-    await _triggerNativeUpdate();
-  }
-
-  static Future<void> _setNextClass(ClassModel classItem) async {
-    final nextTime = _getNextClassDateTime(classItem);
-    final remaining = nextTime.difference(DateTime.now());
-
-    await HomeWidget.saveWidgetData(_keyTitle, classItem.subject);
-    await HomeWidget.saveWidgetData(_keySubtitle, 'Next Class');
-    await HomeWidget.saveWidgetData(_keyCountdown, _formatCountdown(remaining));
-    await HomeWidget.saveWidgetData(_keyType, 'next_class');
-    await HomeWidget.saveWidgetData(_keyEmptyMessage, '');
-    await HomeWidget.saveWidgetData(_keyLastUpdate, DateTime.now().millisecondsSinceEpoch);
-    await HomeWidget.saveWidgetData(_keyDeadlineTimestamp, nextTime.millisecondsSinceEpoch);
-
-    await _triggerNativeUpdate();
-  }
-
-  static Future<void> _setNextAssignment(Assignment assignment) async {
-    final deadline = assignment.deadlineDate!;
-    final remaining = deadline.difference(DateTime.now());
-
-    await HomeWidget.saveWidgetData(_keyTitle, assignment.title);
-    await HomeWidget.saveWidgetData(_keySubtitle, 'Assignment');
-    await HomeWidget.saveWidgetData(_keyCountdown, _formatCountdown(remaining));
-    await HomeWidget.saveWidgetData(_keyType, 'assignment');
-    await HomeWidget.saveWidgetData(_keyEmptyMessage, '');
-    await HomeWidget.saveWidgetData(_keyLastUpdate, DateTime.now().millisecondsSinceEpoch);
-    await HomeWidget.saveWidgetData(_keyDeadlineTimestamp, deadline.millisecondsSinceEpoch);
-
-    await _triggerNativeUpdate();
-  }
-
-  static Future<void> _setEmptyState(String message) async {
-    await HomeWidget.saveWidgetData(_keyTitle, '');
-    await HomeWidget.saveWidgetData(_keySubtitle, '');
-    await HomeWidget.saveWidgetData(_keyCountdown, '');
-    await HomeWidget.saveWidgetData(_keyType, 'empty');
-    await HomeWidget.saveWidgetData(_keyEmptyMessage, message);
-    await HomeWidget.saveWidgetData(_keyLastUpdate, DateTime.now().millisecondsSinceEpoch);
-
-    await _triggerNativeUpdate();
-  }
-
   static String _formatCountdown(Duration duration) {
-    if (duration.isNegative) return '00:00';
+    if (duration.isNegative) return 'Now';
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    }
+    return '${minutes}m';
+  }
+
+  static Future<void> _setErrorState(String message, bool hasError) async {
+    await HomeWidget.saveWidgetData(_keyHasError, hasError);
+    await HomeWidget.saveWidgetData(_keyErrorMessage, message);
+    await HomeWidget.saveWidgetData(_keyCurrentVisible, false);
+    await HomeWidget.saveWidgetData(_keyNextVisible, false);
+    await HomeWidget.saveWidgetData(_keyScheduleVisible, false);
+    await HomeWidget.saveWidgetData(_keyAssignmentsVisible, false);
+    await _triggerNativeUpdate();
+  }
+
+  static Future<void> _setEmptyGrid(String message) async {
+    await HomeWidget.saveWidgetData(_keyHasError, true);
+    await HomeWidget.saveWidgetData(_keyErrorMessage, message);
+    await HomeWidget.saveWidgetData(_keyCurrentVisible, false);
+    await HomeWidget.saveWidgetData(_keyNextVisible, false);
+    await HomeWidget.saveWidgetData(_keyScheduleCount, 0);
+    await HomeWidget.saveWidgetData(_keyScheduleVisible, true);
+    await HomeWidget.saveWidgetData(_keyAssignmentsCount, 0);
+    await HomeWidget.saveWidgetData(_keyAssignmentsVisible, true);
+    await _triggerNativeUpdate();
   }
 
   static Future<void> _triggerNativeUpdate() async {
     await HomeWidget.updateWidget(
-      name: 'StudentPalWidgetProvider',
+      androidName: 'StudentPalWidgetProvider',
       iOSName: 'StudentPalWidget',
       qualifiedAndroidName: 'com.example.mobile_app.StudentPalWidgetProvider',
     );
