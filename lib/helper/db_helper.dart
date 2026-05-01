@@ -471,12 +471,13 @@ class DatabaseHelper {
   ) async {
     final db = await database;
     final salt = CryptoUtils.generateSalt();
+    final normalizedUsername = username.trim().toLowerCase();
     final plainSecretAnswer = secretAnswer.trim().toLowerCase();
-    final token = '${username}_${DateTime.now().millisecondsSinceEpoch}';
+    final token = '${normalizedUsername}_${DateTime.now().millisecondsSinceEpoch}';
     final recoveryToken = CryptoUtils.hashPassword(token, salt);
     
     final userId = await db.insert('users', {
-      'username': username,
+      'username': normalizedUsername,
       'password': CryptoUtils.hashPassword(password, salt),
       'passwordSalt': salt,
       'profilePath': null,
@@ -491,9 +492,10 @@ class DatabaseHelper {
   Future<Map<String, dynamic>?> checkLogin(
       String username, String password) async {
     final db = await database;
+    final normalizedUsername = username.trim().toLowerCase();
     final results = await db.query('users',
-        where: 'username = ?',
-        whereArgs: [username]);
+        where: 'LOWER(username) = ?',
+        whereArgs: [normalizedUsername]);
     if (results.isEmpty) return null;
     
     final user = results.first;
@@ -515,11 +517,12 @@ class DatabaseHelper {
 
   Future<bool> verifySecretAnswer(String username, String answer) async {
     final db = await database;
+    final normalizedUsername = username.trim().toLowerCase();
     final result = await db.query(
       'users',
       columns: ['secretAnswer'],
-      where: 'username = ?',
-      whereArgs: [username],
+      where: 'LOWER(username) = ?',
+      whereArgs: [normalizedUsername],
       limit: 1,
     );
     if (result.isEmpty) return false;
@@ -532,6 +535,15 @@ class DatabaseHelper {
     final results = await db.query('users',
         where: 'recoveryToken = ?',
         whereArgs: [token]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getUserById(int userId) async {
+    final db = await database;
+    final results = await db.query('users',
+        where: 'id = ?',
+        whereArgs: [userId],
+        limit: 1);
     return results.isNotEmpty ? results.first : null;
   }
 
@@ -554,20 +566,35 @@ class DatabaseHelper {
 
   Future<String?> getSecretQuestion(String username) async {
     final db = await database;
+    final normalizedUsername = username.trim().toLowerCase();
     final results = await db.query('users',
         columns: ['secretQuestion'],
-        where: 'username = ?',
-        whereArgs: [username]);
+        where: 'LOWER(username) = ?',
+        whereArgs: [normalizedUsername]);
     if (results.isEmpty) return null;
     return results.first['secretQuestion'] as String?;
   }
 
   Future<Map<String, dynamic>?> getUserByUsername(String username) async {
     final db = await database;
+    final normalizedUsername = username.trim().toLowerCase();
     final results = await db.query('users',
-        where: 'username = ?',
-        whereArgs: [username]);
+        where: 'LOWER(username) = ?',
+        whereArgs: [normalizedUsername]);
     return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<bool> usernameExists(String username) async {
+    final db = await database;
+    final normalizedUsername = username.trim().toLowerCase();
+    final results = await db.query(
+      'users',
+      columns: ['id'],
+      where: 'LOWER(username) = ?',
+      whereArgs: [normalizedUsername],
+      limit: 1,
+    );
+    return results.isNotEmpty;
   }
 
   Future<Map<String, dynamic>?> getUser(int userId) async {

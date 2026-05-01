@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/app_user.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
@@ -15,11 +16,19 @@ class StudentPalLogin extends ConsumerStatefulWidget {
   ConsumerState<StudentPalLogin> createState() => _StudentPalLoginState();
 }
 
+class LowerCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return newValue.copyWith(text: newValue.text.toLowerCase());
+  }
+}
+
 class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
   bool isPressed = false;
   final AuthService _authService = AuthService();
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
 
   double res(BuildContext context, double value) {
     return value * ref.read(themeProvider).uiScale;
@@ -45,7 +54,8 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
   }
 
   void _handleLogin() async {
-    final username = _userController.text.trim();
+    FocusScope.of(context).unfocus();
+    final username = _userController.text.trim().toLowerCase();
     final password = _passController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
@@ -125,6 +135,7 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
   void dispose() {
     _userController.dispose();
     _passController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -195,19 +206,27 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
                               ),
                               SizedBox(height: res(context, 25)),
                               _buildField(
-                                context,
-                                Icons.alternate_email,
-                                "Username",
-                                controller: _userController,
-                              ),
-                              SizedBox(height: res(context, 15)),
-                              _buildField(
-                                context,
-                                Icons.lock,
-                                "Password",
-                                isPassword: true,
-                                controller: _passController,
-                              ),
+                                 context,
+                                 Icons.alternate_email,
+                                 "Username",
+                                 controller: _userController,
+                                 formatters: [LowerCaseTextFormatter()],
+                                 textInputAction: TextInputAction.next,
+                                 onSubmitted: (_) {
+                                   FocusScope.of(context).requestFocus(_passwordFocusNode);
+                                 },
+                               ),
+                               SizedBox(height: res(context, 15)),
+                               _buildField(
+                                 context,
+                                 Icons.lock,
+                                 "Password",
+                                 isPassword: true,
+                                 controller: _passController,
+                                 focusNode: _passwordFocusNode,
+                                 textInputAction: TextInputAction.done,
+                                 onSubmitted: (_) => _handleLogin(),
+                               ),
                               SizedBox(height: res(context, 30)),
                               Row(
                                 children: [
@@ -261,6 +280,10 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
     String hint, {
     bool isPassword = false,
     TextEditingController? controller,
+    List<TextInputFormatter>? formatters,
+    TextInputAction? textInputAction,
+    FocusNode? focusNode,
+    Function(String)? onSubmitted,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -278,6 +301,10 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
       child: TextField(
         controller: controller,
         obscureText: isPassword,
+        inputFormatters: formatters,
+        textInputAction: textInputAction,
+        focusNode: focusNode,
+        onSubmitted: onSubmitted,
         style: TextStyle(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
         decoration: InputDecoration(

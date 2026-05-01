@@ -19,7 +19,8 @@ class AuthService {
   }
 
   Future<AppUser?> login(String username, String password) async {
-    final userMap = await _dbHelper.checkLogin(username, password);
+    final normalizedUsername = username.trim().toLowerCase();
+    final userMap = await _dbHelper.checkLogin(normalizedUsername, password);
     if (userMap == null) {
       return null;
     }
@@ -30,23 +31,17 @@ class AuthService {
   }
 
   Future<bool> usernameExists(String username) async {
-    final db = await _dbHelper.database;
-    final existingUsers = await db.query(
-      'users',
-      columns: ['id'],
-      where: 'username = ?',
-      whereArgs: [username],
-      limit: 1,
-    );
-    return existingUsers.isNotEmpty;
+    final normalizedUsername = username.trim().toLowerCase();
+    return await _dbHelper.usernameExists(normalizedUsername);
   }
 
   Future<AppUser?> register(String username, String password, String secretQuestion, String secretAnswer) async {
-    final result = await _dbHelper.registerUserWithRecovery(username, password, secretQuestion, secretAnswer);
+    final normalizedUsername = username.trim().toLowerCase();
+    final result = await _dbHelper.registerUserWithRecovery(normalizedUsername, password, secretQuestion, secretAnswer);
     final userId = result['id'] as int;
     final userMap = await _dbHelper.getUser(userId);
     if (userMap == null) {
-      return AppUser(id: userId, username: username);
+      return AppUser(id: userId, username: normalizedUsername);
     }
     return AppUser.fromMap(userMap);
   }
@@ -57,16 +52,23 @@ class AuthService {
     String secretQuestion,
     String secretAnswer,
   ) async {
-    final result = await _dbHelper.registerUserWithRecovery(username, password, secretQuestion, secretAnswer);
+    final normalizedUsername = username.trim().toLowerCase();
+    final result = await _dbHelper.registerUserWithRecovery(normalizedUsername, password, secretQuestion, secretAnswer);
     final userId = result['id'] as int;
     final recoveryToken = result['token'] as String;
     final userMap = await _dbHelper.getUser(userId);
-    final user = userMap != null ? AppUser.fromMap(userMap) : AppUser(id: userId, username: username);
+    final user = userMap != null ? AppUser.fromMap(userMap) : AppUser(id: userId, username: normalizedUsername);
     return {'user': user, 'recoveryToken': recoveryToken};
   }
 
   Future<void> logout() {
     return _sessionService.clearSession();
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    final session = await loadSession();
+    if (!session.hasActiveUser) return null;
+    return await _dbHelper.getUserById(session.userId!);
   }
 
   Future<String?> getSecretQuestion(String username) {
@@ -86,7 +88,8 @@ class AuthService {
   }
 
   Future<AppUser?> getUserByUsername(String username) async {
-    final userMap = await _dbHelper.getUserByUsername(username);
+    final normalizedUsername = username.trim().toLowerCase();
+    final userMap = await _dbHelper.getUserByUsername(normalizedUsername);
     if (userMap == null) return null;
     return AppUser.fromMap(userMap);
   }

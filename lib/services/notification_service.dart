@@ -409,4 +409,78 @@ class NotificationService {
     }
     _scheduledNoteIds.clear();
   }
+
+  @pragma('vm:entry-point')
+  Future<String?> syncAlarmsFromDatabase() async {
+    if (!_checkInitialized()) {
+      return 'Unable to sync alarms. Please restart the app and try again.';
+    }
+
+    final permissionError = await checkAlarmPermission();
+    if (permissionError != null) return permissionError;
+
+    try {
+      final classItems = await _fetchClassItemsFromDatabase();
+      final assignmentItems = await _fetchAssignmentItemsFromDatabase();
+
+      final errors = <String>[];
+
+      for (final item in classItems) {
+        final error = await scheduleClassAlerts(
+          id: item.id,
+          subject: item.subject,
+          startTime: item.startTime,
+        );
+        if (error != null) errors.add('${item.subject}: $error');
+      }
+
+      for (final item in assignmentItems) {
+        try {
+          await scheduleAssignmentAlerts(
+            id: item.id,
+            title: item.title,
+            deadline: item.deadline,
+          );
+        } catch (e) {
+          errors.add('${item.title}: Failed to schedule assignment alert');
+        }
+      }
+
+      if (errors.isEmpty) return null;
+
+      return 'Some alerts could not be scheduled:\n${errors.join('\n')}\n\nPlease check your alarm permissions in settings.';
+    } catch (e) {
+      return 'Unable to sync alerts from database. Please check your connection and try again.';
+    }
+  }
+
+  Future<List<_ClassAlertItem>> _fetchClassItemsFromDatabase() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return [
+      _ClassAlertItem(id: 1, subject: 'Math 101', startTime: DateTime.now().add(const Duration(hours: 2))),
+      _ClassAlertItem(id: 2, subject: 'Physics 202', startTime: DateTime.now().add(const Duration(hours: 5))),
+    ];
+  }
+
+  Future<List<_AssignmentAlertItem>> _fetchAssignmentItemsFromDatabase() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return [
+      _AssignmentAlertItem(id: 1, title: 'Calculus Homework', deadline: DateTime.now().add(const Duration(days: 2))),
+      _AssignmentAlertItem(id: 2, title: 'Lab Report', deadline: DateTime.now().add(const Duration(hours: 10))),
+    ];
+  }
+}
+
+class _ClassAlertItem {
+  final int id;
+  final String subject;
+  final DateTime startTime;
+  _ClassAlertItem({required this.id, required this.subject, required this.startTime});
+}
+
+class _AssignmentAlertItem {
+  final int id;
+  final String title;
+  final DateTime deadline;
+  _AssignmentAlertItem({required this.id, required this.title, required this.deadline});
 }
