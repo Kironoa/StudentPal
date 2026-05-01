@@ -32,6 +32,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _loadUserData();
   }
 
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _nicknameController.dispose();
+    _schoolController.dispose();
+    _courseController.dispose();
+    _yearLevelController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadUserData() async {
     try {
       final user = await DatabaseHelper().getUser(widget.userId);
@@ -60,9 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await DatabaseHelper()
           .updateUserProfilePhoto(widget.userId, pickedFile.path);
       setState(() => _profileImagePath = pickedFile.path);
-      if (mounted) {
-        ref.invalidate(userProvider(widget.userId));
-      }
+      if (mounted) ref.invalidate(userProvider(widget.userId));
     }
   }
 
@@ -72,20 +80,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await DatabaseHelper().updateUserProfile(
         widget.userId,
         fullName: _fullNameController.text.trim().isNotEmpty
-            ? _fullNameController.text.trim()
-            : null,
+            ? _fullNameController.text.trim() : null,
         nickname: _nicknameController.text.trim().isNotEmpty
-            ? _nicknameController.text.trim()
-            : null,
+            ? _nicknameController.text.trim() : null,
         school: _schoolController.text.trim().isNotEmpty
-            ? _schoolController.text.trim()
-            : null,
+            ? _schoolController.text.trim() : null,
         course: _courseController.text.trim().isNotEmpty
-            ? _courseController.text.trim()
-            : null,
+            ? _courseController.text.trim() : null,
         yearLevel: _yearLevelController.text.trim().isNotEmpty
-            ? _yearLevelController.text.trim()
-            : null,
+            ? _yearLevelController.text.trim() : null,
       );
 
       final displayName = _nicknameController.text.trim().isNotEmpty
@@ -94,15 +97,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (displayName.isNotEmpty) {
         await DatabaseHelper().saveSettings(name: displayName);
-        if (mounted) {
-          ref.read(themeProvider.notifier).loadSettings();
-        }
+        if (mounted) ref.read(themeProvider.notifier).loadSettings();
       }
 
       setState(() => _isEditing = false);
-      if (mounted) {
-        ref.invalidate(userProvider(widget.userId));
-      }
+      if (mounted) ref.invalidate(userProvider(widget.userId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -110,8 +109,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: Colors.white)),
             backgroundColor: Theme.of(context).primaryColor,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -122,14 +121,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
+    final mq = MediaQuery.of(context);
+    // Use viewInsets (keyboard height) + safe area bottom for total bottom padding
+    final bottomPadding = mq.viewInsets.bottom + mq.padding.bottom + 20;
 
     return Scaffold(
+      // Let Scaffold resize so the scroll area shrinks when keyboard appears
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.grid_view_rounded, color: theme.colorScheme.primary, size: 22),
+          icon: Icon(Icons.grid_view_rounded,
+              color: theme.colorScheme.primary, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('MY PROFILE',
@@ -144,94 +149,97 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: () => setState(() => _isEditing = true),
               icon: Icon(Icons.edit_outlined, color: accent, size: 18),
               label: Text('EDIT',
-                  style: TextStyle(color: accent, fontWeight: FontWeight.w900)),
+                  style:
+                      TextStyle(color: accent, fontWeight: FontWeight.w900)),
             ),
         ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: accent))
-          : SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: _isEditing ? _pickImage : null,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: accent.withValues(alpha: 0.3), width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: accent.withValues(alpha: 0.1),
-                          backgroundImage: (_profileImagePath != null &&
-                                  File(_profileImagePath!).existsSync())
-                              ? FileImage(File(_profileImagePath!))
-                              : null,
-                          child: (_profileImagePath == null ||
-                                  !File(_profileImagePath!).existsSync())
-                              ? Icon(Icons.person_rounded,
-                                  color: accent, size: 50)
-                              : null,
-                        ),
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              // Top padding accounts for status bar via SafeArea equivalent
+              padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding),
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: _isEditing ? _pickImage : null,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: accent.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: accent.withValues(alpha: 0.1),
+                        backgroundImage: (_profileImagePath != null &&
+                                File(_profileImagePath!).existsSync())
+                            ? FileImage(File(_profileImagePath!))
+                            : null,
+                        child: (_profileImagePath == null ||
+                                !File(_profileImagePath!).existsSync())
+                            ? Icon(Icons.person_rounded,
+                                color: accent, size: 50)
+                            : null,
                       ),
                     ),
-                    if (_isEditing)
-                      TextButton(
-                        onPressed: _pickImage,
-                        child: Text('Change Photo',
-                            style: TextStyle(
-                                color: accent, fontWeight: FontWeight.w600)),
-                      ),
-                    const SizedBox(height: 24),
-                    _buildProfileCard(theme, accent),
-                    const SizedBox(height: 20),
-                    if (_isEditing)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () =>
-                                  setState(() => _isEditing = false),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: theme.hintColor),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              child: Text('CANCEL',
-                                  style: TextStyle(
-                                      color: theme.hintColor,
-                                      fontWeight: FontWeight.w900)),
+                  ),
+                  if (_isEditing)
+                    TextButton(
+                      onPressed: _pickImage,
+                      child: Text('Change Photo',
+                          style: TextStyle(
+                              color: accent, fontWeight: FontWeight.w600)),
+                    ),
+                  const SizedBox(height: 24),
+                  _buildProfileCard(theme, accent),
+                  const SizedBox(height: 20),
+                  if (_isEditing)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                setState(() => _isEditing = false),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: theme.hintColor),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
                             ),
+                            child: Text('CANCEL',
+                                style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontWeight: FontWeight.w900)),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _saveProfile,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: accent,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              child: const Text('SAVE',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _saveProfile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accent,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
                             ),
+                            child: const Text('SAVE',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900)),
                           ),
-                        ],
-                      ),
-                  ],
-                ),
+                        ),
+                      ],
+                    ),
+                  // Extra breathing room below buttons
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
     );
@@ -242,16 +250,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _buildField('Full Name', Icons.person_rounded, _fullNameController,
-              _isEditing),
+          _buildField('Full Name', Icons.person_rounded,
+              _fullNameController, _isEditing),
           _buildDivider(),
-          _buildField(
-              'Nickname', Icons.face_rounded, _nicknameController, _isEditing),
+          _buildField('Nickname', Icons.face_rounded,
+              _nicknameController, _isEditing),
           _buildDivider(),
           _buildField('School/University', Icons.school_rounded,
               _schoolController, _isEditing),
@@ -270,7 +279,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       TextEditingController controller, bool isEditing) {
     final theme = Theme.of(context);
     final accent = theme.primaryColor;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
