@@ -67,6 +67,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    FocusScope.of(context).unfocus();
     try {
       await DatabaseHelper().updateUserProfile(
         widget.userId,
@@ -152,6 +153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           : SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [

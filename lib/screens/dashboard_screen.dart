@@ -254,6 +254,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Future<void> _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
+    ref.invalidate(userProvider(widget.userId));
+    ref.invalidate(themeProvider);
+
     if (!mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(

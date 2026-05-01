@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:async';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
@@ -11,6 +14,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/services/battery_optimization_service.dart';
+import 'package:mobile_app/services/widget_update_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 
@@ -36,6 +40,14 @@ void main() async {
       systemNavigationBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
+  }
+
+  if (Platform.isIOS) {
+    await HomeWidget.setAppGroupId('group.com.example.mobile_app');
+  }
+
+  if (Platform.isAndroid) {
+    await AndroidAlarmManager.initialize();
   }
 
   final notificationService = NotificationService();
@@ -70,7 +82,18 @@ class _StudentPalAppState extends ConsumerState<StudentPalApp> {
   void initState() {
     super.initState();
     final authService = AuthService();
-    _sessionFuture = authService.loadSession();
+    _sessionFuture = authService.loadSession().then((session) {
+      if (session.hasActiveUser) {
+        WidgetUpdateService().startPeriodicUpdates(userId: session.userId);
+      }
+      return session;
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetUpdateService().stopPeriodicUpdates();
+    super.dispose();
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:mobile_app/services/widget_update_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -468,6 +469,15 @@ class NotificationService {
       _AssignmentAlertItem(id: 1, title: 'Calculus Homework', deadline: DateTime.now().add(const Duration(days: 2))),
       _AssignmentAlertItem(id: 2, title: 'Lab Report', deadline: DateTime.now().add(const Duration(hours: 10))),
     ];
+  }
+
+  @pragma('vm:entry-point')
+  Future<void> refreshWidget({int? userId}) async {
+    try {
+      await WidgetUpdateService().performOneTimeUpdate(userId: userId);
+    } catch (e) {
+      debugPrint('[NotificationService] refreshWidget error: $e');
+    }
   }
 }
 
