@@ -139,14 +139,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           visualDensity: VisualDensity.compact,
           icon: Icon(Icons.grid_view_rounded,
               color: theme.colorScheme.primary, size: 22),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {},
         ),
         title: Text('MY PROFILE',
             style: TextStyle(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
-                letterSpacing: 1.5)),
+                letterSpacing: 1.5),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
         actions: [
           if (!_isEditing && !_isLoading)
             TextButton.icon(

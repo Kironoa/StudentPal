@@ -26,7 +26,17 @@ import 'package:mobile_app/utils/responsive.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
-  const StudentDashboard({super.key, required this.userId});
+  final VoidCallback? onNavigateToSchedule;
+  final VoidCallback? onNavigateToAssignments;
+  final VoidCallback? onNavigateToProfile;
+
+  const StudentDashboard({
+    super.key,
+    required this.userId,
+    this.onNavigateToSchedule,
+    this.onNavigateToAssignments,
+    this.onNavigateToProfile,
+  });
 
   @override
   ConsumerState<StudentDashboard> createState() => _StudentDashboardState();
@@ -47,7 +57,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Schedule? _currentClass;
   Schedule? _nextClass;
 
-  int _selectedIndex = 0;
   bool _isSpeedDialExpanded = false;
 
   @override
@@ -388,30 +397,15 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   }
 
   void _navigateToSchedulePage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SchedulePage(userId: widget.userId),
-      ),
-    ).then((_) => _loadDashboardData());
+    widget.onNavigateToSchedule?.call();
   }
 
   void _navigateToAssignmentsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AssignmentsScreen(userId: widget.userId),
-      ),
-    ).then((_) => _loadDashboardData());
+    widget.onNavigateToAssignments?.call();
   }
 
   void _navigateToProfilePage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(userId: widget.userId),
-      ),
-    );
+    widget.onNavigateToProfile?.call();
   }
 
   void _showChatModal() {
@@ -610,42 +604,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           _buildSpeedDial(dynamicAccent),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() { _selectedIndex = index; });
-          if (index == 1) {
-            _navigateToSchedulePage();
-          } else if (index == 2) {
-            _navigateToAssignmentsPage();
-          } else if (index == 3) {
-            _navigateToProfilePage();
-          }
-        },
-        selectedItemColor: theme.colorScheme.primary,
-        unselectedItemColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: theme.cardColor,
-        elevation: 8,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_rounded),
-            label: 'Schedule',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.task_alt_rounded),
-            label: 'Tasks',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
-      ),
     );
   }
 
@@ -696,10 +654,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           side: BorderSide(color: onSurface.withValues(alpha: 0.05))),
       onSelected: (value) {
         if (value == 0) {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => ProfileScreen(userId: widget.userId)));
+          widget.onNavigateToProfile?.call();
         } else if (value == 1) {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => const SettingsScreen()));
@@ -807,12 +762,16 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(title,
-            style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: r(20),
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5)),
+        Flexible(
+          child: Text(title,
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: r(20),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1),
+        ),
         if (trailing != null)
           InkWell(
             onTap: onTrailingTap,

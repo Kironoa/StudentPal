@@ -8,7 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:mobile_app/models/user_session.dart';
 import 'package:mobile_app/screens/login_screen.dart';
-import 'package:mobile_app/screens/dashboard_screen.dart';
+import 'package:mobile_app/screens/main_scaffold.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mobile_app/services/notification_service.dart';
@@ -132,7 +132,7 @@ class _StudentPalAppState extends ConsumerState<StudentPalApp> {
           final session = snapshot.data ?? UserSession.loggedOut;
 
           if (session.hasActiveUser) {
-            return StudentDashboard(userId: session.userId!);
+            return MainScaffold(userId: session.userId!);
           } else {
             return const Scaffold(
               resizeToAvoidBottomInset: false,

@@ -91,11 +91,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
             fontSize: res(context, 16),
             letterSpacing: 1.5,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
         leading: IconButton(
           visualDensity: VisualDensity.compact,
           icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {},
         ),
       ),
       body: Column(
