@@ -36,6 +36,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     with TickerProviderStateMixin {
   late Timer _classTimer;
   late AnimationController _bgAnimationController;
+  late AnimationController _speedDialAnimationController;
   late ScrollController _scrollController;
 
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -46,6 +47,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Schedule? _currentClass;
   Schedule? _nextClass;
 
+  int _selectedIndex = 0;
+  bool _isSpeedDialExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       vsync: this,
       duration: const Duration(seconds: 20),
     )..repeat();
+    _speedDialAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   double res(BuildContext context, double value) => value;
@@ -248,6 +256,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     _classTimer.cancel();
     _scrollController.dispose();
     _bgAnimationController.dispose();
+    _speedDialAnimationController.dispose();
     super.dispose();
   }
 
@@ -378,6 +387,57 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     );
   }
 
+  void _navigateToSchedulePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SchedulePage(userId: widget.userId),
+      ),
+    ).then((_) => _loadDashboardData());
+  }
+
+  void _navigateToAssignmentsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AssignmentsScreen(userId: widget.userId),
+      ),
+    ).then((_) => _loadDashboardData());
+  }
+
+  void _navigateToProfilePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(userId: widget.userId),
+      ),
+    );
+  }
+
+  void _showChatModal() {
+    showCenteredModal(
+      context: context,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          width: MediaQuery.of(context).size.width * 0.9,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F0F),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 0.5),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: ChatScreen(userId: widget.userId),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -444,18 +504,38 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                   child: Padding(
                     padding:
                         EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
-                    child: _buildSectionTitle(
-                      "Today's Schedule",
-                      dynamicAccent,
-                      r,
-                      trailing: "Manage",
-                      onTrailingTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              SchedulePage(userId: widget.userId),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            _buildSectionTitle(
+                                "Today's Schedule", dynamicAccent, r),
+                            TextButton(
+                              onPressed: _navigateToSchedulePage,
+                              child: Text(
+                                "Manage",
+                                style: TextStyle(
+                                  color: dynamicAccent,
+                                  fontSize: r(13),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ).then((_) => _loadDashboardData()),
+                        SizedBox(height: r(4)),
+                        Text(
+                          DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                          style: TextStyle(
+                            color: dynamicAccent,
+                            fontSize: r(12),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -477,15 +557,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       dynamicAccent,
                       r,
                       trailing: "View All",
-                      onTrailingTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Builder(
-                            builder: (innerContext) =>
-                                AssignmentsScreen(userId: widget.userId),
-                          ),
-                        ),
-                      ).then((_) => _loadDashboardData()),
+                      onTrailingTap: _navigateToAssignmentsPage,
                     ),
                   ),
                 ),
@@ -520,102 +592,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
+                    padding: EdgeInsets.only(
+                        left: r(20), right: r(20), top: r(15)),
                     child: RepaintBoundary(
-                      child: _buildResourceTile(
-                        "Study Notes",
-                        Icons.note_alt_rounded,
-                        "Manage your quick notes",
-                        dynamicAccent,
-                        r,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  NotesScreen(userId: widget.userId)),
-                        ).then((_) => _loadDashboardData()),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: r(20), right: r(20)),
-                    child: RepaintBoundary(
-                      child: _buildResourceTile(
-                        "Flashcards",
-                        Icons.style_rounded,
-                        "Review your active decks",
-                        dynamicAccent,
-                        r,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  FlashcardsScreen(userId: widget.userId)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: r(20), right: r(20)),
-                    child: RepaintBoundary(
-                      child: _buildResourceTile(
-                        "Sample Quizzes",
-                        Icons.psychology_alt_rounded,
-                        "Test your knowledge",
-                        dynamicAccent,
-                        r,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  QuizzesScreen(userId: widget.userId)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: r(20), right: r(20)),
-                    child: RepaintBoundary(
-                      child: _buildResourceTile(
-                        "Summaries",
-                        Icons.article_outlined,
-                        "Quick review of key points",
-                        dynamicAccent,
-                        r,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  SummariesScreen(userId: widget.userId)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: r(20), right: r(20)),
-                    child: RepaintBoundary(
-                      child: _buildResourceTile(
-                        "Library Access",
-                        Icons.local_library_rounded,
-                        "Digital archives available",
-                        dynamicAccent,
-                        r,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  ResourcesScreen(userId: widget.userId)),
-                        ),
-                      ),
+                      child: _buildResourcesGrid(dynamicAccent, r),
                     ),
                   ),
                 ),
@@ -627,30 +607,42 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
               ],
             ),
           ),
-          AIFloatingChatHead(
-            onPressed: () {
-              showCenteredModal(
-                context: context,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F0F0F),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          width: 0.5),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: ChatScreen(userId: widget.userId),
-                    ),
-                  ),
-                ),
-              );
-            },
+          _buildSpeedDial(dynamicAccent),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() { _selectedIndex = index; });
+          if (index == 1) {
+            _navigateToSchedulePage();
+          } else if (index == 2) {
+            _navigateToAssignmentsPage();
+          } else if (index == 3) {
+            _navigateToProfilePage();
+          }
+        },
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: theme.cardColor,
+        elevation: 8,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_rounded),
+            label: 'Schedule',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.task_alt_rounded),
+            label: 'Tasks',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
           ),
         ],
       ),
@@ -723,33 +715,33 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         _buildPopupItem(2, Icons.logout_rounded, "Logout", accent, r,
             isDestructive: true),
       ],
-       child: Container(
-         padding: const EdgeInsets.all(2),
-         decoration: BoxDecoration(
-             shape: BoxShape.circle,
-             border:
-                 Border.all(color: accent.withValues(alpha: 0.2), width: 1.5)),
-         child: Consumer(
-           builder: (context, ref, _) {
-             final userAsync = ref.watch(userProvider(widget.userId));
-             final profileImagePath = userAsync.asData?.value?['profilePath'] as String?;
-             return CircleAvatar(
-               radius: r(14),
-               backgroundColor: accent.withValues(alpha: 0.1),
-               backgroundImage: (profileImagePath != null &&
-                       File(profileImagePath).existsSync())
-                   ? FileImage(File(profileImagePath))
-                   : null,
-               child: (profileImagePath == null ||
-                       !File(profileImagePath).existsSync())
-                   ? Icon(Icons.person_rounded, color: accent, size: r(16))
-                   : null,
-             );
-           },
-         ),
-       ),
-     );
-   }
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border:
+                Border.all(color: accent.withValues(alpha: 0.2), width: 1.5)),
+        child: Consumer(
+          builder: (context, ref, _) {
+            final userAsync = ref.watch(userProvider(widget.userId));
+            final profileImagePath = userAsync.asData?.value?['profilePath'] as String?;
+            return CircleAvatar(
+              radius: r(14),
+              backgroundColor: accent.withValues(alpha: 0.1),
+              backgroundImage: (profileImagePath != null &&
+                      File(profileImagePath).existsSync())
+                  ? FileImage(File(profileImagePath))
+                  : null,
+              child: (profileImagePath == null ||
+                      !File(profileImagePath).existsSync())
+                  ? Icon(Icons.person_rounded, color: accent, size: r(16))
+                  : null,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   PopupMenuItem<int> _buildPopupItem(int value, IconData icon, String title,
       Color accent, double Function(double) r,
@@ -838,6 +830,18 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   }
 
   Widget _buildProgressRow(Color accent, double Function(double) r) {
+    final now = DateTime.now();
+    double progress = 0.0;
+    if (_currentClass != null) {
+      final startTime = _parseTime(_currentClass!.startTime);
+      final endTime = _parseTime(_currentClass!.endTime);
+      final totalDuration = endTime.difference(startTime).inSeconds;
+      final elapsed = now.difference(startTime).inSeconds;
+      if (totalDuration > 0) {
+        progress = (elapsed / totalDuration).clamp(0.0, 1.0);
+      }
+    }
+
     return Row(
       children: [
         Expanded(
@@ -848,7 +852,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     _formatCountdown(_currentClass),
                     accent.withValues(alpha: 0.4),
                     r,
-                    isActive: _currentClass != null))),
+                    isActive: _currentClass != null,
+                    showProgress: _currentClass != null,
+                    progress: progress,
+                    cardAccent: accent))),
         SizedBox(width: r(14)),
         Expanded(
             child: GestureDetector(
@@ -858,15 +865,27 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     _formatCountdown(_nextClass, isNext: true),
                     accent,
                     r,
-                    isActive: true))),
+                    isActive: true,
+                    showClock: true,
+                    cardAccent: accent))),
       ],
     );
   }
 
   Widget _buildCountdownCard(String label, String className, String time,
       Color accent, double Function(double) r,
-      {bool isActive = false}) {
+      {bool isActive = false,
+      bool showProgress = false,
+      double progress = 0.0,
+      bool showClock = false,
+      Color? cardAccent}) {
     final theme = Theme.of(context);
+    final cardAccentColor = cardAccent ?? Colors.grey;
+    final statusColor = label == "CURRENT"
+        ? (isActive ? Colors.green : Colors.grey)
+        : Colors.grey;
+    final statusText = isActive ? "LIVE" : "FREE";
+
     return _buildGlassContainer(
       borderColor: isActive ? accent.withValues(alpha: 0.4) : null,
       r: r,
@@ -875,27 +894,73 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(
-                    color: accent,
+            Row(
+              children: [
+                Container(
+                  width: r(6),
+                  height: r(6),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: r(4)),
+                Text(
+                  "● $statusText",
+                  style: TextStyle(
+                    color: statusColor,
                     fontSize: r(10),
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5)),
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: r(10)),
             Text(className,
                 style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: r(15),
-                    fontWeight: FontWeight.w800),
+                  color: theme.colorScheme.onSurface,
+                  fontSize: r(15),
+                  fontWeight: FontWeight.w800),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
             SizedBox(height: r(4)),
-            Text(time,
-                style: TextStyle(
+            if (showClock)
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    size: r(11),
+                  ),
+                  SizedBox(width: r(4)),
+                  Text(time,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontSize: r(11),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'monospace')),
+                ],
+              )
+            else
+              Text(time,
+                  style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: r(11),
                     fontWeight: FontWeight.w600,
                     fontFamily: 'monospace')),
+            if (showProgress) ...[
+              SizedBox(height: r(8)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(r(2)),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: cardAccentColor.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(cardAccentColor),
+                  minHeight: r(4),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -925,46 +990,96 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         itemBuilder: (context, index) {
           final item = _todaySchedules[index];
           final onSurface = theme.colorScheme.onSurface;
+          final now = DateTime.now();
+          final isCurrentClass = _currentClass != null &&
+              _currentClass!.id == item.id;
+          final isPast =
+              _parseTime(item.endTime).isBefore(now);
+
+          Color leftBorderColor;
+          if (isCurrentClass) {
+            leftBorderColor = accent;
+          } else if (isPast) {
+            leftBorderColor = Colors.grey.withValues(alpha: 0.4);
+          } else {
+            leftBorderColor = accent.withValues(alpha: 0.3);
+          }
+
           return Padding(
             padding: EdgeInsets.only(right: r(12)),
             child: InkWell(
               onTap: () => _showSingleScheduleDetail(context, item, accent),
-              borderRadius: BorderRadius.circular(16),
-              child: _buildGlassContainer(
+              borderRadius: BorderRadius.circular(r(16)),
+              child: Container(
                 width: r(140),
-                r: r,
-                child: Padding(
-                  padding: EdgeInsets.all(r(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(item.subject,
-                          style: TextStyle(
-                              color: onSurface,
-                              fontWeight: FontWeight.bold,
-                              fontSize: r(13)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      SizedBox(height: r(4)),
-                      Text("${item.displayStartTime} - ${item.displayEndTime}",
-                          style: TextStyle(
-                              color: onSurface.withValues(alpha: 0.6),
-                              fontSize: r(10))),
-                      SizedBox(height: r(8)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4)),
-                        child: Text(item.room,
-                            style: TextStyle(
-                                color: accent,
-                                fontSize: r(9),
-                                fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(r(16)),
+                  border: Border.all(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(r(16)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(
+                          color: leftBorderColor,
+                          width: r(3),
+                        ),
                       ),
-                    ],
+                    ),
+                    padding: EdgeInsets.all(r(12)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (isCurrentClass) ...[
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: r(6), vertical: r(2)),
+                            decoration: BoxDecoration(
+                              color: accent,
+                              borderRadius: BorderRadius.circular(r(4)),
+                            ),
+                            child: Text(
+                              "NOW",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: r(8),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: r(4)),
+                        ],
+                        Text(item.subject,
+                            style: TextStyle(
+                                color: onSurface,
+                                fontWeight: FontWeight.bold,
+                                fontSize: r(13)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        SizedBox(height: r(4)),
+                        Text("${item.displayStartTime} - ${item.displayEndTime}",
+                            style: TextStyle(
+                                color: onSurface.withValues(alpha: 0.6),
+                                fontSize: r(10))),
+                        SizedBox(height: r(8)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4)),
+                          child: Text(item.room,
+                              style: TextStyle(
+                                  color: accent,
+                                  fontSize: r(9),
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -988,16 +1103,16 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           title: Text(
             assignment['title'] ?? "Untitled",
             style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-                fontSize: r(14)),
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: r(14)),
           ),
           subtitle: Text(
             "Due: ${formatDeadline(assignment['deadline'])}",
             style: TextStyle(
-                color: _getDeadlineColor(assignment['deadline'],
-                    theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                fontSize: r(12)),
+              color: _getDeadlineColor(assignment['deadline'],
+                  theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              fontSize: r(12)),
           ),
           trailing: Icon(Icons.chevron_right, color: accent),
         ),
@@ -1005,26 +1120,129 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     );
   }
 
-  Widget _buildResourceTile(String title, IconData icon, String sub,
-      Color accent, double Function(double) r,
-      {VoidCallback? onTap}) {
+  Widget _buildResourcesGrid(Color accent, double Function(double) r) {
+    return GridView.count(
+      crossAxisCount: 2,
+      childAspectRatio: 1.1,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: r(10),
+      crossAxisSpacing: r(10),
+      children: [
+        _buildResourceGridCard(
+          "Study Notes",
+          Icons.note_alt_rounded,
+          "Manage your notes",
+          accent,
+          r,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => NotesScreen(userId: widget.userId)),
+          ).then((_) => _loadDashboardData()),
+        ),
+        _buildResourceGridCard(
+          "Flashcards",
+          Icons.style_rounded,
+          "Review your decks",
+          accent,
+          r,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FlashcardsScreen(userId: widget.userId)),
+          ),
+        ),
+        _buildResourceGridCard(
+          "Sample Quizzes",
+          Icons.psychology_alt_rounded,
+          "Test your knowledge",
+          accent,
+          r,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => QuizzesScreen(userId: widget.userId)),
+          ),
+        ),
+        _buildResourceGridCard(
+          "Summaries",
+          Icons.article_outlined,
+          "Quick review",
+          accent,
+          r,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => SummariesScreen(userId: widget.userId)),
+          ),
+        ),
+        _buildResourceGridCard(
+          "Library Access",
+          Icons.local_library_rounded,
+          "Digital archives",
+          accent,
+          r,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ResourcesScreen(userId: widget.userId)),
+          ),
+        ),
+        _buildResourceGridCard(
+          "AI Tutor",
+          Icons.auto_awesome_rounded,
+          "Get help now",
+          accent,
+          r,
+          _showChatModal,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResourceGridCard(String title, IconData icon, String subtitle,
+      Color accent, double Function(double) r, VoidCallback onTap) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: r(10)),
-      child: _buildGlassContainer(
-        r: r,
-        child: ListTile(
+    return _buildGlassContainer(
+      r: r,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           onTap: onTap,
-          leading: Icon(icon, color: accent),
-          title: Text(title,
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: r(14))),
-          subtitle: Text(sub,
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  fontSize: r(11))),
+          borderRadius: BorderRadius.circular(r(16)),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(r(8)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: accent, size: r(28)),
+                  SizedBox(height: r(8)),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: r(13),
+                    ),
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: r(4)),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: r(10),
+                    ),
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1049,6 +1267,86 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: child ?? const SizedBox(),
+      ),
+    );
+  }
+
+  Widget _buildSpeedDial(Color accent) {
+    final theme = Theme.of(context);
+    final themeState = ref.watch(themeProvider);
+    final double scale = themeState.uiScale;
+    double r(double v) => v * scale;
+
+    return Positioned(
+      bottom: 20,
+      right: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.translate(
+            offset: Offset(0, _isSpeedDialExpanded
+                ? _speedDialAnimationController.value * 70
+                : 0),
+            child: Opacity(
+              opacity: _isSpeedDialExpanded
+                  ? _speedDialAnimationController.value
+                  : 0,
+              child: FloatingActionButton(
+                heroTag: "speed_dial_1",
+                mini: true,
+                backgroundColor: theme.cardColor,
+                onPressed: () {
+                  setState(() { _isSpeedDialExpanded = false; });
+                  _speedDialAnimationController.reverse();
+                  _showChatModal();
+                },
+                child: Icon(Icons.auto_awesome, color: accent, size: 20),
+              ),
+            ),
+          ),
+          SizedBox(height: r(10)),
+          Transform.translate(
+            offset: Offset(0, _isSpeedDialExpanded
+                ? _speedDialAnimationController.value * 70
+                : 0),
+            child: Opacity(
+              opacity: _isSpeedDialExpanded
+                  ? _speedDialAnimationController.value
+                  : 0,
+              child: FloatingActionButton(
+                heroTag: "speed_dial_2",
+                mini: true,
+                backgroundColor: theme.cardColor,
+                onPressed: () {
+                  setState(() { _isSpeedDialExpanded = false; });
+                  _speedDialAnimationController.reverse();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          AssignmentsScreen(userId: widget.userId),
+                    ),
+                  ).then((_) => _loadDashboardData());
+                },
+                child: Icon(Icons.assignment_add, color: accent, size: 20),
+              ),
+            ),
+          ),
+          SizedBox(height: r(10)),
+          FloatingActionButton(
+            heroTag: "speed_dial_main",
+            backgroundColor: accent,
+            onPressed: () {
+              setState(() { _isSpeedDialExpanded = !_isSpeedDialExpanded; });
+              if (_isSpeedDialExpanded) {
+                _speedDialAnimationController.forward();
+              } else {
+                _speedDialAnimationController.reverse();
+              }
+            },
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
       ),
     );
   }
