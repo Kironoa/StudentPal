@@ -305,7 +305,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   Widget _buildTimelineTile(ClassModel item, int index) {
     final theme = Theme.of(context);
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           width: 15,
@@ -328,13 +328,12 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                   ],
                 ),
               ),
-              Expanded(
-                child: Container(
-                  width: 2,
-                  color: index == filteredSchedules.length - 1
-                      ? Colors.transparent
-                      : theme.colorScheme.primary.withValues(alpha: 0.2),
-                ),
+              Container(
+                width: 2,
+                height: 120,
+                color: index == filteredSchedules.length - 1
+                    ? Colors.transparent
+                    : theme.colorScheme.primary.withValues(alpha: 0.2),
               ),
             ],
           ),

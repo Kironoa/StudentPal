@@ -501,13 +501,15 @@ class _FlashcardPlayScreenState extends ConsumerState<FlashcardPlayScreen> {
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2)),
           const Spacer(),
-          SingleChildScrollView(
-            child: Text(text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: isDark ? theme.colorScheme.onSurface : Colors.black87,
-                    fontSize: res(context, 18),
-                    height: 1.5)),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Text(text,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: isDark ? theme.colorScheme.onSurface : Colors.black87,
+                      fontSize: res(context, 18),
+                      height: 1.5)),
+            ),
           ),
           const Spacer(),
           Text("TAP TO REVEAL",

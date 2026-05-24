@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:alarm/alarm.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/services/widget_update_service.dart';
 
 class NotificationService {
@@ -228,6 +230,7 @@ class NotificationService {
     required String title,
     required DateTime deadline,
   }) async {
+    if (!_checkInitialized()) return;
     final baseId = 1000 + id * 4;
     await _notifications.cancel(id: baseId);
     await _notifications.cancel(id: baseId + 1);
@@ -456,19 +459,38 @@ class NotificationService {
   }
 
   Future<List<_ClassAlertItem>> _fetchClassItemsFromDatabase() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return [
-      _ClassAlertItem(id: 1, subject: 'Math 101', startTime: DateTime.now().add(const Duration(hours: 2))),
-      _ClassAlertItem(id: 2, subject: 'Physics 202', startTime: DateTime.now().add(const Duration(hours: 5))),
-    ];
+    final db = await DatabaseHelper().database;
+    final maps = await db.query('schedules');
+    final now = DateTime.now();
+    return maps.map((m) {
+      final timeStr = m['startTime'] as String;
+      DateTime time;
+      try {
+        time = DateFormat.jm().parse(timeStr);
+      } catch (_) {
+        time = DateFormat("HH:mm").parse(timeStr);
+      }
+      final scheduledDate =
+          DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      return _ClassAlertItem(
+        id: m['id'] as int,
+        subject: m['subject'] as String,
+        startTime: scheduledDate,
+      );
+    }).toList();
   }
 
   Future<List<_AssignmentAlertItem>> _fetchAssignmentItemsFromDatabase() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return [
-      _AssignmentAlertItem(id: 1, title: 'Calculus Homework', deadline: DateTime.now().add(const Duration(days: 2))),
-      _AssignmentAlertItem(id: 2, title: 'Lab Report', deadline: DateTime.now().add(const Duration(hours: 10))),
-    ];
+    final db = await DatabaseHelper().database;
+    final maps = await db.query('assignments');
+    return maps.map((m) {
+      return _AssignmentAlertItem(
+        id: m['id'] as int,
+        title: m['title'] as String,
+        deadline: DateTime.tryParse(m['deadline'] as String? ?? '') ??
+            DateTime.now(),
+      );
+    }).toList();
   }
 
   @pragma('vm:entry-point')

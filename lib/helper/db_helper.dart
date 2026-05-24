@@ -889,7 +889,10 @@ class DatabaseHelper {
 
   Future<int> updateSchedule(Schedule schedule) async {
     final db = await database;
-    int result = await db.update('schedules', schedule.toMap(),
+    final row = schedule.toMap()
+      ..remove('id')
+      ..remove('userId');
+    int result = await db.update('schedules', row,
         where: 'id = ?', whereArgs: [schedule.id]);
     if (schedule.id != null) {
       await _syncScheduleNotification(

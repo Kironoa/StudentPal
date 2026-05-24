@@ -63,31 +63,23 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
 
   DateTime _parseTime(String timeStr) {
     final now = DateTime.now();
-    final trimmed = timeStr.trim();
+    var trimmed = timeStr.trim();
 
-    try {
-      return DateFormat("h:mm a").parse(trimmed).copyWith(
-            year: now.year,
-            month: now.month,
-            day: now.day,
-          );
-    } catch (_) {}
+    // Normalize: ensure space before am/pm (handles "9:00AM", "9:00am", "9:00 AM" etc.)
+    trimmed = trimmed.replaceAllMapped(
+      RegExp(r'^(\d{1,2}:\d{2})\s*(am|pm)$', caseSensitive: false),
+      (m) => '${m.group(1)} ${m.group(2)!.toLowerCase()}',
+    );
 
-    try {
-      return DateFormat("HH:mm").parse(trimmed).copyWith(
-            year: now.year,
-            month: now.month,
-            day: now.day,
-          );
-    } catch (_) {}
-
-    try {
-      return DateFormat("h:mm").parse(trimmed).copyWith(
-            year: now.year,
-            month: now.month,
-            day: now.day,
-          );
-    } catch (_) {}
+    for (final format in ["h:mm a", "HH:mm", "h:mm"]) {
+      try {
+        return DateFormat(format).parse(trimmed).copyWith(
+              year: now.year,
+              month: now.month,
+              day: now.day,
+            );
+      } catch (_) {}
+    }
 
     return now;
   }
@@ -145,8 +137,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     if (mounted) {
       setState(() {
         _todaySchedules = allSchedules.where((s) {
-          final scheduleDays = s.days.toLowerCase();
-          return currentDayAliases.any((alias) => scheduleDays.contains(alias));
+          final scheduleDays = s.days.toLowerCase().trim();
+          return currentDayAliases.any(
+              (alias) => scheduleDays.contains(alias.trim().toLowerCase()));
         }).toList();
         _todaySchedules.sort(
           (a, b) => _parseTime(a.startTime).compareTo(_parseTime(b.startTime)),

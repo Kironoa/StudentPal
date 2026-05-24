@@ -130,7 +130,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
         : theme.colorScheme.primary;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           width: 15,
@@ -152,13 +152,12 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                   ],
                 ),
               ),
-              Expanded(
-                child: Container(
-                  width: 2,
-                  color: index == totalItems - 1
-                      ? Colors.transparent
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
+              Container(
+                width: 2,
+                height: 120,
+                color: index == totalItems - 1
+                    ? Colors.transparent
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.1),
               ),
             ],
           ),
