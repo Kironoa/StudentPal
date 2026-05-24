@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
-import 'package:mobile_app/screens/calendar_screen.dart';
 import 'package:mobile_app/screens/schedule_screen.dart';
 import 'package:mobile_app/screens/assignments_screen.dart';
 import 'package:mobile_app/screens/profile_screen.dart';
 import 'package:mobile_app/screens/settings_screen.dart';
+import 'package:mobile_app/widgets/live_clock_widget.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -21,16 +22,59 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _selectedIndex = 0;
 
   void _showCalendarModal() {
+    final theme = Theme.of(context);
+    final accent = ref.read(themeProvider).accentColor;
+    final now = DateTime.now();
+
     showDialog(
       context: context,
-      builder: (_) => Dialog(
+      builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            child: CalendarScreen(userId: widget.userId, showAsModal: true),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      DateFormat('MMMM yyyy').format(now).toUpperCase(),
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.close_rounded,
+                        color: theme.colorScheme.onSurface
+                          .withValues(alpha: 0.5),
+                        size: 18),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              CalendarWidget(
+                accent: accent,
+                today: now,
+                userId: widget.userId,
+              ),
+            ],
           ),
         ),
       ),
