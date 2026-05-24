@@ -876,7 +876,8 @@ Text: ${note.description ?? note.content ?? ''}
                             _titleController.clear();
                             _contentController.clear();
 
-                            if (context.mounted) Navigator.pop(context);
+                            if (!mounted) return;
+                            Navigator.pop(context);
                             _refreshNotes();
                             _showGlassAlert(note == null
                                 ? "Note Saved!"

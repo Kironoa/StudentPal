@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/app_user.dart';
-import 'package:mobile_app/screens/dashboard_screen.dart';
+import 'package:mobile_app/screens/main_scaffold.dart';
 import 'package:mobile_app/screens/signup_screen.dart';
 import 'package:mobile_app/screens/forgot_password_screen.dart';
 import 'package:mobile_app/glass_modal.dart';
@@ -65,6 +65,7 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
 
     try {
       final user = await _authService.login(username, password);
+      if (!mounted) return;
 
       if (user != null) {
         _showSuccessModal(user);
@@ -101,7 +102,7 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => StudentDashboard(userId: user.id),
+                builder: (context) => MainScaffold(userId: user.id),
               ),
             );
           }

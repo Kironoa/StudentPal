@@ -33,11 +33,7 @@ class SettingsScreen extends ConsumerWidget {
             letterSpacing: 1.5,
           ),
         ),
-        leading: IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.grid_view_rounded, color: primaryColor, size: 22),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const SizedBox.shrink(),
       ),
       body: SafeArea(
         child: LayoutBuilder(

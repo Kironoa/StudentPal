@@ -31,16 +31,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _loadChatHistory();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadChatHistory() async {
     try {
       final history = await DatabaseHelper().getChatHistory(widget.userId);
       if (history.isEmpty) {
+        if (!mounted) return;
         setState(() {
           _messages.add({"role": "bot", "content": _defaultWelcome});
         });
         await DatabaseHelper()
             .saveChatMessage(widget.userId, 'bot', _defaultWelcome);
       } else {
+        if (!mounted) return;
         setState(() {
           _messages.clear();
           _messages.addAll(history.map((msg) => {
@@ -57,6 +66,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             .toList());
       }
     } catch (_) {
+      if (!mounted) return;
       if (_messages.isEmpty) {
         setState(() {
           _messages.add({"role": "bot", "content": _defaultWelcome});
@@ -94,12 +104,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await DatabaseHelper().saveChatMessage(widget.userId, 'user', text);
       final response = await _aiService.sendMessage(text);
+      if (!mounted) return;
       setState(() {
         _messages.add({"role": "bot", "content": response});
         _isLoading = false;
       });
       await DatabaseHelper().saveChatMessage(widget.userId, 'bot', response);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _messages.add({
           "role": "bot",
@@ -137,6 +149,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     if (confirm == true) {
       await DatabaseHelper().clearChatHistory(widget.userId);
+      if (!mounted) return;
       setState(() {
         _messages.clear();
         _messages.add({"role": "bot", "content": _defaultWelcome});

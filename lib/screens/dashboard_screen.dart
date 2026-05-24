@@ -36,7 +36,7 @@ class StudentDashboard extends ConsumerStatefulWidget {
 
 class _StudentDashboardState extends ConsumerState<StudentDashboard>
     with TickerProviderStateMixin {
-  late Timer _classTimer;
+  Timer? _classTimer;
   late AnimationController _bgAnimationController;
   late ScrollController _scrollController;
 
@@ -247,7 +247,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
 
   @override
   void dispose() {
-    _classTimer.cancel();
+    _classTimer?.cancel();
     _scrollController.dispose();
     _bgAnimationController.dispose();
     super.dispose();

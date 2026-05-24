@@ -54,6 +54,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       grouped.putIfAbsent(dateKey, () => []).add(reminder);
     }
 
+    if (!mounted) return;
     setState(() {
       _remindersByDate = grouped;
       _updateSelectedDayReminders();

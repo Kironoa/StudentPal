@@ -25,12 +25,14 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
   Future<void> _loadSettings() async {
     try {
       final settings = await DatabaseHelper().getSettings();
+      if (!mounted) return;
       setState(() {
         _notifyClasses = (settings['notifyClasses'] ?? 1) == 1;
         _notifyAssignments = (settings['notifyAssignments'] ?? 1) == 1;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }

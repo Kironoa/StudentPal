@@ -234,6 +234,7 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
                       confirmColor: Colors.redAccent,
                       onConfirm: () async {
                         await _resourceService.deleteResource(summary.id!);
+                        if (!mounted) return;
                         _loadSummaries();
                         _showGlassAlert('Summary Deleted',
                             color: Colors.redAccent);
@@ -297,6 +298,7 @@ class _SummariesScreenState extends ConsumerState<SummariesScreen> {
                   summary.fileName = controller.text;
                   await _resourceService.updateResource(summary);
                   if (context.mounted) Navigator.pop(context);
+                  if (!mounted) return;
                   _loadSummaries();
                   _showGlassAlert("Renamed Successfully");
                 }

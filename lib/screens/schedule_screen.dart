@@ -34,6 +34,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   void _refreshSchedules() async {
     final data = await _repository.getAllClasses(widget.userId);
     final conflictData = findConflicts(data);
+    if (!mounted) return;
     setState(() {
       allSchedules = data;
       conflicts = conflictData;
@@ -472,11 +473,19 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
         return RepaintBoundary(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: Container(
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                constraints: BoxConstraints(
+                  minWidth: 280,
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  child: Container(
                 padding: EdgeInsets.all(res(context, 25)),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.97),
@@ -560,10 +569,11 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                 ),
               ),
             ),
+            ),
           ),
         );
-      },
-    );
+    },
+  );
   }
 
   Widget _detailItem(IconData icon, String label, String value) {
@@ -604,6 +614,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
       onConfirm: () async {
         await _repository.deleteClass(id);
         ClassUpdateProvider.instance.notifyClassUpdate();
+        if (!mounted) return;
         _refreshSchedules();
         if (context.mounted) Navigator.pop(context);
         _showGlassAlert("Class removed", Colors.redAccent);
@@ -636,7 +647,15 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                   backgroundColor: Colors.transparent,
                   insetPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                  child: Container(
+                  constraints: BoxConstraints(
+                    minWidth: 280,
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.85,
+                    ),
+                    child: Container(
                     padding: EdgeInsets.all(res(context, 25)),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface.withValues(alpha: 0.97),
@@ -778,6 +797,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                   ClassUpdateProvider.instance
                                       .notifyClassUpdate();
                                 }
+                                if (!mounted) return;
                                 _refreshSchedules();
                                 if (context.mounted) Navigator.pop(context);
                                 _showGlassAlert(
@@ -794,15 +814,16 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                         ],
                       ),
                     ),
+                    ),
                   ),
                 ),
               );
-            },
-          ),
-        );
-      },
-    );
-  }
+          },
+        ),
+      );
+    },
+  );
+}
 
   String _formatTimeOfDay(TimeOfDay t) {
     final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;

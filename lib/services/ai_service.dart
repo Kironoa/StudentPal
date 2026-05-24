@@ -15,7 +15,7 @@ class AIService {
     try {
       final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
       _instance._model = GenerativeModel(
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash-lite',
         apiKey: apiKey,
       );
       _instance._chatSession = _instance._model.startChat();

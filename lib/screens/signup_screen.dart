@@ -82,6 +82,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         return;
       }
 
+      if (!mounted) return;
       setState(() => isStep2 = true);
     } catch (e) {
       _showModal("Error", "Registration failed.", isError: true);
@@ -119,7 +120,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       if (!mounted) return;
 
-      _showRecoveryQrCode(user!);
+      _showRecoveryQrCode(user);
     } catch (e) {
       debugPrint("Registration error: $e");
       _showModal("Error", "Registration failed.", isError: true);

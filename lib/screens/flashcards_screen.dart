@@ -98,6 +98,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
       confirmLabel: 'DELETE',
       onConfirm: () async {
         await _resourceService.deleteResource(group.id!);
+        if (!mounted) return;
         _loadGroups();
         _showGlassAlert("Set Deleted", color: Colors.redAccent);
       },
@@ -114,47 +115,56 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.97),
-              borderRadius: BorderRadius.circular(28),
+          constraints: BoxConstraints(
+            minWidth: 280,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: res(context, 40),
-                    height: res(context, 4),
-                    margin: EdgeInsets.only(bottom: res(context, 15)),
-                    decoration: BoxDecoration(
-                      color: theme.dividerColor,
-                      borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: EdgeInsets.all(res(context, 25)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: res(context, 40),
+                      height: res(context, 4),
+                      margin: EdgeInsets.only(bottom: res(context, 15)),
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                  ),
-                  Text(
-                    "GROUP OPTIONS",
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                      fontSize: res(context, 14),
-                      letterSpacing: 2,
+                    Text(
+                      "GROUP OPTIONS",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                        fontSize: res(context, 14),
+                        letterSpacing: 2,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: res(context, 20)),
-                  _buildOptionTile(Icons.edit_note_rounded, "Rename Set",
-                      "Change the title of this set", () {
-                    Navigator.pop(context);
-                    _showRenameDialog(group, accent);
-                  }, accent),
-                  _buildOptionTile(Icons.delete_outline_rounded, "Delete Set",
-                      "Remove these flashcards forever", () {
-                    Navigator.pop(context);
-                    _confirmDelete(group);
-                  }, Colors.redAccent),
-                  SizedBox(height: res(context, 20)),
-                ],
+                    SizedBox(height: res(context, 20)),
+                    _buildOptionTile(Icons.edit_note_rounded, "Rename Set",
+                        "Change the title of this set", () {
+                      Navigator.pop(context);
+                      _showRenameDialog(group, accent);
+                    }, accent),
+                    _buildOptionTile(Icons.delete_outline_rounded, "Delete Set",
+                        "Remove these flashcards forever", () {
+                      Navigator.pop(context);
+                      _confirmDelete(group);
+                    }, Colors.redAccent),
+                    SizedBox(height: res(context, 20)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -232,6 +242,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
                   group.fileName = controller.text;
                   await _resourceService.updateResource(group);
                   if (context.mounted) Navigator.pop(context);
+                  if (!mounted) return;
                   _loadGroups();
                   _showGlassAlert("Renamed Successfully");
                 }

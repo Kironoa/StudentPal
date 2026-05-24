@@ -522,6 +522,7 @@ class DatabaseHelper {
     final salt = CryptoUtils.generateSalt();
     final normalizedUsername = username.trim().toLowerCase();
     final plainSecretAnswer = secretAnswer.trim().toLowerCase();
+    final hashedAnswer = CryptoUtils.hashPassword(plainSecretAnswer, salt);
     final token = '${normalizedUsername}_${DateTime.now().millisecondsSinceEpoch}';
     final recoveryToken = CryptoUtils.hashPassword(token, salt);
     
@@ -531,7 +532,7 @@ class DatabaseHelper {
       'passwordSalt': salt,
       'profilePath': null,
       'secretQuestion': secretQuestion,
-      'secretAnswer': plainSecretAnswer,
+      'secretAnswer': hashedAnswer,
       'recoveryToken': recoveryToken,
     });
     
@@ -569,14 +570,18 @@ class DatabaseHelper {
     final normalizedUsername = username.trim().toLowerCase();
     final result = await db.query(
       'users',
-      columns: ['secretAnswer'],
+      columns: ['secretAnswer', 'passwordSalt'],
       where: 'LOWER(username) = ?',
       whereArgs: [normalizedUsername],
       limit: 1,
     );
     if (result.isEmpty) return false;
-    final stored = (result.first['secretAnswer'] as String? ?? '').toLowerCase().trim();
-    return stored == answer.trim().toLowerCase();
+    final stored = (result.first['secretAnswer'] as String? ?? '');
+    final salt = (result.first['passwordSalt'] as String? ?? '');
+    if (salt.isEmpty) {
+      return stored.toLowerCase().trim() == answer.trim().toLowerCase();
+    }
+    return stored == CryptoUtils.hashPassword(answer.trim().toLowerCase(), salt);
   }
 
   Future<Map<String, dynamic>?> verifyRecoveryToken(String token) async {

@@ -57,6 +57,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
   Future<void> _loadResources() async {
     final data =
         await _resourceService.getResources(widget.userId, _currentCategory);
+    if (!mounted) return;
     setState(() => _resources = data);
   }
 
@@ -73,6 +74,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
       confirmLabel: 'DELETE',
       onConfirm: () async {
         await _resourceService.deleteResource(data.id!);
+        if (!mounted) return;
         _loadResources();
         _showGlassAlert("File Deleted", color: Colors.redAccent);
       },
@@ -126,6 +128,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
                   data.fileName = controller.text;
                   await _resourceService.updateResource(data);
                   if (context.mounted) Navigator.pop(context);
+                  if (!mounted) return;
                   _loadResources();
                   _showGlassAlert("File Renamed");
                 }
@@ -185,8 +188,10 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
       );
 
       await _loadResources();
+      if (!mounted) return;
       _showGlassAlert("File Uploaded Successfully!");
     } catch (e) {
+      if (!mounted) return;
       _showGlassAlert("Upload failed: $e", color: Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -203,43 +208,52 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.97),
-              borderRadius: BorderRadius.circular(28),
+          constraints: BoxConstraints(
+            minWidth: 280,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("RESOURCE OPTIONS",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: res(context, 16),
-                          letterSpacing: 1.2,
-                          fontFamily: 'Poppins')),
-                  SizedBox(height: res(context, 20)),
-                  _buildOptionTile(
-                      Icons.visibility_rounded, "View File", "Open this document",
-                      () {
-                    Navigator.pop(context);
-                    _handleFileAction(data);
-                  }),
-                  _buildOptionTile(
-                      Icons.edit_note_rounded, "Rename", "Change file name",
-                      () {
-                    Navigator.pop(context);
-                    _showRenameDialog(data, accent);
-                  }),
-                  _buildOptionTile(
-                      Icons.delete_outline_rounded, "Delete", "Remove from library",
-                      () {
-                    Navigator.pop(context);
-                    _confirmDeleteResource(data);
-                  }, isDestructive: true),
-                  SizedBox(height: res(context, 10)),
-                ],
+            child: Container(
+              padding: EdgeInsets.all(res(context, 25)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("RESOURCE OPTIONS",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: res(context, 16),
+                            letterSpacing: 1.2,
+                            fontFamily: 'Poppins')),
+                    SizedBox(height: res(context, 20)),
+                    _buildOptionTile(
+                        Icons.visibility_rounded, "View File", "Open this document",
+                        () {
+                      Navigator.pop(context);
+                      _handleFileAction(data);
+                    }),
+                    _buildOptionTile(
+                        Icons.edit_note_rounded, "Rename", "Change file name",
+                        () {
+                      Navigator.pop(context);
+                      _showRenameDialog(data, accent);
+                    }),
+                    _buildOptionTile(
+                        Icons.delete_outline_rounded, "Delete", "Remove from library",
+                        () {
+                      Navigator.pop(context);
+                      _confirmDeleteResource(data);
+                    }, isDestructive: true),
+                    SizedBox(height: res(context, 10)),
+                  ],
+                ),
               ),
             ),
           ),

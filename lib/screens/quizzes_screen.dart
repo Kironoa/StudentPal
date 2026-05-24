@@ -107,6 +107,7 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
       confirmLabel: 'DELETE',
       onConfirm: () async {
         await _resourceService.deleteResource(quiz.id!);
+        if (!mounted) return;
         _loadQuizzes();
         _showGlassAlert("Quiz Deleted", color: Colors.redAccent);
       },
@@ -123,76 +124,85 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Container(
-            padding: EdgeInsets.all(res(context, 25)),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.97),
-              borderRadius: BorderRadius.circular(28),
+          constraints: BoxConstraints(
+            minWidth: 280,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: res(context, 40),
-                    height: res(context, 4),
-                    margin: EdgeInsets.only(bottom: res(context, 15)),
-                    decoration: BoxDecoration(
-                        color: theme.dividerColor,
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                  Text("QUIZ OPTIONS",
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2)),
-                  SizedBox(height: res(context, 20)),
-                  ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(res(context, 8)),
+            child: Container(
+              padding: EdgeInsets.all(res(context, 25)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: res(context, 40),
+                      height: res(context, 4),
+                      margin: EdgeInsets.only(bottom: res(context, 15)),
                       decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12)),
-                      child:
-                          Icon(Icons.edit_note_rounded, color: accent),
+                          color: theme.dividerColor,
+                          borderRadius: BorderRadius.circular(10)),
                     ),
-                    title: Text("Rename Quiz",
+                    Text("QUIZ OPTIONS",
                         style: TextStyle(
                             color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold)),
-                    subtitle: Text("Change the title of this quiz",
-                        style: TextStyle(
-                            color: theme.hintColor,
-                            fontSize: 11)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showRenameDialog(quiz, accent);
-                    },
-                  ),
-                  ListTile(
-                    onTap: () {
-                      Navigator.pop(context);
-                      _confirmDelete(quiz);
-                    },
-                    leading: Container(
-                      padding: EdgeInsets.all(res(context, 8)),
-                      decoration: BoxDecoration(
-                          color: Colors.redAccent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12)),
-                      child:
-                          const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2)),
+                    SizedBox(height: res(context, 20)),
+                    ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(res(context, 8)),
+                        decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12)),
+                        child:
+                            Icon(Icons.edit_note_rounded, color: accent),
+                      ),
+                      title: Text("Rename Quiz",
+                          style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.bold)),
+                      subtitle: Text("Change the title of this quiz",
+                          style: TextStyle(
+                              color: theme.hintColor,
+                              fontSize: 11)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showRenameDialog(quiz, accent);
+                      },
                     ),
-                    title: Text("Delete Quiz",
-                        style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.bold)),
-                    subtitle: Text("Remove this quiz from your library",
-                        style: TextStyle(
-                            color: theme.hintColor,
-                            fontSize: 11)),
-                  ),
-                  SizedBox(height: res(context, 20)),
-                ],
+                    ListTile(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _confirmDelete(quiz);
+                      },
+                      leading: Container(
+                        padding: EdgeInsets.all(res(context, 8)),
+                        decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12)),
+                        child:
+                            const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      ),
+                      title: Text("Delete Quiz",
+                          style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.bold)),
+                      subtitle: Text("Remove this quiz from your library",
+                          style: TextStyle(
+                              color: theme.hintColor,
+                              fontSize: 11)),
+                    ),
+                    SizedBox(height: res(context, 20)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -248,6 +258,7 @@ class _QuizzesScreenState extends ConsumerState<QuizzesScreen> {
                   quiz.fileName = controller.text;
                   await _resourceService.updateResource(quiz);
                   if (context.mounted) Navigator.pop(context);
+                  if (!mounted) return;
                   _loadQuizzes();
                   _showGlassAlert("Renamed Successfully");
                 }

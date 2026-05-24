@@ -9,10 +9,14 @@ Future<T?> showCenteredModal<T>({
   return showDialog<T>(
     context: context,
     barrierColor: Colors.black54,
-    builder: (_) => Dialog(
+    builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(
           horizontal: 20, vertical: 24),
+      constraints: BoxConstraints(
+        minWidth: 280,
+        maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+      ),
       child: child,
     ),
   );

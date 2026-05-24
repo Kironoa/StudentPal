@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/providers/user_provider.dart';
@@ -62,15 +64,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (pickedFile != null) {
-      await DatabaseHelper()
-          .updateUserProfilePhoto(widget.userId, pickedFile.path);
-      setState(() => _profileImagePath = pickedFile.path);
-      if (mounted) ref.invalidate(userProvider(widget.userId));
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (pickedFile == null) return;
+
+      final directory = await getApplicationDocumentsDirectory();
+      final localPath =
+          '${directory.path}${Platform.pathSeparator}profile_${widget.userId}.jpg';
+      await File(pickedFile.path).copy(localPath);
+
+      await DatabaseHelper().updateUserProfilePhoto(widget.userId, localPath);
+      if (!mounted) return;
+      setState(() => _profileImagePath = localPath);
+      ref.invalidate(userProvider(widget.userId));
+    } catch (e) {
+      debugPrint("[ProfileScreen] _pickImage error: $e");
+      if (!mounted) return;
+      AlertService().showError(context, "Failed to load image");
     }
   }
 

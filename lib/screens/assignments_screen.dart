@@ -541,6 +541,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
       confirmLabel: 'DELETE',
       onConfirm: () async {
         await _assignmentService.deleteAssignment(id);
+        if (!mounted) return;
         _refreshAssignments();
         if (!context.mounted) return;
         _showGlassAlert('Task removed', Colors.redAccent);
