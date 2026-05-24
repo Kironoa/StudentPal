@@ -55,7 +55,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     });
   }
 
-  // --- AI GENERATION LOGIC ---
+  
 
   Future<void> _generateAISummary(StudyNote note) async {
     setState(() => _isLoading = true);
@@ -166,7 +166,7 @@ Text: ${note.description ?? note.content ?? ''}
     }
   }
 
-  // --- UI COMPONENTS ---
+  
 
   void _showGlassAlert(String message, {Color? color}) {
     if (!mounted) return;
@@ -609,7 +609,7 @@ Text: ${note.description ?? note.content ?? ''}
 
   void _viewNoteDetails(StudyNote item) {
     final theme = Theme.of(context);
-    final formattedDate = DateFormat('MMMM dd, yyyy • hh:mm a')
+    final formattedDate = DateFormat('MMMM dd, yyyy â€¢ hh:mm a')
         .format(item.createdAt ?? DateTime.now());
 
     showCenteredModal(

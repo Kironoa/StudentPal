@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:android_intent_plus/android_intent.dart';
 
-/// Checks and requests battery optimization exemption on Android
-/// so scheduled notifications fire reliably in the background.
+
+
 class BatteryOptimizationService {
   static final BatteryOptimizationService _instance =
       BatteryOptimizationService._internal();
@@ -14,7 +14,7 @@ class BatteryOptimizationService {
   static const _channel = MethodChannel(
       'com.studentpal.app/battery');
 
-  /// Returns true if the app is already ignoring battery optimizations.
+  
   Future<bool> isIgnoringBatteryOptimizations() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -26,8 +26,8 @@ class BatteryOptimizationService {
     }
   }
 
-  /// Opens the DIRECT per-app battery optimization dialog.
-  /// This is the correct intent — not the general list.
+  
+  
   Future<bool> requestIgnoreBatteryOptimization(
       String packageName) async {
     if (!Platform.isAndroid) return false;
@@ -45,7 +45,7 @@ class BatteryOptimizationService {
     }
   }
 
-  /// Call this on app start. Only prompts if not already exempted.
+  
   Future<void> checkAndPrompt(String packageName) async {
     if (!Platform.isAndroid) return;
     final already = await isIgnoringBatteryOptimizations();
@@ -55,7 +55,7 @@ class BatteryOptimizationService {
       await requestIgnoreBatteryOptimization(packageName);
     } else {
       debugPrint(
-          '[BatteryOptimization] Already exempted — skipping.');
+          '[BatteryOptimization] Already exempted â€” skipping.');
     }
   }
 }

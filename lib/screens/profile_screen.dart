@@ -91,7 +91,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           : _fullNameController.text.trim();
 
       if (displayName.isNotEmpty) {
-        // Use upsert so missing row id=1 is never a silent failure
+        
         final db = DatabaseHelper();
         await db.upsertSettings(name: displayName);
         if (mounted) ref.read(themeProvider.notifier).loadSettings();
@@ -126,21 +126,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final mq = MediaQuery.of(context);
-    // Use viewInsets (keyboard height) + safe area bottom for total bottom padding
+    
     final bottomPadding = mq.viewInsets.bottom + mq.padding.bottom + 20;
 
     return Scaffold(
-      // Let Scaffold resize so the scroll area shrinks when keyboard appears
+      
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.grid_view_rounded,
-              color: theme.colorScheme.primary, size: 22),
-          onPressed: () {},
-        ),
+        automaticallyImplyLeading: true,
         title: Text('MY PROFILE',
             style: TextStyle(
                 color: theme.colorScheme.onSurface,
@@ -166,7 +161,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               physics: const BouncingScrollPhysics(),
               keyboardDismissBehavior:
                   ScrollViewKeyboardDismissBehavior.onDrag,
-              // Top padding accounts for status bar via SafeArea equivalent
+              
               padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding),
               child: Column(
                 children: [
@@ -243,7 +238,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ],
                     ),
-                  // Extra breathing room below buttons
+                  
                   const SizedBox(height: 8),
                 ],
               ),
@@ -321,6 +316,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         controller.text.isNotEmpty
                             ? controller.text
                             : 'Not set',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

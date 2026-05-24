@@ -8,8 +8,9 @@ import 'package:mobile_app/providers/theme_provider.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final int userId;
+  final bool showAsModal;
 
-  const CalendarScreen({super.key, required this.userId});
+  const CalendarScreen({super.key, required this.userId, this.showAsModal = false});
 
   @override
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
@@ -113,7 +114,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     return Card(
       child: ListTile(
-        title: Text(reminder.title),
+        title: Text(reminder.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -426,100 +427,122 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final themeState = ref.watch(themeProvider);
     final accentColor = themeState.accentColor;
 
+    final content = Column(
+      children: [
+        if (widget.showAsModal)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Calendar',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        TableCalendar<Reminder>(
+          firstDay: DateTime.utc(2020),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          calendarFormat: _calendarFormat,
+          eventLoader: _getRemindersForDay,
+          onDaySelected: _onDaySelected,
+          onFormatChanged: (format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+            _loadRemindersForMonth(focusedDay);
+          },
+          calendarStyle: CalendarStyle(
+            markerDecoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+            ),
+            todayDecoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+          ),
+          calendarBuilders: CalendarBuilders<Reminder>(
+            markerBuilder: (context, date, reminders) {
+              if (reminders.isNotEmpty) {
+                return Positioned(
+                  bottom: 1,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.cyan,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                );
+              }
+              return null;
+            },
+          ),
+          headerStyle: const HeaderStyle(
+            titleCentered: true,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Reminders for ${DateFormat.yMMMd().format(_selectedDay)}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _selectedDayReminders.isEmpty
+              ? Center(
+                    child: Text(
+                      'No reminders for this day',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                    ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _selectedDayReminders.length,
+                  itemBuilder: (context, index) {
+                    final reminder = _selectedDayReminders[index];
+                    return _buildReminderTile(reminder);
+                  },
+                ),
+        ),
+      ],
+    );
+
+    if (widget.showAsModal) {
+      return content;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar'),
         backgroundColor: accentColor,
       ),
-      body: Column(
-        children: [
-          TableCalendar<Reminder>(
-            firstDay: DateTime.utc(2020),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            calendarFormat: _calendarFormat,
-            eventLoader: _getRemindersForDay,
-            onDaySelected: _onDaySelected,
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-              _loadRemindersForMonth(focusedDay);
-            },
-            calendarStyle: CalendarStyle(
-              markerDecoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-            ),
-            calendarBuilders: CalendarBuilders<Reminder>(
-              markerBuilder: (context, date, reminders) {
-                if (reminders.isNotEmpty) {
-                  return Positioned(
-                    bottom: 1,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.cyan,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  );
-                }
-                return null;
-              },
-            ),
-            headerStyle: const HeaderStyle(
-              titleCentered: true,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Reminders for ${DateFormat.yMMMd().format(_selectedDay)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _selectedDayReminders.isEmpty
-                ? Center(
-                      child: Text(
-                        'No reminders for this day',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.6),
-                            ),
-                      ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _selectedDayReminders.length,
-                    itemBuilder: (context, index) {
-                      final reminder = _selectedDayReminders[index];
-                      return _buildReminderTile(reminder);
-                    },
-                  ),
-          ),
-        ],
-      ),
+      body: content,
       floatingActionButton: FloatingActionButton(
+        heroTag: "add_reminder",
         onPressed: _showAddReminderDialog,
         backgroundColor: accentColor,
         child: const Icon(Icons.add),

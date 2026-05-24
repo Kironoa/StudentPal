@@ -21,7 +21,7 @@ class CustomTextField extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        // Using withOpacity for broader compatibility
+        
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Theme.of(context).dividerColor),

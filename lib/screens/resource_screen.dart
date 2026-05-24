@@ -60,7 +60,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
     setState(() => _resources = data);
   }
 
-  // --- UI ALIGNMENT: CUSTOM GLASS ALERT ---
+  
   void _showGlassAlert(String message, {Color? color}) {
     AlertService().showGlassAlert(context, message, color: color);
   }
@@ -523,4 +523,4 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen>
   }
 }
 
-// End of file
+

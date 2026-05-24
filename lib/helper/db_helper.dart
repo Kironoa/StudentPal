@@ -10,7 +10,7 @@ import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/core/crypto_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// SQLite database singleton — manages all table creation, migrations, and queries.
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
@@ -77,7 +77,7 @@ class DatabaseHelper {
           await _createNotesTable(db);
         }
         if (oldVersion < 6) {
-          // No schema changes in v6. Entry exists to close the migration gap.
+          
         }
         if (oldVersion < 7) await _createSettingsTable(db);
         if (oldVersion < 8) {
@@ -484,7 +484,7 @@ class DatabaseHelper {
     if (accentColor != null) data['accentColor'] = accentColor;
     if (uiScale != null) data['uiScale'] = uiScale;
     if (data.isEmpty) return;
-    // Try update first; if nothing updated, insert a full default row
+    
     final updated = await db.update('settings', data, where: 'id = 1');
     if (updated == 0) {
       await db.insert('settings', {
@@ -657,8 +657,8 @@ class DatabaseHelper {
     }
   }
 
-  /// Factory reset: deletes the database file so it gets recreated with the latest schema.
-  /// Call this from a dev-only screen or temporarily from main() to fix corrupted/mismatched schemas.
+  
+  
   Future<void> resetDatabase() async {
     final directory = await getApplicationSupportDirectory();
     final path = join(directory.path, 'student_pal.db');

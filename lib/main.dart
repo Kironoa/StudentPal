@@ -83,9 +83,9 @@ class _StudentPalAppState extends ConsumerState<StudentPalApp> {
     final authService = AuthService();
     _sessionFuture = authService.loadSession().then((session) {
       if (session.hasActiveUser) {
-        // Immediate update from main isolate (DB is ready here, no race conditions)
+        
         WidgetUpdateService().refreshWidget(userId: session.userId);
-        // Then start the background periodic service
+        
         WidgetUpdateService().startPeriodicUpdates(userId: session.userId);
       }
       return session;

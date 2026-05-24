@@ -8,33 +8,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/screens/resource_screen.dart';
-import 'package:mobile_app/screens/schedule_screen.dart';
-import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/providers/user_provider.dart';
 import 'package:mobile_app/services/notification_service.dart';
-import 'package:mobile_app/screens/notes_screen.dart';
-import 'package:mobile_app/screens/assignments_screen.dart';
 import 'package:mobile_app/screens/chat_screen.dart';
-import 'package:mobile_app/screens/profile_screen.dart';
+import 'package:mobile_app/screens/notes_screen.dart';
 import 'package:mobile_app/screens/quizzes_screen.dart';
+import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/screens/summaries_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/widgets/live_clock_widget.dart';
-import 'package:mobile_app/utils/responsive.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
-  final VoidCallback? onNavigateToSchedule;
-  final VoidCallback? onNavigateToAssignments;
   final VoidCallback? onNavigateToProfile;
 
   const StudentDashboard({
     super.key,
     required this.userId,
-    this.onNavigateToSchedule,
-    this.onNavigateToAssignments,
     this.onNavigateToProfile,
   });
 
@@ -46,7 +38,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     with TickerProviderStateMixin {
   late Timer _classTimer;
   late AnimationController _bgAnimationController;
-  late AnimationController _speedDialAnimationController;
   late ScrollController _scrollController;
 
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -57,8 +48,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Schedule? _currentClass;
   Schedule? _nextClass;
 
-  bool _isSpeedDialExpanded = false;
-
   @override
   void initState() {
     super.initState();
@@ -68,10 +57,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       vsync: this,
       duration: const Duration(seconds: 20),
     )..repeat();
-    _speedDialAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
   }
 
   double res(BuildContext context, double value) => value;
@@ -265,7 +250,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     _classTimer.cancel();
     _scrollController.dispose();
     _bgAnimationController.dispose();
-    _speedDialAnimationController.dispose();
     super.dispose();
   }
 
@@ -379,35 +363,26 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       children: [
         Icon(icon, color: accent, size: res(context, 20)),
         SizedBox(width: res(context, 10)),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: res(context, 10),
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold)),
-            Text(value,
-                style: TextStyle(
-                    fontSize: res(context, 14), fontWeight: FontWeight.w600)),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: res(context, 10),
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold)),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: res(context, 14), fontWeight: FontWeight.w600)),
+            ],
+          ),
         ),
       ],
     );
   }
-
-  void _navigateToSchedulePage() {
-    widget.onNavigateToSchedule?.call();
-  }
-
-  void _navigateToAssignmentsPage() {
-    widget.onNavigateToAssignments?.call();
-  }
-
-  void _navigateToProfilePage() {
-    widget.onNavigateToProfile?.call();
-  }
-
   void _showChatModal() {
     showCenteredModal(
       context: context,
@@ -417,16 +392,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           height: MediaQuery.of(context).size.height * 0.85,
           width: MediaQuery.of(context).size.width * 0.9,
           decoration: BoxDecoration(
-            color: const Color(0xFF0F0F0F),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 0.5),
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(30),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: ChatScreen(userId: widget.userId),
-          ),
+          child: ChatScreen(userId: widget.userId),
         ),
       ),
     );
@@ -440,87 +409,72 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     final double scale = themeState.uiScale;
     double r(double v) => v * scale;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
         children: [
           RepaintBoundary(
             child: _buildBackground(dynamicAccent, r),
           ),
           SafeArea(
+            top: true,
+            bottom: false,
             child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics()),
-              cacheExtent: 500,
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  backgroundColor:
-                      theme.scaffoldBackgroundColor.withValues(alpha: 0.4),
-                  elevation: 0,
-                  expandedHeight: r(90),
-                  collapsedHeight: r(75),
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: FlexibleSpaceBar(
-                    titlePadding: EdgeInsets.zero,
-                    centerTitle: true,
-                    title: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: r(20), vertical: r(10)),
-                      child: _buildFloatingHeader(dynamicAccent, r),
-                    ),
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            cacheExtent: 500,
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                backgroundColor:
+                    theme.scaffoldBackgroundColor.withValues(alpha: 0.4),
+                elevation: 0,
+                expandedHeight: r(90),
+                collapsedHeight: r(75),
+                automaticallyImplyLeading: false,
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: EdgeInsets.zero,
+                  centerTitle: true,
+                  title: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: r(20), vertical: r(10)),
+                    child: _buildFloatingHeader(dynamicAccent, r),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: r(20)),
-                    child: SizedBox(height: r(10)),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r(20)),
+                  child: SizedBox(height: r(10)),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r(20)),
+                  child:
+                      _buildSectionTitle("Class Progress", dynamicAccent, r),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
+                  child: RepaintBoundary(
+                    child: _buildProgressRow(dynamicAccent, r),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: r(20)),
-                    child:
-                        _buildSectionTitle("Class Progress", dynamicAccent, r),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
-                    child: RepaintBoundary(
-                      child: _buildProgressRow(dynamicAccent, r),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildSectionTitle(
-                                "Today's Schedule", dynamicAccent, r),
-                            TextButton(
-                              onPressed: _navigateToSchedulePage,
-                              child: Text(
-                                "Manage",
-                                style: TextStyle(
-                                  color: dynamicAccent,
-                                  fontSize: r(13),
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: r(4)),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle(
+                          "Today's Schedule", dynamicAccent, r),
+                      SizedBox(height: r(4)),
                         Text(
                           DateFormat('EEEE, MMMM d').format(DateTime.now()),
                           style: TextStyle(
@@ -528,80 +482,79 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                             fontSize: r(12),
                             fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
-                    child: RepaintBoundary(
-                      child: _buildHorizontalSchedule(dynamicAccent, r),
-                    ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
+                  child: RepaintBoundary(
+                    child: _buildHorizontalSchedule(dynamicAccent, r),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
                     child: _buildSectionTitle(
-                      "Assignments",
-                      dynamicAccent,
-                      r,
-                      trailing: "View All",
-                      onTrailingTap: _navigateToAssignmentsPage,
-                    ),
+                      "Tasks",
+                    dynamicAccent,
+                    r,
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
-                    child: _recentAssignments.isEmpty
-                        ? RepaintBoundary(
-                            child: _buildAssignmentCard({
-                              "title": "No Assignments",
-                              "deadline": "Free day!"
-                            }, dynamicAccent, r),
-                          )
-                        : Column(
-                            children: _recentAssignments
-                                .map(
-                                  (a) => RepaintBoundary(
-                                      child: _buildAssignmentCard(
-                                          a, dynamicAccent, r)),
-                                )
-                                .toList(),
-                          ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
+                  child: _recentAssignments.isEmpty
+                      ? RepaintBoundary(
+                          child: _buildAssignmentCard({
+                            "title": "No Assignments",
+                            "deadline": "Free day!"
+                          }, dynamicAccent, r),
+                        )
+                      : Column(
+                          children: _recentAssignments
+                              .map(
+                                (a) => RepaintBoundary(
+                                    child: _buildAssignmentCard(
+                                        a, dynamicAccent, r)),
+                              )
+                              .toList(),
+                        ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
+                  child: _buildSectionTitle("Resources", dynamicAccent, r),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      left: r(20), right: r(20), top: r(15)),
+                  child: RepaintBoundary(
+                    child: _buildResourcesGrid(dynamicAccent, r),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.only(left: r(20), right: r(20), top: r(30)),
-                    child: _buildSectionTitle("Resources", dynamicAccent, r),
-                  ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: r(40)),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        left: r(20), right: r(20), top: r(15)),
-                    child: RepaintBoundary(
-                      child: _buildResourcesGrid(dynamicAccent, r),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: r(40)),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          _buildSpeedDial(dynamicAccent),
+          ),
         ],
       ),
     );
@@ -622,31 +575,31 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
               Text("Hello!",
                   style: TextStyle(
                       color: accent,
-                      fontSize: r(9),
+                      fontSize: 9,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5)),
               Text(_capitalize(themeState.username),
                   style: TextStyle(
                       color: onSurface,
-                      fontSize: r(15),
+                      fontSize: 15,
                       fontWeight: FontWeight.w900),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1),
             ],
           ),
         ),
-        LiveClockWidget(r: r, accent: accent, userId: widget.userId),
-        SizedBox(width: r(8)),
-        _buildProfileAvatar(onSurface, accent, r),
+        LiveClockWidget(r: (v) => v, accent: accent, userId: widget.userId),
+        const SizedBox(width: 8),
+        _buildProfileAvatar(onSurface, accent),
       ],
     );
   }
 
   Widget _buildProfileAvatar(
-      Color onSurface, Color accent, double Function(double) r) {
+      Color onSurface, Color accent) {
     final theme = Theme.of(context);
     return PopupMenuButton<int>(
-      offset: Offset(0, r(45)),
+      offset: const Offset(0, 45),
       color: theme.cardColor,
       elevation: 8,
       shape: RoundedRectangleBorder(
@@ -656,18 +609,13 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         if (value == 0) {
           widget.onNavigateToProfile?.call();
         } else if (value == 1) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()));
-        } else if (value == 2) {
           _handleLogout();
         }
       },
       itemBuilder: (context) => [
-        _buildPopupItem(0, Icons.person_rounded, "My Profile", accent, r),
+        _buildPopupItem(0, Icons.person_rounded, "My Profile", accent, (v) => v),
         const PopupMenuDivider(height: 1),
-        _buildPopupItem(1, Icons.settings_rounded, "Settings", accent, r),
-        const PopupMenuDivider(height: 1),
-        _buildPopupItem(2, Icons.logout_rounded, "Logout", accent, r,
+        _buildPopupItem(1, Icons.logout_rounded, "Logout", accent, (v) => v,
             isDestructive: true),
       ],
       child: Container(
@@ -681,7 +629,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
             final userAsync = ref.watch(userProvider(widget.userId));
             final profileImagePath = userAsync.asData?.value?['profilePath'] as String?;
             return CircleAvatar(
-              radius: r(14),
+              radius: 14,
               backgroundColor: accent.withValues(alpha: 0.1),
               backgroundImage: (profileImagePath != null &&
                       File(profileImagePath).existsSync())
@@ -689,7 +637,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                   : null,
               child: (profileImagePath == null ||
                       !File(profileImagePath).existsSync())
-                  ? Icon(Icons.person_rounded, color: accent, size: r(16))
+                  ? Icon(Icons.person_rounded, color: accent, size: 16)
                   : null,
             );
           },
@@ -708,11 +656,15 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           Icon(icon,
               color: isDestructive ? Colors.redAccent : accent, size: r(18)),
           SizedBox(width: r(12)),
-          Text(title,
-              style: TextStyle(
-                  fontSize: r(13),
-                  fontWeight: FontWeight.w600,
-                  color: isDestructive ? Colors.redAccent : null)),
+          Flexible(
+            child: Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: r(13),
+                    fontWeight: FontWeight.w600,
+                    color: isDestructive ? Colors.redAccent : null)),
+          ),
         ],
       ),
     );
@@ -824,7 +776,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     _formatCountdown(_nextClass, isNext: true),
                     accent,
                     r,
-                    isActive: true,
+                    isActive: false,
                     showClock: true,
                     cardAccent: accent))),
       ],
@@ -843,7 +795,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     final statusColor = label == "CURRENT"
         ? (isActive ? Colors.green : Colors.grey)
         : Colors.grey;
-    final statusText = isActive ? "LIVE" : "FREE";
+    final statusText = isActive ? "LIVE" : null;
 
     return _buildGlassContainer(
       borderColor: isActive ? accent.withValues(alpha: 0.4) : null,
@@ -853,29 +805,30 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: r(6),
-                  height: r(6),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
+            if (statusText != null)
+              Row(
+                children: [
+                  Container(
+                    width: r(6),
+                    height: r(6),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                SizedBox(width: r(4)),
-                Text(
-                  "● $statusText",
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: r(10),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
+                  SizedBox(width: r(4)),
+                  Text(
+                    "● $statusText",
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: r(10),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: r(10)),
+                ],
+              ),
+            if (statusText != null) SizedBox(height: r(10)),
             Text(className,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
@@ -893,12 +846,16 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     size: r(11),
                   ),
                   SizedBox(width: r(4)),
-                  Text(time,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                        fontSize: r(11),
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'monospace')),
+                  Flexible(
+                    child: Text(time,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontSize: r(11),
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'monospace'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ),
                 ],
               )
             else
@@ -907,7 +864,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: r(11),
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'monospace')),
+                    fontFamily: 'monospace'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             if (showProgress) ...[
               SizedBox(height: r(8)),
               ClipRRect(
@@ -1056,7 +1015,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       padding: EdgeInsets.only(bottom: r(10)),
       child: _buildGlassContainer(
         r: r,
-        child: ListTile(
+        child: Material(
+          type: MaterialType.transparency,
+          child: ListTile(
           onTap: () => _showAssignmentDetail(context, assignment, accent),
           contentPadding: EdgeInsets.symmetric(horizontal: r(15)),
           title: Text(
@@ -1074,6 +1035,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
               fontSize: r(12)),
           ),
           trailing: Icon(Icons.chevron_right, color: accent),
+        ),
         ),
       ),
     );
@@ -1149,7 +1111,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           ),
         ),
         _buildResourceGridCard(
-          "AI Tutor",
+          "AI Chat",
           Icons.auto_awesome_rounded,
           "Get help now",
           accent,
@@ -1186,6 +1148,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       fontSize: r(13),
                     ),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: r(4)),
@@ -1196,6 +1159,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       fontSize: r(10),
                     ),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -1230,101 +1194,4 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     );
   }
 
-  Widget _buildSpeedDial(Color accent) {
-    final theme = Theme.of(context);
-    final themeState = ref.watch(themeProvider);
-    final double scale = themeState.uiScale;
-    double r(double v) => v * scale;
-
-    return Positioned(
-      bottom: 20,
-      right: 20,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Transform.translate(
-            offset: Offset(0, _isSpeedDialExpanded
-                ? _speedDialAnimationController.value * 70
-                : 0),
-            child: Opacity(
-              opacity: _isSpeedDialExpanded
-                  ? _speedDialAnimationController.value
-                  : 0,
-              child: FloatingActionButton(
-                heroTag: "speed_dial_1",
-                mini: true,
-                backgroundColor: theme.cardColor,
-                onPressed: () {
-                  setState(() { _isSpeedDialExpanded = false; });
-                  _speedDialAnimationController.reverse();
-                  _showChatModal();
-                },
-                child: Icon(Icons.auto_awesome, color: accent, size: 20),
-              ),
-            ),
-          ),
-          SizedBox(height: r(10)),
-          Transform.translate(
-            offset: Offset(0, _isSpeedDialExpanded
-                ? _speedDialAnimationController.value * 70
-                : 0),
-            child: Opacity(
-              opacity: _isSpeedDialExpanded
-                  ? _speedDialAnimationController.value
-                  : 0,
-              child: FloatingActionButton(
-                heroTag: "speed_dial_2",
-                mini: true,
-                backgroundColor: theme.cardColor,
-                onPressed: () {
-                  setState(() { _isSpeedDialExpanded = false; });
-                  _speedDialAnimationController.reverse();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AssignmentsScreen(userId: widget.userId),
-                    ),
-                  ).then((_) => _loadDashboardData());
-                },
-                child: Icon(Icons.assignment_add, color: accent, size: 20),
-              ),
-            ),
-          ),
-          SizedBox(height: r(10)),
-          FloatingActionButton(
-            heroTag: "speed_dial_main",
-            backgroundColor: accent,
-            onPressed: () {
-              setState(() { _isSpeedDialExpanded = !_isSpeedDialExpanded; });
-              if (_isSpeedDialExpanded) {
-                _speedDialAnimationController.forward();
-              } else {
-                _speedDialAnimationController.reverse();
-              }
-            },
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class AIFloatingChatHead extends StatelessWidget {
-  final VoidCallback onPressed;
-  const AIFloatingChatHead({super.key, required this.onPressed});
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 20,
-      right: 20,
-      child: FloatingActionButton(
-          heroTag: "ai_chat_btn",
-          backgroundColor: Theme.of(context).primaryColor,
-          elevation: 6,
-          onPressed: onPressed,
-          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 30)),
-    );
-  }
 }

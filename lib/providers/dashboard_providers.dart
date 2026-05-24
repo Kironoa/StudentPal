@@ -6,7 +6,7 @@ import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/services/user_service.dart';
 import 'package:mobile_app/utils/schedule_utils.dart';
 
-/// Riverpod providers for dashboard data (users, schedules).
+
 final databaseHelperProvider = rp.Provider<DatabaseHelper>((ref) => DatabaseHelper());
 final userServiceProvider = rp.Provider<UserService>((ref) => UserService());
 

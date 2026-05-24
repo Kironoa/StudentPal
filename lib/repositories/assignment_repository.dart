@@ -2,7 +2,7 @@ import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/assignment_model.dart';
 import 'package:mobile_app/core/base_repository.dart';
 
-/// Data access layer for assignments — wraps DatabaseHelper queries.
+
 class AssignmentRepository implements BaseRepository<Assignment> {
   final DatabaseHelper _dbHelper;
 

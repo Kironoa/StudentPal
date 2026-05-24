@@ -38,8 +38,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
   Future<void> _saveSetting(String key, bool value) async {
     try {
       await DatabaseHelper().saveSettings();
-      // Note: The saveSettings method needs to support notifyClasses and notifyAssignments
-      // For now, we'll update the settings table directly
+      
+      
       final db = await DatabaseHelper().database;
       await db.update('settings', {key: value ? 1 : 0}, where: 'id = 1');
     } catch (e) {
@@ -63,7 +63,7 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Drag handle
+                
                 Center(
                   child: Container(
                     width: 40,
@@ -99,8 +99,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                     setState(() => _notifyClasses = value);
                     await _saveSetting('notifyClasses', value);
                     if (!value) {
-                      // Cancel all class notifications
-                      // This would need access to all class IDs
+                      
+                      
                     }
                   },
                 ),

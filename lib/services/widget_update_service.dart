@@ -17,7 +17,7 @@ class WidgetUpdateService {
 
   static const int _alarmId = 99999;
 
-  // Shared preference keys for 2x2 grid
+  
   static const String _keyCurrentSubject = 'widget_current_subject';
   static const String _keyCurrentTime = 'widget_current_time';
   static const String _keyCurrentVisible = 'widget_current_visible';
@@ -125,14 +125,14 @@ class WidgetUpdateService {
   @pragma('vm:entry-point')
   static Future<void> _performWidgetUpdate(int? userId) async {
     try {
-      // Get user ID from SharedPreferences if not provided
+      
       if (userId == null) {
         final prefs = await SharedPreferences.getInstance();
         final storedUserId = prefs.getInt('userId');
         final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
         if (!isLoggedIn || storedUserId == null) {
           debugPrint(
-              '[WidgetUpdateService] Not logged in — showing empty state');
+              '[WidgetUpdateService] Not logged in â€” showing empty state');
           await _setErrorState('Welcome to StudentPal!', true);
           return;
         }
@@ -144,7 +144,7 @@ class WidgetUpdateService {
 
       final db = DatabaseHelper();
 
-      // Verify user exists
+      
       final userData = await db.getUser(userId);
       if (userData == null) {
         debugPrint('[WidgetUpdateService] User not found in DB');
@@ -152,11 +152,11 @@ class WidgetUpdateService {
         return;
       }
 
-      // Clear any previous error state
+      
       await HomeWidget.saveWidgetData(_keyHasError, false);
       await HomeWidget.saveWidgetData(_keyErrorMessage, '');
 
-      // Get all classes for the user
+      
       final allClasses = await db.getAllClassModels(userId);
       if (allClasses.isEmpty) {
         debugPrint('[WidgetUpdateService] No classes found');
@@ -177,7 +177,7 @@ class WidgetUpdateService {
       };
       final todayAbbrev = dayMap[todayIndex]!;
 
-      // === TOP LEFT: Current Class ===
+      
       ClassModel? currentClass;
       for (final classItem in allClasses) {
         final classDays = classItem.days.toUpperCase();
@@ -202,7 +202,7 @@ class WidgetUpdateService {
         await HomeWidget.saveWidgetData(_keyCurrentVisible, false);
       }
 
-      // === TOP RIGHT: Next Class with Countdown ===
+      
       ClassModel? nextClass;
       int closestDiff = 999999;
 
@@ -242,7 +242,7 @@ class WidgetUpdateService {
         await HomeWidget.saveWidgetData(_keyNextVisible, false);
       }
 
-      // === BOTTOM LEFT: Today's Remaining Classes ===
+      
       int classesToday = 0;
       final currentMinutes = TimeHelper.getCurrentMinutes();
 
@@ -258,7 +258,7 @@ class WidgetUpdateService {
       await HomeWidget.saveWidgetData(_keyScheduleVisible, true);
       debugPrint('[WidgetUpdateService] Classes left today: $classesToday');
 
-      // === BOTTOM RIGHT: Pending Assignments ===
+      
       final assignmentsData = await db.getAssignments(userId);
       int pendingAssignments = 0;
 

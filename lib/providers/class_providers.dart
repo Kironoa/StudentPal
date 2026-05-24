@@ -7,7 +7,7 @@ import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/providers/class_update_notifier.dart';
 import 'package:mobile_app/utils/schedule_utils.dart';
 
-/// Riverpod providers for classes, assignments, and time-related data.
+
 final classRepositoryProvider = Provider<ClassRepository>((ref) {
   return ClassRepository();
 });

@@ -72,8 +72,9 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        automaticallyImplyLeading: false,
         title: Text(
-          "ASSIGNMENTS",
+          "TASKS",
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w900,
@@ -82,11 +83,6 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
-        ),
-        leading: IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
-          onPressed: () {},
         ),
       ),
       body: FutureBuilder<List<Assignment>>(
@@ -109,6 +105,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_task",
         onPressed: () => _showForm(),
         backgroundColor: accentColor,
         elevation: 4,
@@ -132,20 +129,22 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
         ? theme.colorScheme.error
         : theme.colorScheme.primary;
 
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 15,
+          child: Column(
             children: [
               Container(
-                width: res(context, 15),
-                height: res(context, 15),
+                width: 15,
+                height: 15,
                 decoration: BoxDecoration(
                   color: priorityColor,
                   shape: BoxShape.circle,
                   border: Border.all(
                       color: theme.scaffoldBackgroundColor,
-                      width: res(context, 3)),
+                      width: 3),
                   boxShadow: [
                     BoxShadow(
                         color: priorityColor.withValues(alpha: 0.3),
@@ -155,7 +154,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
               ),
               Expanded(
                 child: Container(
-                  width: res(context, 2),
+                  width: 2,
                   color: index == totalItems - 1
                       ? Colors.transparent
                       : theme.colorScheme.onSurface.withValues(alpha: 0.1),
@@ -163,69 +162,79 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
               ),
             ],
           ),
-          SizedBox(width: res(context, 20)),
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.only(bottom: res(context, 20)),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(res(context, 20)),
-                border: Border.all(
-                    color: theme.dividerColor.withValues(alpha: 0.05)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(res(context, 20)),
-                child: InkWell(
-                  onTap: () => _viewDetailsSheet(item),
-                  child: Padding(
-                    padding: EdgeInsets.all(res(context, 16)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("DUE: ${formatDeadline(item.deadline)}",
+        ),
+        SizedBox(width: 20),
+        Expanded(
+          child: Container(
+            margin: EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.05)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: () => _viewDetailsSheet(item),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text("DUE: ${formatDeadline(item.deadline)}",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                     color: _getDeadlineColor(
                                         item.deadline, priorityColor),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: res(context, 11))),
-                            Icon(Icons.more_vert_rounded,
-                                size: res(context, 18),
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.3)),
-                          ],
-                        ),
-                        SizedBox(height: res(context, 8)),
-                        Text(item.title,
-                            style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: res(context, 17),
-                                fontWeight: FontWeight.bold)),
-                        SizedBox(height: res(context, 4)),
-                        Row(
-                          children: [
-                            Icon(Icons.bookmark_outline_rounded,
-                                size: res(context, 14),
-                                color: theme.colorScheme.secondary),
-                            SizedBox(width: res(context, 4)),
-                            Text(item.subject ?? "General",
+                                    fontSize: 11)),
+                          ),
+                          Icon(Icons.more_vert_rounded,
+                              size: 18,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.3)),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.bookmark_outline_rounded,
+                              size: 14,
+                              color: theme.colorScheme.secondary),
+                          SizedBox(width: 4),
+                          Flexible(
+                            child: Text(item.subject ?? "General",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                     color: theme.colorScheme.secondary,
-                                    fontSize: res(context, 13),
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

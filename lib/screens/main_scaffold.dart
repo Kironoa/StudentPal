@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/screens/dashboard_screen.dart';
+import 'package:mobile_app/screens/calendar_screen.dart';
 import 'package:mobile_app/screens/schedule_screen.dart';
 import 'package:mobile_app/screens/assignments_screen.dart';
 import 'package:mobile_app/screens/profile_screen.dart';
+import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -18,9 +20,30 @@ class MainScaffold extends ConsumerStatefulWidget {
 class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _selectedIndex = 0;
 
+  void _showCalendarModal() {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: CalendarScreen(userId: widget.userId, showAsModal: true),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onItemTapped(int index) {
+    if (index == 1) {
+      _showCalendarModal();
+      return;
+    }
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index > 1 ? index - 1 : index;
     });
   }
 
@@ -36,17 +59,24 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         children: [
           DashboardContent(
             userId: widget.userId,
-            onNavigateToSchedule: () => _onItemTapped(1),
-            onNavigateToAssignments: () => _onItemTapped(2),
-            onNavigateToProfile: () => _onItemTapped(3),
+            onNavigateToProfile: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: widget.userId),
+                ),
+              );
+            },
           ),
           SchedulePage(userId: widget.userId),
           AssignmentsScreen(userId: widget.userId),
-          ProfileScreen(userId: widget.userId),
+          const SettingsScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: _selectedIndex == 0
+            ? 0
+            : _selectedIndex + 1, // map stack index → nav index
         onTap: _onItemTapped,
         selectedItemColor: theme.colorScheme.primary,
         unselectedItemColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -63,6 +93,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_rounded),
+            label: 'Calendar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.schedule_rounded),
             label: 'Schedule',
           ),
           BottomNavigationBarItem(
@@ -70,8 +104,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             label: 'Tasks',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
+            icon: Icon(Icons.settings_rounded),
+            label: 'Settings',
           ),
         ],
       ),
@@ -81,15 +115,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
 class DashboardContent extends StatelessWidget {
   final int userId;
-  final VoidCallback onNavigateToSchedule;
-  final VoidCallback onNavigateToAssignments;
   final VoidCallback onNavigateToProfile;
 
   const DashboardContent({
     super.key,
     required this.userId,
-    required this.onNavigateToSchedule,
-    required this.onNavigateToAssignments,
     required this.onNavigateToProfile,
   });
 
@@ -97,8 +127,6 @@ class DashboardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return StudentDashboard(
       userId: userId,
-      onNavigateToSchedule: onNavigateToSchedule,
-      onNavigateToAssignments: onNavigateToAssignments,
       onNavigateToProfile: onNavigateToProfile,
     );
   }

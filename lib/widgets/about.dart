@@ -49,7 +49,7 @@ class AboutScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Logo Section
+            
             Center(
               child: Container(
                 padding: const EdgeInsets.all(20),
@@ -99,7 +99,7 @@ class AboutScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 40),
 
-            // Tech Stack Row
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -110,7 +110,7 @@ class AboutScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 60),
 
-            // Feedback & Contact Section
+            
             const Text(
               "Have feedback or a feature request? Let me know!",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),

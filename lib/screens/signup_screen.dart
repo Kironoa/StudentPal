@@ -211,6 +211,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -232,13 +233,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 duration: const Duration(milliseconds: 150),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  width: MediaQuery.of(context).size.width * 0.88,
+                  width: screenWidth * 0.88,
                   padding: EdgeInsets.all(res(context, 2)),
                   decoration: _buildOuterDecoration(theme),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: isStep2
-                        ? _buildStep2Card(theme)
+                        ? _buildStep2Card(theme, screenWidth)
                         : _buildStep1Card(theme),
                   ),
                 ),
@@ -315,11 +316,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
-  Widget _buildStep2Card(ThemeData theme) {
+  Widget _buildStep2Card(ThemeData theme, double screenWidth) {
     return Container(
       key: const ValueKey('step2'),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+        maxHeight: screenWidth * 1.5,
       ),
       decoration: BoxDecoration(
         color: theme.cardColor,
@@ -385,7 +386,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: Container(
                         width: double.infinity,
                         constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.55),
+                            maxWidth: screenWidth * 0.55),
                         child: Text(
                           q,
                           overflow: TextOverflow.ellipsis,

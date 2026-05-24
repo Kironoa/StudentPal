@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/models/study_resource_model.dart';
 
-/// Manages CRUD operations for study resources (quizzes, flashcards, summaries).
+
 class StudyResourceService {
   final DatabaseHelper _dbHelper;
 

@@ -24,7 +24,7 @@ class NotificationService {
   static const String meowChannelName = 'Student Pal Alerts';
   static const String meowSoundName = 'meow';
 
-  // Timezone helper from reference code
+  
   @pragma('vm:entry-point')
   static void _setLocalTimezone() {
     final offsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
@@ -54,7 +54,7 @@ class NotificationService {
 
   bool _checkInitialized() {
     if (!_isInitialized) {
-      debugPrint('[NotificationService] Not initialized — skipping.');
+      debugPrint('[NotificationService] Not initialized â€” skipping.');
       return false;
     }
     return true;
@@ -67,7 +67,7 @@ class NotificationService {
       final tzName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzName.toString()));
     } catch (e) {
-      _setLocalTimezone(); // Use the reference code's timezone mapping
+      _setLocalTimezone(); 
     }
 
     const androidSettings =
@@ -119,7 +119,7 @@ class NotificationService {
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
 
-    // Initialize alarm package
+    
     await Alarm.init();
 
     _isInitialized = true;
@@ -143,9 +143,9 @@ class NotificationService {
 
   @pragma('vm:entry-point')
   Future<String?> checkAlarmPermission() async {
-    // Alarm.hasPermission() removed - not available in alarm 5.0.0+
+    
     if (Platform.isAndroid) {
-      // Exact logic from user's Task 2 requirement
+      
       final androidImplementation = _notifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       final bool? canSchedule = await androidImplementation?.requestExactAlarmsPermission();
@@ -154,7 +154,7 @@ class NotificationService {
         return null;
       }
     } else {
-      // Non-Android platforms - assume permission is handled
+      
       _permissionError = null;
       return null;
     }
@@ -171,17 +171,17 @@ class NotificationService {
   }) async {
     if (!_checkInitialized()) return 'Not initialized';
 
-    // Check alarm permission first
+    
     final permissionError = await checkAlarmPermission();
     if (permissionError != null) return permissionError;
 
-    // Cancel existing alerts
+    
     await _notifications.cancel(id: id * 10);
-    await Alarm.stop(id * 10 + 1); // Cancel existing alarm if any
+    await Alarm.stop(id * 10 + 1); 
 
     final now = DateTime.now();
 
-    // 10 minutes before - use local notification
+    
     final tenMinBefore = startTime.subtract(const Duration(minutes: 10));
     if (tenMinBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -192,13 +192,13 @@ class NotificationService {
       );
     }
 
-    // Class Starting Now - use Alarm for foreground service (wakes device)
+    
     final oneMinBefore = startTime.subtract(const Duration(minutes: 1));
     if (oneMinBefore.isAfter(now)) {
       final alarmSettings = AlarmSettings(
         id: id * 10 + 1,
         dateTime: oneMinBefore,
-        assetAudioPath: 'assets/meow.wav', // Using meow.wav for class alarms
+        assetAudioPath: 'assets/meow.wav', 
         loopAudio: true,
         vibrate: true,
         androidFullScreenIntent: true,
@@ -236,7 +236,7 @@ class NotificationService {
 
     final now = DateTime.now();
 
-    // 3 Days Before - use alarmClock for reliability
+    
     final threeDaysBefore = deadline.subtract(const Duration(days: 3));
     if (threeDaysBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -248,7 +248,7 @@ class NotificationService {
       );
     }
 
-    // 10 Hours Before - use alarmClock for reliability
+    
     final tenHoursBefore = deadline.subtract(const Duration(hours: 10));
     if (tenHoursBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -260,7 +260,7 @@ class NotificationService {
       );
     }
 
-    // 3 Hours Before
+    
     final threeHoursBefore = deadline.subtract(const Duration(hours: 3));
     if (threeHoursBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -271,7 +271,7 @@ class NotificationService {
       );
     }
 
-    // 1 Hour Before
+    
     final oneHourBefore = deadline.subtract(const Duration(hours: 1));
     if (oneHourBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -320,7 +320,7 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     if (!_checkInitialized()) return;
     await _notifications.cancel(id: id * 10);
-    await Alarm.stop(id * 10 + 1); // Also stop the alarm
+    await Alarm.stop(id * 10 + 1); 
     await _notifications.cancel(id: id * 10 + 1);
   }
 
@@ -336,7 +336,7 @@ class NotificationService {
   @pragma('vm:entry-point')
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
-    await Alarm.stopAll(); // Stop all alarms
+    await Alarm.stopAll(); 
   }
 
   @pragma('vm:entry-point')

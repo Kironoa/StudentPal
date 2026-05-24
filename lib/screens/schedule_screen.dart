@@ -76,13 +76,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = theme.colorScheme.primary;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        automaticallyImplyLeading: false,
         title: Text(
           "CLASS SCHEDULE",
           style: TextStyle(
@@ -93,11 +93,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
-        ),
-        leading: IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.grid_view_rounded, color: accentColor, size: 22),
-          onPressed: () {},
         ),
       ),
       body: Column(
@@ -124,6 +119,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_class",
         onPressed: () => _showFormDialog(),
         backgroundColor: theme.colorScheme.primary,
         elevation: 4,
@@ -183,6 +179,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
               ),
               child: Text(
                 "${a.subject} ↔ ${b.subject} (${a.days}, ${a.displayStartTime}-${a.displayEndTime})",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontSize: res(context, 12),
@@ -305,20 +303,22 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
 
   Widget _buildTimelineTile(ClassModel item, int index) {
     final theme = Theme.of(context);
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 15,
+          child: Column(
             children: [
               Container(
-                width: res(context, 15),
-                height: res(context, 15),
+                width: 15,
+                height: 15,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(
                       color: theme.scaffoldBackgroundColor,
-                      width: res(context, 3)),
+                      width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.primary.withValues(alpha: 0.3),
@@ -329,7 +329,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
               ),
               Expanded(
                 child: Container(
-                  width: res(context, 2),
+                  width: 2,
                   color: index == filteredSchedules.length - 1
                       ? Colors.transparent
                       : theme.colorScheme.primary.withValues(alpha: 0.2),
@@ -337,66 +337,77 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
               ),
             ],
           ),
-          SizedBox(width: res(context, 20)),
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.only(bottom: res(context, 20)),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(res(context, 20)),
-                border: Border.all(
-                    color: theme.dividerColor.withValues(alpha: 0.05)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(res(context, 20)),
-                child: InkWell(
-                  onTap: () => _showDetailsModal(item),
-                  child: Padding(
-                    padding: EdgeInsets.all(res(context, 16)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
+        ),
+        SizedBox(width: 20),
+        Expanded(
+          child: Container(
+            margin: EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.05)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: () => _showDetailsModal(item),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
                               "${item.displayStartTime} - ${item.displayEndTime}",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
-                                fontSize: res(context, 12),
+                                fontSize: 12,
                               ),
                             ),
-                            Icon(
-                              Icons.more_vert_rounded,
-                              size: res(context, 18),
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.3),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: res(context, 8)),
-                        Text(
-                          item.subject,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: res(context, 18),
+                          ),
+                          Icon(
+                            Icons.more_vert_rounded,
+                            size: 18,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.3),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        item.subject,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: res(context, 4)),
+                        SizedBox(height: 4),
                         Row(
                           children: [
                             Icon(Icons.location_on_outlined,
-                                size: res(context, 14),
+                                size: 14,
                                 color: theme.colorScheme.secondary),
-                            SizedBox(width: res(context, 4)),
-                            Text(
-                              item.room,
-                              style: TextStyle(
-                                color: theme.colorScheme.secondary,
-                                fontSize: res(context, 13),
-                                fontWeight: FontWeight.w500,
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                item.room,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: theme.colorScheme.secondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
@@ -409,8 +420,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildEmptyState(ThemeData theme) {
@@ -419,7 +429,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(res(context, 20)),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
               shape: BoxShape.circle,
@@ -565,16 +575,20 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
               size: res(context, 20),
               color: Theme.of(context).colorScheme.primary),
           SizedBox(width: res(context, 15)),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: res(context, 11), color: Colors.grey.shade500)),
-              Text(value,
-                  style: TextStyle(
-                      fontSize: res(context, 15), fontWeight: FontWeight.w600)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        fontSize: res(context, 11), color: Colors.grey.shade500)),
+                Text(value,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: res(context, 15), fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
         ],
       ),

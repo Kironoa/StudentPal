@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/themes/app_themes.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 
-/// Riverpod state management for app theme, brightness, and UI scale.
+
 class ThemeState {
   final String username;
   final double uiScale;
@@ -73,7 +73,7 @@ class ThemeProvider extends ChangeNotifier {
           _accentColor = Color(settings['accentColor'] as int);
         }
 
-        if (_uiScale < 0.8 || _uiScale > 1.2) {
+        if (_uiScale < 0.8 || _uiScale > 1.0) {
           _uiScale = 1.0;
         }
 

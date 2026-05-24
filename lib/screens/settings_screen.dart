@@ -99,12 +99,12 @@ class SettingsScreen extends ConsumerWidget {
                              ),
                            ],
                          ),
-                         Slider(
-                           value: scale,
-                           min: 0.8,
-                           max: 1.2,
-                           divisions: 4,
-                           label: "${(scale * 100).round()}%",
+                          Slider(
+                            value: scale,
+                            min: 0.8,
+                            max: 1.0,
+                            divisions: 2,
+                            label: "${(scale * 100).round()}%",
                            activeColor: primaryColor,
                            onChanged: (double value) {
                              ref.read(themeProvider.notifier).setScale(value);

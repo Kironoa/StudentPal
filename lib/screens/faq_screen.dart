@@ -47,7 +47,7 @@ class FaqScreen extends StatelessWidget {
     {
       'question': 'Can I change the app\'s appearance?',
       'answer': 'Yes. Go to Settings > Appearance to switch between dark and light mode, choose an '
-          'accent color, and adjust the interface scale between 80% and 120%.'
+          'accent color, and adjust the interface scale between 80% and 100%.'
     },
   ];
 

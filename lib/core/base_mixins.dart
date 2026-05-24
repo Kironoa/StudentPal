@@ -1,4 +1,4 @@
-/// Reusable mixins for date parsing, validation, and identifiable models.
+
 mixin Identifiable {
   int? get id;
 }

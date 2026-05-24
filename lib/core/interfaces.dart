@@ -3,7 +3,7 @@ import 'package:mobile_app/models/assignment_model.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/models/app_user.dart';
 
-/// Abstract contracts (interfaces) for repositories and services.
+
 abstract class INotesRepository {
   Future<List<StudyNote>> getAll(int userId);
   Future<StudyNote?> getById(int id);

@@ -1,4 +1,4 @@
-/// Abstract base interface for all repositories.
+
 abstract class BaseRepository<T> {
   Future<List<T>> getAll(int userId);
   Future<T?> getById(int id);

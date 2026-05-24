@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// ChangeNotifier for class list update notifications.
+
 class ClassUpdateNotifier extends ChangeNotifier {
   bool _shouldRefresh = false;
   int _updateCount = 0;

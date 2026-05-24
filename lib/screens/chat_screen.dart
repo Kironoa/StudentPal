@@ -48,7 +48,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 "content": msg['content'] as String,
               }));
         });
-        // Replay history into AI session so the AI has context
+        
         _aiService.restoreHistory(history
             .map((msg) => {
                   'role': msg['role'] as String,

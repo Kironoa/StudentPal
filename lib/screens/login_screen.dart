@@ -142,6 +142,7 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -180,7 +181,7 @@ class _StudentPalLoginState extends ConsumerState<StudentPalLogin> {
                     duration: const Duration(milliseconds: 150),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: MediaQuery.of(context).size.width * 0.88,
+                      width: screenWidth * 0.88,
                       padding: EdgeInsets.all(res(context, 2)),
                       decoration: _buildOuterDecoration(theme),
                       child: Container(
