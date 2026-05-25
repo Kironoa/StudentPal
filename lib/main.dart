@@ -16,6 +16,8 @@ import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/services/battery_optimization_service.dart';
 import 'package:mobile_app/services/widget_update_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
+import 'package:mobile_app/providers/loading_provider.dart';
+import 'package:mobile_app/widgets/loading_spinner.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 
 void main() async {
@@ -101,6 +103,18 @@ class _StudentPalAppState extends ConsumerState<StudentPalApp> {
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
+    if (!themeState.isLoaded) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFF00FF75)),
+          ),
+        ),
+      );
+    }
+
     final baseTheme = themeState.currentTheme;
 
     return MaterialApp(
@@ -110,11 +124,23 @@ class _StudentPalAppState extends ConsumerState<StudentPalApp> {
         textTheme: baseTheme.textTheme.apply(fontFamily: 'Poppins'),
       ),
       builder: (context, child) {
+        final isLoading = ref.watch(globalLoadingProvider);
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.linear(themeState.uiScale),
           ),
-          child: child!,
+          child: Stack(
+            children: [
+              child!,
+              if (isLoading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  child: Center(
+                    child: LoadingSpinner(size: 80),
+                  ),
+                ),
+            ],
+          ),
         );
       },
       home: FutureBuilder<UserSession>(

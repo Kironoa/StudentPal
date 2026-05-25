@@ -404,9 +404,11 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
       });
     });
 
+    final themeState = ref.watch(themeProvider);
+    if (!themeState.isLoaded) return const SizedBox.shrink();
+
     final theme = Theme.of(context);
     final Color dynamicAccent = theme.colorScheme.primary;
-    final themeState = ref.watch(themeProvider);
     final double scale = themeState.uiScale;
     double r(double v) => v * scale;
 
@@ -429,7 +431,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
               SliverAppBar(
                 pinned: true,
                 backgroundColor:
-                    theme.scaffoldBackgroundColor.withValues(alpha: 0.4),
+                    theme.scaffoldBackgroundColor.withValues(alpha: 0.30),
                 elevation: 0,
                 expandedHeight: r(90),
                 collapsedHeight: r(75),
@@ -937,7 +939,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
               child: Container(
                 width: r(140),
                 decoration: BoxDecoration(
-                  color: theme.cardColor.withValues(alpha: 0.85),
+        color: theme.cardColor.withValues(alpha: 0.30),
                   borderRadius: BorderRadius.circular(r(16)),
                   border: Border.all(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
@@ -1187,7 +1189,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.85),
+        color: theme.cardColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
             color: borderColor ??

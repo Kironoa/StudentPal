@@ -37,12 +37,7 @@ class AboutScreen extends ConsumerWidget {
         leading: IconButton(
           visualDensity: VisualDensity.compact,
           icon: Icon(Icons.grid_view_rounded, color: accent, size: 22),
-          onPressed: () {
-            int count = 0;
-            Navigator.popUntil(context, (route) {
-              return count++ == 2;
-            });
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SingleChildScrollView(

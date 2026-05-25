@@ -9,6 +9,7 @@ import 'package:mobile_app/services/notes_service.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/ai_service.dart';
 import 'package:mobile_app/services/study_resource_service.dart';
+import 'package:mobile_app/providers/loading_provider.dart';
 import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/utils/responsive.dart';
@@ -58,6 +59,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   
 
   Future<void> _generateAISummary(StudyNote note) async {
+    ref.read(globalLoadingProvider.notifier).show();
     setState(() => _isLoading = true);
     try {
       final promptText =
@@ -81,6 +83,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     } catch (e) {
       _showGlassAlert("Summary failed: $e");
     } finally {
+      ref.read(globalLoadingProvider.notifier).hide();
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -94,6 +97,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       return;
     }
 
+    ref.read(globalLoadingProvider.notifier).show();
     setState(() => _isLoading = true);
     try {
       final promptText = """
@@ -126,11 +130,13 @@ $currentContent
     } catch (e) {
       _showGlassAlert("Error: $e");
     } finally {
+      ref.read(globalLoadingProvider.notifier).hide();
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _generateQuiz(StudyNote note, int count) async {
+    ref.read(globalLoadingProvider.notifier).show();
     setState(() => _isLoading = true);
     try {
       final promptText = """
@@ -162,6 +168,7 @@ Text: ${note.description ?? note.content ?? ''}
     } catch (e) {
       _showGlassAlert("Quiz error: $e");
     } finally {
+      ref.read(globalLoadingProvider.notifier).hide();
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -303,16 +310,18 @@ Text: ${note.description ?? note.content ?? ''}
   }
 
   Widget _buildQtyBtn(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.05),
-          border: Border.all(color: Colors.white10),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+          border: Border.all(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
         ),
-        child: Icon(icon, color: Colors.white, size: 28),
+        child: Icon(icon, color: theme.colorScheme.onSurface, size: 28),
       ),
     );
   }
