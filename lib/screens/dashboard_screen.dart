@@ -19,6 +19,7 @@ import 'package:mobile_app/screens/flashcards_screen.dart';
 import 'package:mobile_app/screens/summaries_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/widgets/live_clock_widget.dart';
+import 'package:mobile_app/providers/class_update_notifier.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
@@ -247,6 +248,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   }
 
   Future<void> _handleLogout() async {
+    await _notifService.cancelAllNotifications();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
@@ -396,6 +398,12 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<int>>(classUpdateNotifierProvider, (prev, next) {
+      next.whenOrNull(data: (_) {
+        if (mounted) _loadDashboardData();
+      });
+    });
+
     final theme = Theme.of(context);
     final Color dynamicAccent = theme.colorScheme.primary;
     final themeState = ref.watch(themeProvider);
@@ -556,7 +564,12 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Widget _buildFloatingHeader(Color accent, double Function(double) r) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    final themeState = ref.watch(themeProvider);
+    final userAsync = ref.watch(userProvider(widget.userId));
+    final displayName = userAsync.when(
+      data: (user) => _capitalize(user?['username'] as String? ?? 'Student'),
+      loading: () => 'Student',
+      error: (_, __) => 'Student',
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -571,7 +584,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5)),
-              Text(_capitalize(themeState.username),
+              Text(displayName,
                   style: TextStyle(
                       color: onSurface,
                       fontSize: 15,

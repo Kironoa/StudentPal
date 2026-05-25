@@ -1,5 +1,17 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final classUpdateNotifierProvider = StreamProvider<int>((ref) {
+  final controller = StreamController<int>.broadcast();
+  void onUpdate() => controller.add(ClassUpdateProvider.instance.updateCount);
+  ClassUpdateProvider.instance.addListener(onUpdate);
+  ref.onDispose(() {
+    ClassUpdateProvider.instance.removeListener(onUpdate);
+    controller.close();
+  });
+  return controller.stream;
+});
 
 class ClassUpdateNotifier extends ChangeNotifier {
   bool _shouldRefresh = false;
