@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  STUDENT PAL WIDGET — ROOT BACKGROUND
+  =====================================
+  EDIT THESE PROPERTIES:
+
+  BACKGROUND COLOR:  change the #RRGGBB value in <solid android:color="..."/>
+                     Format: #AARRGGBB (AA = alpha hex, e.g. CC = 80% opacity)
+  CORNER RADIUS:     change the android:radius value (currently 12dp)
+  BORDER:            uncomment the <stroke> block to add an outline
+-->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="#CC121212" />
     <corners android:radius="12dp" />
+    <!--
+    <stroke
+        android:width="0.5dp"
+        android:color="#33FFFFFF" />
+    -->
 </shape>

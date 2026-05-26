@@ -529,12 +529,14 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
                 minHeight: 6,
                 borderRadius: BorderRadius.circular(10)),
             SizedBox(height: res(context, 40)),
-            Text(q.question,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: res(context, 20),
-                    fontWeight: FontWeight.bold)),
+            Flexible(
+              child: Text(q.question,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: res(context, 20),
+                      fontWeight: FontWeight.bold)),
+            ),
             const Spacer(),
             ...List.generate(q.options.length, (index) {
               Color cardColor = theme.colorScheme.surface;
@@ -578,20 +580,17 @@ class _QuizPlayInternalState extends ConsumerState<QuizPlayInternal> {
             }),
             const Spacer(),
             if (_isAnswered)
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15))),
-                  onPressed: _next,
-                  child: Text("CONTINUE",
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w900)),
-                ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    padding: EdgeInsets.symmetric(vertical: 18, horizontal: 32),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15))),
+                onPressed: _next,
+                child: Text("CONTINUE",
+                    style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w900)),
               ),
           ],
         ),

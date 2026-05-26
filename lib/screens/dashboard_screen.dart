@@ -20,6 +20,8 @@ import 'package:mobile_app/screens/summaries_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/widgets/live_clock_widget.dart';
 import 'package:mobile_app/providers/class_update_notifier.dart';
+import 'package:mobile_app/providers/class_providers.dart';
+import 'package:mobile_app/models/assignment_model.dart';
 
 class StudentDashboard extends ConsumerStatefulWidget {
   final int userId;
@@ -45,7 +47,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   final NotificationService _notifService = NotificationService();
 
   List<Schedule> _todaySchedules = [];
-  List<Map<String, dynamic>> _recentAssignments = [];
   Schedule? _currentClass;
   Schedule? _nextClass;
 
@@ -122,8 +123,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     final allSchedules = await _dbHelper.getAllSchedules(widget.userId);
     DateTime now = DateTime.now();
     String currentDayName = DateFormat('EEEE').format(now).toLowerCase();
-    final allAssignments = await _dbHelper.getAssignments(widget.userId);
-
     final dayMap = {
       'monday': ['monday', 'mon', 'm'],
       'tuesday': ['tuesday', 'tue', 't'],
@@ -145,7 +144,6 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         _todaySchedules.sort(
           (a, b) => _parseTime(a.startTime).compareTo(_parseTime(b.startTime)),
         );
-        _recentAssignments = allAssignments.take(3).toList();
       });
       _updateCurrentAndNextClass();
     }
@@ -307,7 +305,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   }
 
   void _showAssignmentDetail(
-      BuildContext context, Map<String, dynamic> assignment, Color accent) {
+      BuildContext context, Assignment? assignment, Color accent) {
+    if (assignment == null) return;
     final theme = Theme.of(context);
     showDialog(
       context: context,
@@ -317,7 +316,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
-            assignment['title'] ?? "Assignment",
+            assignment.title,
             style: TextStyle(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w900),
@@ -327,15 +326,16 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPopupDetailRow(Icons.event_note_rounded, "Deadline",
-                  formatDeadline(assignment['deadline']), accent),
-              if (assignment['description'] != null) ...[
+                  formatDeadline(assignment.deadline), accent),
+              if (assignment.description != null &&
+                  assignment.description!.isNotEmpty) ...[
                 SizedBox(height: res(context, 12)),
                 Text("Description",
                     style: TextStyle(
                         fontSize: res(context, 10),
                         color: Colors.grey,
                         fontWeight: FontWeight.bold)),
-                Text(assignment['description'],
+                Text(assignment.description!,
                     style: TextStyle(fontSize: res(context, 14))),
               ],
             ],
@@ -400,6 +400,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<int>>(classUpdateNotifierProvider, (prev, next) {
       next.whenOrNull(data: (_) {
+        ref.invalidate(assignmentsProvider(widget.userId));
         if (mounted) _loadDashboardData();
       });
     });
@@ -516,22 +517,27 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
                 child: Padding(
                   padding:
                       EdgeInsets.only(left: r(20), right: r(20), top: r(15)),
-                  child: _recentAssignments.isEmpty
-                      ? RepaintBoundary(
-                          child: _buildAssignmentCard({
-                            "title": "No Assignments",
-                            "deadline": "Free day!"
-                          }, dynamicAccent, r),
-                        )
-                      : Column(
-                          children: _recentAssignments
-                              .map(
-                                (a) => RepaintBoundary(
-                                    child: _buildAssignmentCard(
-                                        a, dynamicAccent, r)),
-                              )
-                              .toList(),
-                        ),
+                  child: ref.watch(assignmentsProvider(widget.userId)).when(
+                    data: (assignments) => assignments.isEmpty
+                        ? RepaintBoundary(
+                            child: _buildAssignmentCard(null, dynamicAccent, r),
+                          )
+                        : Column(
+                            children: assignments
+                                .map(
+                                  (a) => RepaintBoundary(
+                                      child: _buildAssignmentCard(
+                                          a, dynamicAccent, r)),
+                                )
+                                .toList(),
+                          ),
+                    loading: () => const SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator())),
+                    error: (_, __) => RepaintBoundary(
+                      child: _buildAssignmentCard(null, dynamicAccent, r),
+                    ),
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
@@ -1016,7 +1022,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
     );
   }
 
-  Widget _buildAssignmentCard(Map<String, dynamic> assignment, Color accent,
+  Widget _buildAssignmentCard(Assignment? assignment, Color accent,
       double Function(double) r) {
     final theme = Theme.of(context);
     return Padding(
@@ -1026,23 +1032,31 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard>
         child: Material(
           type: MaterialType.transparency,
           child: ListTile(
-          onTap: () => _showAssignmentDetail(context, assignment, accent),
+          onTap: assignment != null
+              ? () => _showAssignmentDetail(context, assignment, accent)
+              : null,
           contentPadding: EdgeInsets.symmetric(horizontal: r(15)),
           title: Text(
-            assignment['title'] ?? "Untitled",
+            assignment?.title ?? "No Assignments",
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
               fontSize: r(14)),
           ),
           subtitle: Text(
-            "Due: ${formatDeadline(assignment['deadline'])}",
+            assignment != null
+                ? "Due: ${formatDeadline(assignment.deadline)}"
+                : "Free day!",
             style: TextStyle(
-              color: _getDeadlineColor(assignment['deadline'],
-                  theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              color: assignment != null
+                  ? _getDeadlineColor(assignment.deadline,
+                      theme.colorScheme.onSurface.withValues(alpha: 0.6))
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontSize: r(12)),
           ),
-          trailing: Icon(Icons.chevron_right, color: accent),
+          trailing: assignment != null
+              ? Icon(Icons.chevron_right, color: accent)
+              : null,
         ),
         ),
       ),

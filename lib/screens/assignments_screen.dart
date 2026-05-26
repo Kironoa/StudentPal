@@ -7,6 +7,7 @@ import 'package:mobile_app/services/assignment_service.dart';
 import 'package:mobile_app/widgets/text_field.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/services/alert_service.dart';
+import 'package:mobile_app/providers/class_update_notifier.dart';
 
 class AssignmentsScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -335,6 +336,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
                         widget.userId,
                         assignmentData,
                       );
+                      ClassUpdateProvider.instance.triggerUpdate();
                       if (!context.mounted) return;
                       _showGlassAlert(
                         isEdit ? "Task Updated" : "Task Saved",
@@ -540,6 +542,7 @@ class _AssignmentsScreenState extends ConsumerState<AssignmentsScreen> {
       confirmLabel: 'DELETE',
       onConfirm: () async {
         await _assignmentService.deleteAssignment(id);
+        ClassUpdateProvider.instance.triggerUpdate();
         if (!mounted) return;
         _refreshAssignments();
         if (!context.mounted) return;

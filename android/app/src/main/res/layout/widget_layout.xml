@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ============================================================================
+  STUDENT PAL 2x2 HOME SCREEN WIDGET — LAYOUT REFERENCE
+  ============================================================================
+  VISUAL PROPERTIES YOU CAN ADJUST (search for each tag below):
+
+  CARD CORNER RADIUS  → edit res/drawable/widget_background.xml          (root)
+                          and res/drawable/widget_section_background.xml   (quadrants)
+  CARD BACKGROUND     → edit the <solid android:color="..."/> in the same two files
+  CARD DIMENSIONS     → adjust android:layout_margin* values below (currently 2dp)
+  TEXT PADDING        → adjust android:padding values on each quadrant LinearLayout (currently 8dp)
+  ROOT PADDING        → adjust android:padding on the root FrameLayout (currently 4dp)
+  GRID GAP           → adjust android:padding on the GridLayout (currently 8dp)
+  LABEL COLOR        → edit android:textColor on each label TextView below
+  ============================================================================
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="4dp">
 
-    <!-- EMPTY STATE -->
+    <!-- ===== EMPTY STATE (shown when there's no data or an error) ===== -->
     <LinearLayout
         android:id="@+id/widget_empty_state"
         android:layout_width="match_parent"
@@ -40,7 +56,12 @@
 
     </LinearLayout>
 
-    <!-- 2x2 GRID CONTENT -->
+    <!-- ===== 2x2 GRID CONTENT (shown when data is available) ===== -->
+    <!--
+      Grid gap is controlled by android:padding here (8dp).
+      The GridLayout has internal margins of 0 — all spacing comes from the
+      quadrant child margins, root padding, and grid padding combined.
+    -->
     <GridLayout
         android:id="@+id/widget_grid"
         android:layout_width="match_parent"
@@ -51,7 +72,13 @@
         android:columnCount="2"
         android:useDefaultMargins="false">
 
-        <!-- TOP LEFT: Current Class -->
+        <!-- ===== TOP LEFT: Current Class ===== -->
+        <!--
+          CARD WIDTH/HEIGHT: controlled by layout_columnWeight="1" / layout_rowWeight="1"
+          Each quadrant gets 50% width and 50% height of the grid area.
+          INTERNAL PADDING (text inset): android:padding="8dp"
+          MARGIN (gap to neighbors): android:layout_marginEnd/Bottom/Top/Start
+        -->
         <LinearLayout
             android:id="@+id/widget_current_class"
             android:layout_width="0dp"
@@ -66,6 +93,7 @@
             android:layout_marginEnd="2dp"
             android:layout_marginBottom="2dp">
 
+            <!-- LABEL — adjust textSize, textColor for the section header -->
             <TextView
                 android:id="@+id/widget_current_label"
                 android:layout_width="match_parent"
@@ -77,6 +105,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:textAllCaps="true" />
 
+            <!-- TITLE — adjust textSize for the primary value -->
             <TextView
                 android:id="@+id/widget_current_subject"
                 android:layout_width="match_parent"
@@ -90,6 +119,7 @@
                 android:ellipsize="end"
                 android:layout_marginTop="2dp" />
 
+            <!-- SUBTITLE — adjust textSize for secondary info -->
             <TextView
                 android:id="@+id/widget_current_time"
                 android:layout_width="match_parent"
@@ -103,7 +133,7 @@
 
         </LinearLayout>
 
-        <!-- TOP RIGHT: Next Class -->
+        <!-- ===== TOP RIGHT: Next Class ===== -->
         <LinearLayout
             android:id="@+id/widget_next_class"
             android:layout_width="0dp"
@@ -155,7 +185,7 @@
 
         </LinearLayout>
 
-        <!-- BOTTOM LEFT: Today's Schedule -->
+        <!-- ===== BOTTOM LEFT: Today's Schedule ===== -->
         <LinearLayout
             android:id="@+id/widget_schedule"
             android:layout_width="0dp"
@@ -181,6 +211,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:textAllCaps="true" />
 
+            <!-- LARGE COUNT — adjust textSize for the big number display -->
             <TextView
                 android:id="@+id/widget_schedule_count"
                 android:layout_width="match_parent"
@@ -204,7 +235,7 @@
 
         </LinearLayout>
 
-        <!-- BOTTOM RIGHT: Assignments -->
+        <!-- ===== BOTTOM RIGHT: Assignments ===== -->
         <LinearLayout
             android:id="@+id/widget_assignments"
             android:layout_width="0dp"
