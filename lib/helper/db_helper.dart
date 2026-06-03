@@ -2,14 +2,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
-import 'package:intl/intl.dart';
 import 'package:mobile_app/models/schedule_model.dart';
 import 'package:mobile_app/models/class_model.dart';
 import 'package:mobile_app/models/reminder_model.dart';
 import 'package:mobile_app/services/notification_service.dart';
 import 'package:mobile_app/core/crypto_utils.dart';
 import 'package:path_provider/path_provider.dart';
-
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -35,7 +33,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 25,
+      version: 25,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -76,9 +74,7 @@ class DatabaseHelper {
           await _createAssignmentsTable(db);
           await _createNotesTable(db);
         }
-        if (oldVersion < 6) {
-          
-        }
+        if (oldVersion < 6) {}
         if (oldVersion < 7) await _createSettingsTable(db);
         if (oldVersion < 8) {
           var columns = await db.rawQuery('PRAGMA table_info(assignments)');
@@ -112,46 +108,58 @@ class DatabaseHelper {
           }());
         }
         if (oldVersion < 17) {
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_schedules_userId ON schedules(userId)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_assignments_userId ON assignments(userId)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_userId ON notes(userId)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_study_resources_userId ON study_resources(userId)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_schedules_userId ON schedules(userId)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_assignments_userId ON assignments(userId)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_notes_userId ON notes(userId)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_study_resources_userId ON study_resources(userId)');
           final columns = await db.rawQuery('PRAGMA table_info(settings)');
           final colNames = columns.map((c) => c['name'] as String).toList();
           if (!colNames.contains('accentColor')) {
-            await db.execute('ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
+            await db.execute(
+                'ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
           }
           if (!colNames.contains('uiScale')) {
-            await db.execute('ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
+            await db.execute(
+                'ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
           }
         }
         if (oldVersion < 18) {
           await db.execute('ALTER TABLE users ADD COLUMN secretQuestion TEXT');
-          await db.execute('ALTER TABLE users ADD COLUMN secretAnswerHash TEXT');
+          await db
+              .execute('ALTER TABLE users ADD COLUMN secretAnswerHash TEXT');
           await db.execute('ALTER TABLE users ADD COLUMN recoveryToken TEXT');
         }
         if (oldVersion < 19) {
           await db.execute('ALTER TABLE users ADD COLUMN passwordSalt TEXT');
         }
         if (oldVersion < 20) {
-          await db.execute('ALTER TABLE users RENAME COLUMN secretAnswerHash TO secretAnswer');
+          await db.execute(
+              'ALTER TABLE users RENAME COLUMN secretAnswerHash TO secretAnswer');
         }
         if (oldVersion < 21) {
           final cols = await db.rawQuery('PRAGMA table_info(settings)');
           final names = cols.map((c) => c['name'] as String).toList();
           if (!names.contains('notifyClasses')) {
-            await db.execute('ALTER TABLE settings ADD COLUMN notifyClasses INTEGER DEFAULT 1');
+            await db.execute(
+                'ALTER TABLE settings ADD COLUMN notifyClasses INTEGER DEFAULT 1');
           }
           if (!names.contains('notifyAssignments')) {
-            await db.execute('ALTER TABLE settings ADD COLUMN notifyAssignments INTEGER DEFAULT 1');
+            await db.execute(
+                'ALTER TABLE settings ADD COLUMN notifyAssignments INTEGER DEFAULT 1');
           }
         }
         if (oldVersion < 22) {
-        await db.execute('CREATE TABLE reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, title TEXT, description TEXT, date TEXT, time TEXT)');
+          await db.execute(
+              'CREATE TABLE reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, title TEXT, description TEXT, date TEXT, time TEXT)');
         }
         if (oldVersion < 23) {
           var userColumns = await db.rawQuery('PRAGMA table_info(users)');
-          var userColNames = userColumns.map((c) => c['name'] as String).toList();
+          var userColNames =
+              userColumns.map((c) => c['name'] as String).toList();
           if (!userColNames.contains('fullName')) {
             await db.execute('ALTER TABLE users ADD COLUMN fullName TEXT');
           }
@@ -175,7 +183,8 @@ class DatabaseHelper {
         }
         if (oldVersion < 25) {
           final userColumns = await db.rawQuery('PRAGMA table_info(users)');
-          final userColNames = userColumns.map((c) => c['name'] as String).toList();
+          final userColNames =
+              userColumns.map((c) => c['name'] as String).toList();
           if (!userColNames.contains('fullName')) {
             await db.execute('ALTER TABLE users ADD COLUMN fullName TEXT');
           }
@@ -209,10 +218,16 @@ class DatabaseHelper {
         notifyAssignments INTEGER DEFAULT 1
       )
     ''');
-    await db.insert('settings',
-        {'id': 1, 'username': 'Student', 'isDarkMode': 0, 'isLoggedIn': 0,
-         'accentColor': 4278238035, 'uiScale': 1.0,
-         'notifyClasses': 1, 'notifyAssignments': 1});
+    await db.insert('settings', {
+      'id': 1,
+      'username': 'Student',
+      'isDarkMode': 0,
+      'isLoggedIn': 0,
+      'accentColor': 4278238035,
+      'uiScale': 1.0,
+      'notifyClasses': 1,
+      'notifyAssignments': 1
+    });
   }
 
   Future<void> _createSchedulesTable(Database db) async {
@@ -222,7 +237,8 @@ class DatabaseHelper {
         userId INTEGER, subject TEXT, days TEXT, startTime TEXT, endTime TEXT, room TEXT, professor TEXT
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_schedules_userId ON schedules(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_schedules_userId ON schedules(userId)');
   }
 
   Future<void> _createAssignmentsTable(Database db) async {
@@ -234,7 +250,8 @@ class DatabaseHelper {
         deadline TEXT 
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_assignments_userId ON assignments(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_assignments_userId ON assignments(userId)');
   }
 
   Future<void> _createNotesTable(Database db) async {
@@ -244,7 +261,8 @@ class DatabaseHelper {
         userId INTEGER, title TEXT, description TEXT, content TEXT, dateCreated TEXT
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_userId ON notes(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_notes_userId ON notes(userId)');
   }
 
   Future<void> _createResourcesTable(Database db) async {
@@ -259,7 +277,8 @@ class DatabaseHelper {
         dateAdded TEXT
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_study_resources_userId ON study_resources(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_study_resources_userId ON study_resources(userId)');
   }
 
   Future<void> _createAiCacheTable(Database db) async {
@@ -286,7 +305,8 @@ class DatabaseHelper {
         createdAt TEXT NOT NULL
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_reminders_userId ON reminders(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_reminders_userId ON reminders(userId)');
   }
 
   Future<void> _createChatMessagesTable(Database db) async {
@@ -299,7 +319,8 @@ class DatabaseHelper {
         timestamp TEXT NOT NULL
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_userId ON chat_messages(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_chat_messages_userId ON chat_messages(userId)');
   }
 
   Future<void> saveChatMessage(int userId, String role, String content) async {
@@ -339,23 +360,33 @@ class DatabaseHelper {
     return id;
   }
 
-  Future<List<Map<String, dynamic>>> getRemindersForDate(int userId, DateTime date) async {
+  Future<List<Map<String, dynamic>>> getRemindersForDate(
+      int userId, DateTime date) async {
     final db = await database;
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
     return await db.query('reminders',
-      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
-      whereArgs: [userId, startOfDay.toIso8601String(), endOfDay.toIso8601String()],
-      orderBy: 'reminderTime ASC');
+        where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+        whereArgs: [
+          userId,
+          startOfDay.toIso8601String(),
+          endOfDay.toIso8601String()
+        ],
+        orderBy: 'reminderTime ASC');
   }
 
-  Future<Map<DateTime, List<Map<String, dynamic>>>> getRemindersForMonth(int userId, int year, int month) async {
+  Future<Map<DateTime, List<Map<String, dynamic>>>> getRemindersForMonth(
+      int userId, int year, int month) async {
     final db = await database;
     final startOfMonth = DateTime(year, month);
     final endOfMonth = DateTime(year, month + 1);
     final results = await db.query('reminders',
-      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
-      whereArgs: [userId, startOfMonth.toIso8601String(), endOfMonth.toIso8601String()]);
+        where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+        whereArgs: [
+          userId,
+          startOfMonth.toIso8601String(),
+          endOfMonth.toIso8601String()
+        ]);
 
     final Map<DateTime, List<Map<String, dynamic>>> remindersByDate = {};
     for (final reminder in results) {
@@ -366,12 +397,13 @@ class DatabaseHelper {
     return remindersByDate;
   }
 
-  Future<List<Map<String, dynamic>>> getRemindersForDateRange(int userId, DateTime start, DateTime end) async {
+  Future<List<Map<String, dynamic>>> getRemindersForDateRange(
+      int userId, DateTime start, DateTime end) async {
     final db = await database;
     return await db.query('reminders',
-      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
-      whereArgs: [userId, start.toIso8601String(), end.toIso8601String()],
-      orderBy: 'reminderTime ASC');
+        where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+        whereArgs: [userId, start.toIso8601String(), end.toIso8601String()],
+        orderBy: 'reminderTime ASC');
   }
 
   Future<int> updateReminder(Reminder reminder) async {
@@ -393,11 +425,12 @@ class DatabaseHelper {
     return await db.delete('reminders', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> deleteRemindersByTimeRange(int userId, DateTime start, DateTime end) async {
+  Future<int> deleteRemindersByTimeRange(
+      int userId, DateTime start, DateTime end) async {
     final db = await database;
     return await db.delete('reminders',
-      where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
-      whereArgs: [userId, start.toIso8601String(), end.toIso8601String()]);
+        where: 'userId = ? AND reminderTime >= ? AND reminderTime < ?',
+        whereArgs: [userId, start.toIso8601String(), end.toIso8601String()]);
   }
 
   Future<String?> getCachedAIContent(int resourceId, String type) async {
@@ -431,16 +464,19 @@ class DatabaseHelper {
     List<Map<String, dynamic>> results =
         await db.query('settings', where: 'id = 1');
     if (results.isEmpty) return {};
-    
+
     final settings = results.first;
-    if (!settings.containsKey('accentColor') || !settings.containsKey('uiScale')) {
+    if (!settings.containsKey('accentColor') ||
+        !settings.containsKey('uiScale')) {
       final columns = await db.rawQuery('PRAGMA table_info(settings)');
       final colNames = columns.map((c) => c['name'] as String).toList();
       if (!colNames.contains('accentColor')) {
-        await db.execute('ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
+        await db.execute(
+            'ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
       }
       if (!colNames.contains('uiScale')) {
-        await db.execute('ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
+        await db.execute(
+            'ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
       }
       results = await db.query('settings', where: 'id = 1');
       return results.isNotEmpty ? results.first : {};
@@ -448,7 +484,12 @@ class DatabaseHelper {
     return settings;
   }
 
-  Future<void> saveSettings({String? name, bool? dark, bool? loggedIn, int? accentColor, double? uiScale}) async {
+  Future<void> saveSettings(
+      {String? name,
+      bool? dark,
+      bool? loggedIn,
+      int? accentColor,
+      double? uiScale}) async {
     final db = await database;
     Map<String, dynamic> data = {};
     if (name != null) data['username'] = name;
@@ -464,10 +505,12 @@ class DatabaseHelper {
         final columns = await db.rawQuery('PRAGMA table_info(settings)');
         final colNames = columns.map((c) => c['name'] as String).toList();
         if (!colNames.contains('accentColor')) {
-          await db.execute('ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
+          await db.execute(
+              'ALTER TABLE settings ADD COLUMN accentColor INTEGER DEFAULT 4278238035');
         }
         if (!colNames.contains('uiScale')) {
-          await db.execute('ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
+          await db.execute(
+              'ALTER TABLE settings ADD COLUMN uiScale REAL DEFAULT 1.0');
         }
         await db.update('settings', data, where: 'id = 1');
       } else {
@@ -476,7 +519,8 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> upsertSettings({String? name, bool? dark, int? accentColor, double? uiScale}) async {
+  Future<void> upsertSettings(
+      {String? name, bool? dark, int? accentColor, double? uiScale}) async {
     final db = await database;
     final data = <String, dynamic>{};
     if (name != null) data['username'] = name;
@@ -484,7 +528,7 @@ class DatabaseHelper {
     if (accentColor != null) data['accentColor'] = accentColor;
     if (uiScale != null) data['uiScale'] = uiScale;
     if (data.isEmpty) return;
-    
+
     final updated = await db.update('settings', data, where: 'id = 1');
     if (updated == 0) {
       await db.insert('settings', {
@@ -523,9 +567,10 @@ class DatabaseHelper {
     final normalizedUsername = username.trim().toLowerCase();
     final plainSecretAnswer = secretAnswer.trim().toLowerCase();
     final hashedAnswer = CryptoUtils.hashPassword(plainSecretAnswer, salt);
-    final token = '${normalizedUsername}_${DateTime.now().millisecondsSinceEpoch}';
+    final token =
+        '${normalizedUsername}_${DateTime.now().millisecondsSinceEpoch}';
     final recoveryToken = CryptoUtils.hashPassword(token, salt);
-    
+
     final userId = await db.insert('users', {
       'username': normalizedUsername,
       'password': CryptoUtils.hashPassword(password, salt),
@@ -535,7 +580,7 @@ class DatabaseHelper {
       'secretAnswer': hashedAnswer,
       'recoveryToken': recoveryToken,
     });
-    
+
     return {'id': userId, 'token': recoveryToken};
   }
 
@@ -544,21 +589,20 @@ class DatabaseHelper {
     final db = await database;
     final normalizedUsername = username.trim().toLowerCase();
     final results = await db.query('users',
-        where: 'LOWER(username) = ?',
-        whereArgs: [normalizedUsername]);
+        where: 'LOWER(username) = ?', whereArgs: [normalizedUsername]);
     if (results.isEmpty) return null;
-    
+
     final user = results.first;
     final storedHash = user['password'] as String?;
     final storedSalt = user['passwordSalt'] as String?;
-    
+
     String computedHash;
     if (storedSalt == null || storedSalt.isEmpty) {
       computedHash = CryptoUtils.hashLegacy(password);
     } else {
       computedHash = CryptoUtils.hashPassword(password, storedSalt);
     }
-    
+
     if (computedHash == storedHash) {
       return user;
     }
@@ -581,35 +625,33 @@ class DatabaseHelper {
     if (salt.isEmpty) {
       return stored.toLowerCase().trim() == answer.trim().toLowerCase();
     }
-    return stored == CryptoUtils.hashPassword(answer.trim().toLowerCase(), salt);
+    return stored ==
+        CryptoUtils.hashPassword(answer.trim().toLowerCase(), salt);
   }
 
   Future<Map<String, dynamic>?> verifyRecoveryToken(String token) async {
     final db = await database;
-    final results = await db.query('users',
-        where: 'recoveryToken = ?',
-        whereArgs: [token]);
+    final results =
+        await db.query('users', where: 'recoveryToken = ?', whereArgs: [token]);
     return results.isNotEmpty ? results.first : null;
   }
 
   Future<Map<String, dynamic>?> getUserById(int userId) async {
     final db = await database;
-    final results = await db.query('users',
-        where: 'id = ?',
-        whereArgs: [userId],
-        limit: 1);
+    final results =
+        await db.query('users', where: 'id = ?', whereArgs: [userId], limit: 1);
     return results.isNotEmpty ? results.first : null;
   }
 
   Future<void> updatePassword(int userId, String newPassword) async {
     final db = await database;
-    final existingUser = await db.query('users',
-        where: 'id = ?',
-        whereArgs: [userId]);
+    final existingUser =
+        await db.query('users', where: 'id = ?', whereArgs: [userId]);
     if (existingUser.isEmpty) return;
-    
+
     final salt = CryptoUtils.generateSalt();
-    await db.update('users',
+    await db.update(
+        'users',
         {
           'password': CryptoUtils.hashPassword(newPassword, salt),
           'passwordSalt': salt
@@ -633,8 +675,7 @@ class DatabaseHelper {
     final db = await database;
     final normalizedUsername = username.trim().toLowerCase();
     final results = await db.query('users',
-        where: 'LOWER(username) = ?',
-        whereArgs: [normalizedUsername]);
+        where: 'LOWER(username) = ?', whereArgs: [normalizedUsername]);
     return results.isNotEmpty ? results.first : null;
   }
 
@@ -662,8 +703,6 @@ class DatabaseHelper {
     }
   }
 
-  
-  
   Future<void> resetDatabase() async {
     final directory = await getApplicationSupportDirectory();
     final path = join(directory.path, 'student_pal.db');
@@ -677,7 +716,8 @@ class DatabaseHelper {
         where: 'id = ?', whereArgs: [userId]);
   }
 
-  Future<int> updateUserProfile(int userId, {
+  Future<int> updateUserProfile(
+    int userId, {
     String? fullName,
     String? nickname,
     String? school,
@@ -692,8 +732,7 @@ class DatabaseHelper {
     if (course != null) data['course'] = course;
     if (yearLevel != null) data['yearLevel'] = yearLevel;
     if (data.isEmpty) return 0;
-    return await db.update('users', data,
-        where: 'id = ?', whereArgs: [userId]);
+    return await db.update('users', data, where: 'id = ?', whereArgs: [userId]);
   }
 
   Future<int> updateUser(int id, Map<String, dynamic> data) async {
@@ -883,7 +922,8 @@ class DatabaseHelper {
     Map<String, dynamic> row = schedule.toMap();
     row['userId'] = currentUserId;
     int id = await db.insert('schedules', row);
-    await _syncScheduleNotification(id, schedule.subject, schedule.startTime);
+    await _syncScheduleNotification(
+        id, schedule.subject, schedule.startTime, schedule.days);
     return id;
   }
 
@@ -892,11 +932,11 @@ class DatabaseHelper {
     final row = schedule.toMap()
       ..remove('id')
       ..remove('userId');
-    int result = await db.update('schedules', row,
-        where: 'id = ?', whereArgs: [schedule.id]);
+    int result = await db
+        .update('schedules', row, where: 'id = ?', whereArgs: [schedule.id]);
     if (schedule.id != null) {
       await _syncScheduleNotification(
-          schedule.id!, schedule.subject, schedule.startTime);
+          schedule.id!, schedule.subject, schedule.startTime, schedule.days);
     }
     return result;
   }
@@ -918,7 +958,8 @@ class DatabaseHelper {
 
   Future<List<ClassModel>> getAllClassModels(int currentUserId) async {
     assert(() {
-      debugPrint('[DatabaseHelper] getAllClassModels: Fetching all classes for userId=$currentUserId');
+      debugPrint(
+          '[DatabaseHelper] getAllClassModels: Fetching all classes for userId=$currentUserId');
       return true;
     }());
     final db = await database;
@@ -926,7 +967,8 @@ class DatabaseHelper {
         .query('schedules', where: 'userId = ?', whereArgs: [currentUserId]);
     final classes = maps.map((m) => ClassModel.fromMap(m)).toList();
     assert(() {
-      debugPrint('[DatabaseHelper] getAllClassModels: Found ${classes.length} classes');
+      debugPrint(
+          '[DatabaseHelper] getAllClassModels: Found ${classes.length} classes');
       return true;
     }());
     return classes;
@@ -934,8 +976,10 @@ class DatabaseHelper {
 
   Future<int> insertClassModel(ClassModel classModel, int currentUserId) async {
     assert(() {
-      debugPrint('[DatabaseHelper] insertClassModel: Creating class "${classModel.subject}" for userId=$currentUserId');
-      debugPrint('[DatabaseHelper] insertClassModel: startTime=${classModel.startTime}, endTime=${classModel.endTime}');
+      debugPrint(
+          '[DatabaseHelper] insertClassModel: Creating class "${classModel.subject}" for userId=$currentUserId');
+      debugPrint(
+          '[DatabaseHelper] insertClassModel: startTime=${classModel.startTime}, endTime=${classModel.endTime}');
       return true;
     }());
     final db = await database;
@@ -943,7 +987,8 @@ class DatabaseHelper {
     row['userId'] = currentUserId;
     row.remove('id');
     final id = await db.insert('schedules', row);
-    await _syncScheduleNotification(id, classModel.subject, classModel.startTime);
+    await _syncScheduleNotification(
+        id, classModel.subject, classModel.startTime, classModel.days);
     assert(() {
       debugPrint('[DatabaseHelper] insertClassModel: SUCCESS id=$id');
       return true;
@@ -953,38 +998,35 @@ class DatabaseHelper {
 
   Future<void> updateClassModel(ClassModel classModel) async {
     assert(() {
-      debugPrint('[DatabaseHelper] updateClassModel: Updating class id=${classModel.id}');
-      debugPrint('[DatabaseHelper] updateClassModel: startTime=${classModel.startTime}, endTime=${classModel.endTime}');
+      debugPrint(
+          '[DatabaseHelper] updateClassModel: Updating class id=${classModel.id}');
+      debugPrint(
+          '[DatabaseHelper] updateClassModel: startTime=${classModel.startTime}, endTime=${classModel.endTime}');
       return true;
     }());
     final db = await database;
     final row = classModel.toMap();
     row.remove('id');
     row.remove('userId');
-    await db.update('schedules', row, where: 'id = ?', whereArgs: [classModel.id]);
+    await db
+        .update('schedules', row, where: 'id = ?', whereArgs: [classModel.id]);
     assert(() {
       debugPrint('[DatabaseHelper] updateClassModel: SUCCESS');
       return true;
     }());
     if (classModel.id != null) {
-      await _syncScheduleNotification(classModel.id!, classModel.subject, classModel.startTime);
+      await _syncScheduleNotification(classModel.id!, classModel.subject,
+          classModel.startTime, classModel.days);
     }
   }
 
   Future<void> _syncScheduleNotification(
-      int id, String subject, String startTimeStr) async {
+      int id, String subject, String startTimeStr, String days) async {
     try {
-      DateTime now = DateTime.now();
-      DateTime time;
-      try {
-        time = DateFormat.jm().parse(startTimeStr);
-      } catch (_) {
-        time = DateFormat("HH:mm").parse(startTimeStr);
-      }
-      DateTime scheduledDate =
-          DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      final scheduledDate = ClassModel.nextOccurrence(days, startTimeStr);
+      if (scheduledDate == null) {
+        debugPrint('_syncScheduleNotification: No valid day for days="$days"');
+        return;
       }
       await NotificationService().scheduleClassAlerts(
           id: id, subject: subject, startTime: scheduledDate);

@@ -146,7 +146,9 @@ class _LoadingSpinnerState extends State<LoadingSpinner>
   Widget build(BuildContext context) {
     final boxSize = widget.size / 2;
 
-    return SizedBox(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
       width: widget.size,
       height: widget.size,
       child: Stack(
@@ -228,6 +230,7 @@ class _LoadingSpinnerState extends State<LoadingSpinner>
             ),
           ),
         ],
+      ),
       ),
     );
   }

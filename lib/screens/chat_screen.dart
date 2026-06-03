@@ -4,6 +4,7 @@ import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/utils/responsive.dart';
 import 'package:mobile_app/helper/db_helper.dart';
+import 'package:mobile_app/widgets/loading_spinner.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -112,13 +113,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       await DatabaseHelper().saveChatMessage(widget.userId, 'bot', response);
     } catch (e) {
       if (!mounted) return;
+      final err = e.toString().toLowerCase();
+      String friendly;
+      if (err.contains('quota') || err.contains('limit') || err.contains('429')) {
+        friendly =
+            'The AI assistant is taking a short break due to high traffic! Please try again in a few seconds.';
+      } else if (err.contains('socket') ||
+          err.contains('exception') ||
+          err.contains('failed host')) {
+        friendly =
+            'It looks like you are offline. Please check your internet connection and try again!';
+      } else {
+        friendly = 'Sorry, I encountered an error. Please try again.';
+      }
       setState(() {
-        _messages.add({
-          "role": "bot",
-          "content": "Sorry, I encountered an error. Please try again."
-        });
+        _messages.add({"role": "bot", "content": friendly});
         _isLoading = false;
       });
+      await DatabaseHelper().saveChatMessage(widget.userId, 'bot', friendly);
     }
     _scrollToBottom();
   }
@@ -334,15 +346,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
+        clipBehavior: Clip.antiAlias,
         padding: EdgeInsets.all(res(context, 12)),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(15),
         ),
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+        child: Center(
+          child: LoadingSpinner(size: 24),
         ),
       ),
     );

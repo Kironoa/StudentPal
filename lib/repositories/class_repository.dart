@@ -58,7 +58,7 @@ class ClassRepository {
       row['userId'] = userId;
       final id = await db.insert('schedules', row);
       debugPrint('[ClassRepository] createClass: SUCCESS with id=$id');
-      await _scheduleNotification(id, classModel.subject, classModel.startTime);
+      await _scheduleNotification(id, classModel.subject, classModel.startTime, classModel.days);
       return id;
     } catch (e) {
       debugPrint('[ClassRepository] createClass ERROR: $e');
@@ -82,7 +82,7 @@ class ClassRepository {
       );
       debugPrint('[ClassRepository] updateClass: SUCCESS');
       if (classModel.id != null) {
-        await _scheduleNotification(classModel.id!, classModel.subject, classModel.startTime);
+        await _scheduleNotification(classModel.id!, classModel.subject, classModel.startTime, classModel.days);
       }
     } catch (e) {
       debugPrint('[ClassRepository] updateClass ERROR: $e');
@@ -130,17 +130,16 @@ class ClassRepository {
     }
   }
 
-  Future<void> _scheduleNotification(int id, String subject, String startTime) async {
-    debugPrint('[ClassRepository] _scheduleNotification: Scheduling notification for id=$id, subject=$subject, startTime=$startTime');
+  Future<void> _scheduleNotification(int id, String subject, String startTime, String days) async {
+    debugPrint('[ClassRepository] _scheduleNotification: id=$id, subject=$subject, days=$days, startTime=$startTime');
     try {
-      final startMinutes = ClassModel.timeToMinutes(startTime);
-      final now = DateTime.now();
-      var scheduledDate = DateTime(now.year, now.month, now.day, startMinutes ~/ 60, startMinutes % 60);
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      final scheduledDate = ClassModel.nextOccurrence(days, startTime);
+      if (scheduledDate == null) {
+        debugPrint('[ClassRepository] _scheduleNotification: No valid day found for days="$days"');
+        return;
       }
       await NotificationService().scheduleClassAlerts(id: id, subject: subject, startTime: scheduledDate);
-      debugPrint('[ClassRepository] _scheduleNotification: SUCCESS');
+      debugPrint('[ClassRepository] _scheduleNotification: SUCCESS for $scheduledDate');
     } catch (e) {
       debugPrint('[ClassRepository] _scheduleNotification ERROR: $e');
     }

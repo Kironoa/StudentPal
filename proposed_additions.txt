@@ -1,0 +1,69 @@
+PROPOSED ADDITIONS - Student Pal Thesis Project
+=================================================
+
+1. ROLE-BASED USER SYSTEM
+   - Add "role" field to users (student / instructor)
+   - Instructors have a separate dashboard and capabilities
+   - Students have their existing dashboard plus new features (leaderboard, tokens)
+
+2. INSTRUCTOR FEATURES
+   - Instructor Dashboard: overview of enrolled students and their performance
+   - Student Roster: manage which students are under an instructor
+   - Grading System: instructors can grade student assignments and provide feedback
+   - Performance overview per student (grades, averages, trends)
+
+3. ENROLLMENT SYSTEM
+   - New table: enrollments (links instructors to students)
+   - Students can be assigned to instructors
+   - Instructors see only their enrolled students
+
+4. GRADING DATABASE
+   - New table: grades (student_id, assignment_id, instructor_id, score, feedback, graded_at)
+   - Tracks individual assignment scores
+   - Calculates overall performance averages
+
+5. LEADERBOARD / RANKINGS
+   - Public leaderboard showing all students ranked by total points
+   - Filterable by course, year level, or instructor
+   - Displays student name, rank, total points, and grade average
+
+6. TOKEN / POINTS SYSTEM
+   - New table: tokens (user_id, balance, last_updated)
+   - New table: token_transactions (user_id, amount, type, description, created_at)
+   - Students earn tokens for:
+     - Completing assignments on time
+     - High grades
+     - Consistent study streaks
+     - Instructor-awarded bonus tokens
+   - Token balance displayed on profile/dashboard
+
+7. REWARD STORE
+   - New table: rewards (id, name, description, cost, image, is_active)
+   - New table: redemptions (id, user_id, reward_id, redeemed_at, status)
+   - Students can browse available rewards
+   - Redeem tokens for rewards (e.g., free meals, merchandise, perks)
+   - Redemption history
+
+8. NEW SCREENS / PAGES
+   - InstructorDashboardScreen
+   - StudentRosterScreen
+   - GradeStudentScreen
+   - LeaderboardScreen
+   - TokenWalletScreen
+   - RewardStoreScreen
+   - RedemptionHistoryScreen
+
+9. UI UPDATES
+   - Login/Signup: add role selection (student or instructor)
+   - Main navigation: role-based menu (students see leaderboard + tokens; instructors see roster + grading)
+   - Profile screen: show token balance
+   - Dashboard widget: show rank and token count
+
+10. EXISTING FILE CHANGES
+    - db_helper.dart: new tables + migration
+    - app_user.dart: add role field
+    - auth_service.dart: handle role during login
+    - main_scaffold.dart: role-based routing
+    - login_screen.dart: role selection
+    - signup_screen.dart: role selection
+    - profile_screen.dart: show role, tokens

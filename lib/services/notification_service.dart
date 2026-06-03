@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:alarm/alarm.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:mobile_app/helper/db_helper.dart';
+import 'package:mobile_app/models/class_model.dart';
 import 'package:mobile_app/services/widget_update_service.dart';
 
 class NotificationService {
@@ -26,7 +26,6 @@ class NotificationService {
   static const String meowChannelName = 'Student Pal Alerts';
   static const String meowSoundName = 'meow';
 
-  
   @pragma('vm:entry-point')
   static void _setLocalTimezone() {
     final offsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
@@ -69,7 +68,7 @@ class NotificationService {
       final tzName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzName.toString()));
     } catch (e) {
-      _setLocalTimezone(); 
+      _setLocalTimezone();
     }
 
     const androidSettings =
@@ -121,7 +120,6 @@ class NotificationService {
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
 
-    
     await Alarm.init();
 
     _isInitialized = true;
@@ -145,18 +143,17 @@ class NotificationService {
 
   @pragma('vm:entry-point')
   Future<String?> checkAlarmPermission() async {
-    
     if (Platform.isAndroid) {
-      
-      final androidImplementation = _notifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      final bool? canSchedule = await androidImplementation?.requestExactAlarmsPermission();
+      final androidImplementation =
+          _notifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      final bool? canSchedule =
+          await androidImplementation?.requestExactAlarmsPermission();
       if (canSchedule == true) {
         _permissionError = null;
         return null;
       }
     } else {
-      
       _permissionError = null;
       return null;
     }
@@ -173,17 +170,14 @@ class NotificationService {
   }) async {
     if (!_checkInitialized()) return 'Not initialized';
 
-    
     final permissionError = await checkAlarmPermission();
     if (permissionError != null) return permissionError;
 
-    
     await _notifications.cancel(id: id * 10);
-    await Alarm.stop(id * 10 + 1); 
+    await Alarm.stop(id * 10 + 1);
 
     final now = DateTime.now();
 
-    
     final tenMinBefore = startTime.subtract(const Duration(minutes: 10));
     if (tenMinBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -194,13 +188,12 @@ class NotificationService {
       );
     }
 
-    
     final oneMinBefore = startTime.subtract(const Duration(minutes: 1));
     if (oneMinBefore.isAfter(now)) {
       final alarmSettings = AlarmSettings(
         id: id * 10 + 1,
         dateTime: oneMinBefore,
-        assetAudioPath: 'assets/meow.wav', 
+        assetAudioPath: 'assets/meow.wav',
         loopAudio: true,
         vibrate: true,
         androidFullScreenIntent: true,
@@ -239,7 +232,6 @@ class NotificationService {
 
     final now = DateTime.now();
 
-    
     final threeDaysBefore = deadline.subtract(const Duration(days: 3));
     if (threeDaysBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -251,7 +243,6 @@ class NotificationService {
       );
     }
 
-    
     final tenHoursBefore = deadline.subtract(const Duration(hours: 10));
     if (tenHoursBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -263,7 +254,6 @@ class NotificationService {
       );
     }
 
-    
     final threeHoursBefore = deadline.subtract(const Duration(hours: 3));
     if (threeHoursBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -274,7 +264,6 @@ class NotificationService {
       );
     }
 
-    
     final oneHourBefore = deadline.subtract(const Duration(hours: 1));
     if (oneHourBefore.isAfter(now)) {
       await _scheduleNotification(
@@ -323,7 +312,7 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     if (!_checkInitialized()) return;
     await _notifications.cancel(id: id * 10);
-    await Alarm.stop(id * 10 + 1); 
+    await Alarm.stop(id * 10 + 1);
     await _notifications.cancel(id: id * 10 + 1);
   }
 
@@ -339,7 +328,7 @@ class NotificationService {
   @pragma('vm:entry-point')
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
-    await Alarm.stopAll(); 
+    await Alarm.stopAll();
   }
 
   @pragma('vm:entry-point')
@@ -461,23 +450,20 @@ class NotificationService {
   Future<List<_ClassAlertItem>> _fetchClassItemsFromDatabase() async {
     final db = await DatabaseHelper().database;
     final maps = await db.query('schedules');
-    final now = DateTime.now();
-    return maps.map((m) {
-      final timeStr = m['startTime'] as String;
-      DateTime time;
-      try {
-        time = DateFormat.jm().parse(timeStr);
-      } catch (_) {
-        time = DateFormat("HH:mm").parse(timeStr);
+    final items = <_ClassAlertItem>[];
+    for (final m in maps) {
+      final days = m['days'] as String? ?? '';
+      final startTime = m['startTime'] as String? ?? '00:00';
+      final scheduledDate = ClassModel.nextOccurrence(days, startTime);
+      if (scheduledDate != null) {
+        items.add(_ClassAlertItem(
+          id: m['id'] as int,
+          subject: m['subject'] as String,
+          startTime: scheduledDate,
+        ));
       }
-      final scheduledDate =
-          DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      return _ClassAlertItem(
-        id: m['id'] as int,
-        subject: m['subject'] as String,
-        startTime: scheduledDate,
-      );
-    }).toList();
+    }
+    return items;
   }
 
   Future<List<_AssignmentAlertItem>> _fetchAssignmentItemsFromDatabase() async {
@@ -487,8 +473,8 @@ class NotificationService {
       return _AssignmentAlertItem(
         id: m['id'] as int,
         title: m['title'] as String,
-        deadline: DateTime.tryParse(m['deadline'] as String? ?? '') ??
-            DateTime.now(),
+        deadline:
+            DateTime.tryParse(m['deadline'] as String? ?? '') ?? DateTime.now(),
       );
     }).toList();
   }
@@ -507,12 +493,14 @@ class _ClassAlertItem {
   final int id;
   final String subject;
   final DateTime startTime;
-  _ClassAlertItem({required this.id, required this.subject, required this.startTime});
+  _ClassAlertItem(
+      {required this.id, required this.subject, required this.startTime});
 }
 
 class _AssignmentAlertItem {
   final int id;
   final String title;
   final DateTime deadline;
-  _AssignmentAlertItem({required this.id, required this.title, required this.deadline});
+  _AssignmentAlertItem(
+      {required this.id, required this.title, required this.deadline});
 }

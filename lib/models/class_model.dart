@@ -117,6 +117,47 @@ class ClassModel {
     );
   }
 
+  static DateTime? nextOccurrence(String days, String startTime) {
+    const dayAbbrevToWeekday = {
+      'M': DateTime.monday,
+      'T': DateTime.tuesday,
+      'W': DateTime.wednesday,
+      'Th': DateTime.thursday,
+      'F': DateTime.friday,
+      'S': DateTime.saturday,
+      'Sun': DateTime.sunday,
+    };
+
+    final dayAbbrevs = days.split(',').map((d) => d.trim()).toList();
+    final minutes = timeToMinutes(startTime);
+    final hour = minutes ~/ 60;
+    final minute = minutes % 60;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (int offset = 0; offset < 7; offset++) {
+      final candidate = today.add(Duration(days: offset));
+      final weekday = candidate.weekday;
+
+      String? abbrev;
+      for (final entry in dayAbbrevToWeekday.entries) {
+        if (entry.value == weekday) {
+          abbrev = entry.key;
+          break;
+        }
+      }
+
+      if (abbrev != null && dayAbbrevs.contains(abbrev)) {
+        final classTime = DateTime(candidate.year, candidate.month, candidate.day, hour, minute);
+        if (classTime.isAfter(now)) {
+          return classTime;
+        }
+      }
+    }
+
+    return null;
+  }
+
   @override
   String toString() {
     return 'ClassModel(id: $id, subject: $subject, days: $days, startTime: $startTime, endTime: $endTime, room: $room, professor: $professor)';
