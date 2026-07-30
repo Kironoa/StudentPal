@@ -1,57 +1,60 @@
-import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
 
-  late final GenerativeModel _model;
-  ChatSession? _chatSession;
+  late final Dio _dio;
+  List<Map<String, String>> _history = [];
 
-  AIService._internal();
-
-  static Future<void> initialize() async {
-    try {
-      final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-      _instance._model = GenerativeModel(
-        model: 'gemini-2.5-flash',
-        apiKey: apiKey,
-      );
-      _instance._chatSession = _instance._model.startChat();
-    } catch (e) {
-      debugPrint('AIService init failed: $e');
-    }
+  AIService._internal() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://openrouter.ai/api/v1',
+      headers: {
+        'Authorization': 'Bearer ${dotenv.env['OPENROUTER_API_KEY'] ?? ''}',
+        'Content-Type': 'application/json',
+      },
+    ));
   }
 
+  static Future<void> initialize() async {}
+
   void resetSession() {
-    _chatSession = _model.startChat();
+    _history.clear();
   }
 
   void restoreHistory(List<Map<String, String>> messages) {
-    try {
-      final history = messages.map((msg) {
-        final role = msg['role'] == 'user' ? 'user' : 'model';
-        return Content(role, [TextPart(msg['content'] ?? '')]);
-      }).toList();
-      _chatSession = _model.startChat(history: history);
-    } catch (e) {
-      debugPrint('Failed to restore chat history: $e');
-      _chatSession = _model.startChat();
-    }
+    _history = messages;
   }
 
-  bool get isReady => _chatSession != null;
+  bool get isReady =>
+      (dotenv.env['OPENROUTER_API_KEY'] ?? '').isNotEmpty;
 
   Future<String> sendMessage(String message) async {
     try {
-      final response = await _chatSession?.sendMessage(Content.text(message));
-      return response?.text ?? "I couldn't generate a response.";
-    } catch (e) {
-      if (e.toString().contains('429')) {
-        return "Quota exceeded for today. Please try your new API key!";
+      _history.add({'role': 'user', 'content': message});
+
+      final messages = _history
+          .map((m) => {'role': m['role'] == 'user' ? 'user' : 'assistant', 'content': m['content']})
+          .toList();
+
+      final response = await _dio.post('/chat/completions', data: {
+        'model': 'openai/gpt-4o-mini',
+        'messages': messages,
+      });
+
+      final reply =
+          response.data['choices'][0]['message']['content'] as String;
+      _history.add({'role': 'assistant', 'content': reply});
+      return reply;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final body = e.response?.data;
+      if (status == 429 || body?.toString().contains('quota') == true) {
+        return 'Quota exceeded for today. Please try your new API key!';
       }
-      return "Error: $e";
+      return 'Error: ${e.message}';
     }
   }
 }

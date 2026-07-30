@@ -25,7 +25,7 @@ void main() async {
 
   await dotenv.load(fileName: ".env");
 
-  await AIService.initialize();
+  AIService.initialize();
 
   tz_data.initializeTimeZones();
 

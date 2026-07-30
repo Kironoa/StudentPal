@@ -77,14 +77,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
 
     try {
-      if (await _authService.usernameExists(username)) {
+      print("SignUp: checking if username exists...");
+      final exists = await _authService.usernameExists(username);
+      print("SignUp: usernameExists result: $exists");
+      if (exists) {
         _showModal("Error", "Username taken.", isError: true);
         return;
       }
 
       if (!mounted) return;
+      print("SignUp: moving to step 2");
       setState(() => isStep2 = true);
-    } catch (e) {
+    } catch (e, stack) {
+      print("SignUp step 1 error: $e");
+      print("SignUp step 1 stack: $stack");
       _showModal("Error", "Registration failed.", isError: true);
     }
   }
