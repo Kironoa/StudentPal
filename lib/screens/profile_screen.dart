@@ -7,6 +7,8 @@ import 'package:mobile_app/services/alert_service.dart';
 import 'package:mobile_app/helper/db_helper.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/providers/user_provider.dart';
+import 'package:mobile_app/providers/friends_providers.dart';
+import 'package:mobile_app/screens/peers_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -211,6 +213,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   const SizedBox(height: 24),
                   _buildProfileCard(theme, accent),
+                  const SizedBox(height: 16),
+                  _buildSocialCard(theme, accent),
                   const SizedBox(height: 20),
                   if (_isEditing)
                     Row(
@@ -256,6 +260,110 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildSocialCard(ThemeData theme, Color accent) {
+    final friendsCountAsync = ref.watch(friendsCountProvider(widget.userId));
+    final pendingCountAsync =
+        ref.watch(pendingRequestsCountProvider(widget.userId));
+    final friendsCount = friendsCountAsync.asData?.value ?? 0;
+    final pendingCount = pendingCountAsync.asData?.value ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(20),
+        border:
+            Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(Icons.group_rounded, color: accent, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$friendsCount Friend${friendsCount == 1 ? '' : 's'}',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface)),
+                Text(
+                    pendingCount > 0
+                        ? '$pendingCount pending request${pendingCount == 1 ? '' : 's'}'
+                        : 'Find classmates using StudentPal',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: pendingCount > 0
+                            ? Colors.orange
+                            : theme.hintColor)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PeersScreen(userId: widget.userId),
+                    ),
+                  ).then((_) {
+                    invalidateFriends(ref, widget.userId);
+                  });
+                },
+                icon: const Icon(Icons.people_alt_rounded,
+                    color: Colors.white, size: 16),
+                label: const Text('PEER',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                ),
+              ),
+              if (pendingCount > 0)
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: theme.scaffoldBackgroundColor,
+                            width: 1.5)),
+                    child: Text('$pendingCount',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

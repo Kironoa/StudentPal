@@ -33,7 +33,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 25,
+      version: 26,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -61,6 +61,7 @@ class DatabaseHelper {
         await _createAiCacheTable(db);
         await _createRemindersTable(db);
         await _createChatMessagesTable(db);
+        await _createFriendshipsTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createSchedulesTable(db);
@@ -201,6 +202,9 @@ class DatabaseHelper {
             await db.execute('ALTER TABLE users ADD COLUMN yearLevel TEXT');
           }
         }
+        if (oldVersion < 26) {
+          await _createFriendshipsTable(db);
+        }
       },
     );
   }
@@ -321,6 +325,25 @@ class DatabaseHelper {
     ''');
     await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_chat_messages_userId ON chat_messages(userId)');
+  }
+
+  Future<void> _createFriendshipsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS friendships(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        friendId INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        createdAt TEXT NOT NULL,
+        UNIQUE(userId, friendId)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_friendships_userId ON friendships(userId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_friendships_friendId ON friendships(friendId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_friendships_status ON friendships(status)');
   }
 
   Future<void> saveChatMessage(int userId, String role, String content) async {
@@ -1036,5 +1059,201 @@ class DatabaseHelper {
         return true;
       }());
     }
+  }
+
+  // ---------------- Friends / Peers ----------------
+
+  /// All other registered students, excluding [currentUserId].
+  /// Each row includes friendship metadata:
+  /// `friendshipStatus` (none|pending_sent|pending_received|accepted|declined),
+  /// `friendshipId`, `isRequester` (1 if current user sent the request).
+  Future<List<Map<String, dynamic>>> getAllPeers(
+    int currentUserId, {
+    String query = '',
+  }) async {
+    final db = await database;
+    final q = query.trim();
+    final where = StringBuffer('u.id != ?');
+    final args = <Object?>[currentUserId];
+    if (q.isNotEmpty) {
+      where.write(
+          ' AND (u.username LIKE ? OR u.fullName LIKE ? OR u.nickname LIKE ? OR u.school LIKE ? OR u.course LIKE ?)');
+      final like = '%$q%';
+      args.addAll([like, like, like, like, like]);
+    }
+    final rows = await db.rawQuery('''
+      SELECT u.*,
+        f.id AS friendshipId,
+        f.status AS friendshipRawStatus,
+        f.userId AS requesterId,
+        CASE
+          WHEN f.status = 'accepted' THEN 'accepted'
+          WHEN f.status = 'pending' AND f.userId = ? THEN 'pending_sent'
+          WHEN f.status = 'pending' AND f.friendId = ? THEN 'pending_received'
+          WHEN f.status = 'declined' THEN 'declined'
+          ELSE 'none'
+        END AS friendshipStatus
+      FROM users u
+      LEFT JOIN friendships f ON (
+        (f.userId = ? AND f.friendId = u.id) OR
+        (f.friendId = ? AND f.userId = u.id)
+      )
+      WHERE $where
+      ORDER BY u.username COLLATE NOCASE ASC
+    ''', [currentUserId, currentUserId, currentUserId, currentUserId, ...args]);
+    return rows;
+  }
+
+  Future<List<Map<String, dynamic>>> getFriends(int userId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT u.*,
+        f.id AS friendshipId,
+        f.createdAt AS friendsSince
+      FROM users u
+      INNER JOIN friendships f ON (
+        ((f.userId = ? AND f.friendId = u.id) OR
+         (f.friendId = ? AND f.userId = u.id))
+        AND f.status = 'accepted'
+      )
+      ORDER BY u.username COLLATE NOCASE ASC
+    ''', [userId, userId]);
+  }
+
+  Future<int> getFriendsCount(int userId) async {
+    final db = await database;
+    final res = await db.rawQuery('''
+      SELECT COUNT(*) AS c FROM friendships
+      WHERE status = 'accepted' AND (userId = ? OR friendId = ?)
+    ''', [userId, userId]);
+    return (res.first['c'] as int?) ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> getIncomingRequests(int userId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT u.*, f.id AS friendshipId, f.createdAt AS requestedAt
+      FROM users u
+      INNER JOIN friendships f ON f.userId = u.id
+      WHERE f.friendId = ? AND f.status = 'pending'
+      ORDER BY f.createdAt DESC
+    ''', [userId]);
+  }
+
+  Future<List<Map<String, dynamic>>> getOutgoingRequests(int userId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT u.*, f.id AS friendshipId, f.createdAt AS requestedAt
+      FROM users u
+      INNER JOIN friendships f ON f.friendId = u.id
+      WHERE f.userId = ? AND f.status = 'pending'
+      ORDER BY f.createdAt DESC
+    ''', [userId]);
+  }
+
+  Future<int> getPendingIncomingCount(int userId) async {
+    final db = await database;
+    final res = await db.rawQuery(
+        "SELECT COUNT(*) AS c FROM friendships WHERE friendId = ? AND status = 'pending'",
+        [userId]);
+    return (res.first['c'] as int?) ?? 0;
+  }
+
+  Future<String> getFriendshipStatus(int userId, int peerId) async {
+    if (userId == peerId) return 'self';
+    final db = await database;
+    final rows = await db.query('friendships',
+        where:
+            '(userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)',
+        whereArgs: [userId, peerId, peerId, userId],
+        limit: 1);
+    if (rows.isEmpty) return 'none';
+    final row = rows.first;
+    final status = (row['status'] as String?) ?? 'pending';
+    if (status == 'accepted') return 'accepted';
+    if (status == 'declined') return 'declined';
+    final requester = row['userId'] as int?;
+    return requester == userId ? 'pending_sent' : 'pending_received';
+  }
+
+  Future<bool> sendFriendRequest(int userId, int peerId) async {
+    if (userId == peerId) return false;
+    final db = await database;
+    final existing = await db.query('friendships',
+        where:
+            '(userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)',
+        whereArgs: [userId, peerId, peerId, userId],
+        limit: 1);
+    if (existing.isNotEmpty) {
+      final row = existing.first;
+      final status = row['status'] as String?;
+      // Allow re-request after decline / unfriend.
+      if (status == 'declined') {
+        await db.update(
+            'friendships',
+            {
+              'status': 'pending',
+              'userId': userId,
+              'friendId': peerId,
+              'createdAt': DateTime.now().toIso8601String(),
+            },
+            where: 'id = ?',
+            whereArgs: [row['id']]);
+        return true;
+      }
+      return false;
+    }
+    await db.insert('friendships', {
+      'userId': userId,
+      'friendId': peerId,
+      'status': 'pending',
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+    return true;
+  }
+
+  Future<bool> acceptFriendRequest(int friendshipId, int currentUserId) async {
+    final db = await database;
+    final rows = await db.query('friendships',
+        where: 'id = ?', whereArgs: [friendshipId], limit: 1);
+    if (rows.isEmpty) return false;
+    final row = rows.first;
+    // Only the receiver can accept.
+    if ((row['friendId'] as int?) != currentUserId) return false;
+    if ((row['status'] as String?) != 'pending') return false;
+    await db.update('friendships', {'status': 'accepted'},
+        where: 'id = ?', whereArgs: [friendshipId]);
+    return true;
+  }
+
+  Future<bool> declineFriendRequest(int friendshipId, int currentUserId) async {
+    final db = await database;
+    final rows = await db.query('friendships',
+        where: 'id = ?', whereArgs: [friendshipId], limit: 1);
+    if (rows.isEmpty) return false;
+    final row = rows.first;
+    final involved = (row['userId'] as int?) == currentUserId ||
+        (row['friendId'] as int?) == currentUserId;
+    if (!involved) return false;
+    await db.update('friendships', {'status': 'declined'},
+        where: 'id = ?', whereArgs: [friendshipId]);
+    return true;
+  }
+
+  Future<bool> cancelOutgoingRequest(int userId, int peerId) async {
+    final db = await database;
+    final count = await db.delete('friendships',
+        where: "userId = ? AND friendId = ? AND status = 'pending'",
+        whereArgs: [userId, peerId]);
+    return count > 0;
+  }
+
+  Future<bool> removeFriend(int userId, int peerId) async {
+    final db = await database;
+    final count = await db.delete('friendships',
+        where:
+            "((userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)) AND status = 'accepted'",
+        whereArgs: [userId, peerId, peerId, userId]);
+    return count > 0;
   }
 }
